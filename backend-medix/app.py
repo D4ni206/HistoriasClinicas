@@ -18,6 +18,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
     'DATABASE_URL',
     'mssql+pyodbc://@MONIT-02/General?driver=SQL+Server+Native+Client+11.0&trusted_connection=yes'
 )
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
@@ -190,7 +191,7 @@ def descargar_documento(id):
     doc = Documento.query.get_or_404(id)
     try:
         s3_obj = s3_client.get_object(Bucket=BUCKET_NAME, Key=doc.ruta_minio)
-        
+
         # Mapeo preciso de tipo MIME según extensión
         extension = doc.ruta_minio.rsplit('.', 1)[-1].lower() if '.' in doc.ruta_minio else ''
         mime_map = {
