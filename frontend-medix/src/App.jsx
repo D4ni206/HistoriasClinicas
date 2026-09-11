@@ -478,6 +478,151 @@ export default function App() {
           </table>
         </div>
       )}
+
+      {/* MODAL / PANEL DE VISTA PREVIA */}
+      {documentoEnVista && (
+        <div
+          onClick={() => setDocumentoEnVista(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+            padding: '20px',
+            backdropFilter: 'blur(2px)'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              width: '100%',
+              maxWidth: '960px',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Cabecera del Panel */}
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid #e5e7eb',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#f9fafb'
+            }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '17px', color: '#111827', fontWeight: '700' }}>
+                  📋 Visor de Documento: {documentoEnVista.nombre_archivo}
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#4b5563' }}>
+                  Paciente DNI: <strong style={{ color: '#0369a1' }}>{documentoEnVista.paciente_dni || 'Sin DNI'}</strong> | Subido el: {documentoEnVista.fecha_subida || '—'}
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <a
+                  href={`${API_BASE}/documentos/${documentoEnVista.id}/archivo`}
+                  style={{
+                    padding: '8px 14px',
+                    backgroundColor: '#6366f1',
+                    color: 'white',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    fontSize: '13px',
+                    fontWeight: '600'
+                  }}
+                >
+                  ⬇️ Descargar
+                </a>
+                <button
+                  onClick={() => setDocumentoEnVista(null)}
+                  style={{
+                    padding: '8px 14px',
+                    backgroundColor: '#e5e7eb',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    color: '#374151'
+                  }}
+                >
+                  ✕ Cerrar
+                </button>
+              </div>
+            </div>
+
+            {/* Contenedor del Visor */}
+            <div style={{
+              flex: 1,
+              backgroundColor: '#1f2937',
+              padding: '16px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '450px',
+              maxHeight: 'calc(92vh - 80px)',
+              overflow: 'auto'
+            }}>
+              {esPdf(documentoEnVista.nombre_archivo) ? (
+                <iframe
+                  src={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`}
+                  title={`Visor PDF - ${documentoEnVista.nombre_archivo}`}
+                  style={{
+                    width: '100%',
+                    height: '75vh',
+                    border: 'none',
+                    borderRadius: '8px',
+                    backgroundColor: '#ffffff'
+                  }}
+                />
+              ) : esImagen(documentoEnVista.nombre_archivo) ? (
+                <div style={{ textAlign: 'center', width: '100%', maxHeight: '75vh', overflow: 'auto' }}>
+                  <img
+                    src={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`}
+                    alt="Vista previa de documento"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '75vh',
+                      objectFit: 'contain',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                    }}
+                  />
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', color: '#f3f4f6', padding: '40px' }}>
+                  <p style={{ fontSize: '16px', marginBottom: '12px' }}>
+                    📄 Este tipo de archivo no admite previsualización directa en el navegador.
+                  </p>
+                  <a
+                    href={`${API_BASE}/documentos/${documentoEnVista.id}/archivo`}
+                    style={{
+                      display: 'inline-block',
+                      padding: '10px 18px',
+                      backgroundColor: '#2563eb',
+                      color: 'white',
+                      borderRadius: '6px',
+                      textDecoration: 'none',
+                      fontWeight: '600'
+                    }}
+                  >
+                    ⬇️ Descargar archivo
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
