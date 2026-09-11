@@ -1,6 +1,16 @@
 from datetime import datetime
 from app import db # Asumiendo que 'db' es tu instancia de SQLAlchemy
 
+class Paciente(db.Model):
+    __tablename__ = 'paciente'
+    id = db.Column(db.Integer, primary_key=True)
+    dni = db.Column(db.String(20), unique=True, nullable=False)
+
+class Medico(db.Model):
+    __tablename__ = 'medico'
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+
 class Estado_Paciente(db.Model):
     __tablename__ = 'estado_paciente'
     id = db.Column(db.Integer, primary_key=True)

@@ -1,18 +1,22 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from dotenv import load_dotenv
 import boto3
 import os
 import uuid
 
+load_dotenv()
+
 app = Flask(__name__)
 CORS(app) # Permite que React (puerto 5173) se comunique con Flask (puerto 5000)
 
-# Configuración de PostgreSQL (Reemplaza 'tu_contraseña' por la de pgAdmin)
+# Configuración de Base de Datos (SQL Server)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
     'DATABASE_URL',
-    'postgresql://postgres:postgres@localhost:5432/medix_db'
+    'mssql+pyodbc://@MONIT-02/General?driver=SQL+Server+Native+Client+11.0&trusted_connection=yes'
 )
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -24,19 +28,22 @@ s3_client = boto3.client('s3',
 )
 BUCKET_NAME = 'historias-clinicas'
 
-# Modelos de Base de Datos
-class Paciente(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    dni = db.Column(db.String(20), unique=True, nullable=False)
-
-class Documento(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    paciente_id = db.Column(db.Integer, db.ForeignKey('paciente.id'), nullable=False)
-    ruta_minio = db.Column(db.String(255), nullable=False)
+# Modelos de Base de Datos (definidos en models.py)
+from models import Paciente, Documento_Escaneado as Documento
 
 # Crear tablas si no existen (ejecutar esto una vez)
 with app.app_context():
     db.create_all()
+
+@app.route('/', methods=['GET'])
+def inicio():
+    return jsonify({
+        "estado": "activo",
+        "mensaje": "Servidor Backend Medix funcionando correctamente",
+        "rutas": [
+            {"metodo": "POST", "ruta": "/api/documentos", "descripcion": "Subir documento asociado a DNI"}
+        ]
+    })
 
 @app.route('/api/documentos', methods=['POST'])
 def subir_documento():
@@ -46,7 +53,7 @@ def subir_documento():
     if not dni_paciente or not archivo:
         return jsonify({"mensaje": "Faltan datos (DNI o archivo)"}), 400
 
-    # 1. Buscar o crear el paciente en PostgreSQL
+    # 1. Buscar o crear el paciente en la base de datos
     paciente = Paciente.query.filter_by(dni=dni_paciente).first()
     if not paciente:
         paciente = Paciente(dni=dni_paciente)
@@ -62,7 +69,7 @@ def subir_documento():
     except Exception as e:
         return jsonify({"mensaje": "Error al subir a MinIO"}), 500
 
-    # 3. Guardar la ruta del archivo en PostgreSQL
+    # 3. Guardar la ruta del archivo en la base de datos
     nuevo_doc = Documento(paciente_id=paciente.id, ruta_minio=nombre_archivo_s3)
     db.session.add(nuevo_doc)
     db.session.commit()
@@ -70,4 +77,4 @@ def subir_documento():
     return jsonify({"mensaje": "Documento subido y registrado exitosamente", "ruta": nombre_archivo_s3}), 201
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
