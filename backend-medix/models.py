@@ -1,5 +1,5 @@
 from datetime import datetime
-from app import db # Asumiendo que 'db' es tu instancia de SQLAlchemy
+from extensions import db
 
 class Paciente(db.Model):
     __tablename__ = 'paciente'

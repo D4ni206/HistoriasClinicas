@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
+from extensions import db
+from models import Paciente, Documento_Escaneado as Documento
 import boto3
 import os
 import uuid
@@ -18,7 +19,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
 )
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+db.init_app(app)
 
 # Configuración de MinIO
 s3_client = boto3.client('s3',
@@ -27,9 +28,6 @@ s3_client = boto3.client('s3',
     aws_secret_access_key=os.getenv('MINIO_SECRET_KEY', 'minioadmin')
 )
 BUCKET_NAME = 'historias-clinicas'
-
-# Modelos de Base de Datos (definidos en models.py)
-from models import Paciente, Documento_Escaneado as Documento
 
 # Crear tablas si no existen (ejecutar esto una vez)
 with app.app_context():
