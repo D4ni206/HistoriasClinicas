@@ -190,22 +190,38 @@ def descargar_documento(id):
     doc = Documento.query.get_or_404(id)
     try:
         s3_obj = s3_client.get_object(Bucket=BUCKET_NAME, Key=doc.ruta_minio)
-        content_type = s3_obj.get('ContentType', 'application/octet-stream')
-        if content_type == 'application/octet-stream':
-            guess, _ = mimetypes.guess_type(doc.ruta_minio)
-            if guess:
-                content_type = guess
+        
+        # Mapeo preciso de tipo MIME según extensión
+        extension = doc.ruta_minio.rsplit('.', 1)[-1].lower() if '.' in doc.ruta_minio else ''
+        mime_map = {
+            'pdf': 'application/pdf',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'webp': 'image/webp',
+            'txt': 'text/plain; charset=utf-8'
+        }
+        content_type = mime_map.get(extension)
+        if not content_type:
+            content_type = s3_obj.get('ContentType') or mimetypes.guess_type(doc.ruta_minio)[0] or 'application/octet-stream'
 
-        disposition = 'inline' if request.args.get('view') == '1' else 'attachment'
+        is_view = request.args.get('view') == '1'
         nombre_descarga = doc.ruta_minio.split('/')[-1]
+
+        headers = {
+            "Content-Type": content_type,
+            "X-Content-Type-Options": "nosniff"
+        }
+        if is_view:
+            headers["Content-Disposition"] = f'inline; filename="{nombre_descarga}"'
+        else:
+            headers["Content-Disposition"] = f'attachment; filename="{nombre_descarga}"'
 
         return Response(
             s3_obj['Body'].read(),
             mimetype=content_type,
-            headers={
-                "Content-Disposition": f"{disposition}; filename={nombre_descarga}",
-                "Content-Type": content_type
-            }
+            headers=headers
         )
     except Exception as e:
         return jsonify({"mensaje": f"Error al recuperar archivo de MinIO: {str(e)}"}), 500

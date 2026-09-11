@@ -18,8 +18,18 @@ export default function App() {
   const [editandoPaciente, setEditandoPaciente] = useState(null)
   const [nuevoDni, setNuevoDni] = useState('')
 
+  // Panel / Visor de documento
+  const [documentoEnVista, setDocumentoEnVista] = useState(null)
+  const esPdf = (nombre = '') => nombre.toLowerCase().endsWith('.pdf')
+  const esImagen = (nombre = '') => /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(nombre)
+
   useEffect(() => {
     cargarDatos()
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setDocumentoEnVista(null)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
   const notificar = (tipo, texto) => {
@@ -312,22 +322,22 @@ export default function App() {
                     </td>
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                       <div style={{ display: 'inline-flex', gap: '6px' }}>
-                        <a
-                          href={`${API_BASE}/documentos/${doc.id}/archivo?view=1`}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          onClick={() => setDocumentoEnVista(doc)}
                           style={{
                             padding: '6px 12px',
                             backgroundColor: '#10b981',
                             color: 'white',
-                            textDecoration: 'none',
+                            border: 'none',
                             borderRadius: '6px',
                             fontSize: '12px',
-                            fontWeight: '600'
+                            fontWeight: '600',
+                            cursor: 'pointer'
                           }}
+                          title="Ver vista previa en panel"
                         >
                           👁️ Ver
-                        </a>
+                        </button>
                         <a
                           href={`${API_BASE}/documentos/${doc.id}/archivo`}
                           style={{
