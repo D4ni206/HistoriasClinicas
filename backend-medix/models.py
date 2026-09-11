@@ -5,6 +5,17 @@ class Paciente(db.Model):
     __tablename__ = 'paciente'
     id = db.Column(db.Integer, primary_key=True)
     dni = db.Column(db.String(20), unique=True, nullable=False)
+    documentos = db.relationship('Documento_Escaneado', backref='paciente', cascade='all, delete-orphan', lazy=True)
+
+    def to_dict(self, include_documentos=False):
+        data = {
+            'id': self.id,
+            'dni': self.dni,
+            'total_documentos': len(self.documentos) if self.documentos else 0
+        }
+        if include_documentos:
+            data['documentos'] = [d.to_dict() for d in self.documentos]
+        return data
 
 class Medico(db.Model):
     __tablename__ = 'medico'
@@ -45,6 +56,19 @@ class Documento_Escaneado(db.Model):
     medico_id = db.Column(db.Integer, db.ForeignKey('medico.id'), nullable=True)
     especialidad_id = db.Column(db.Integer, db.ForeignKey('especialidad.id'), nullable=True)
     enfermedad_id = db.Column(db.Integer, db.ForeignKey('enfermedad_cie.id'), nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'ruta_minio': self.ruta_minio,
+            'nombre_archivo': self.ruta_minio.split('/')[-1] if '/' in self.ruta_minio else self.ruta_minio,
+            'fecha_subida': self.fecha_subida.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_subida else None,
+            'paciente_id': self.paciente_id,
+            'paciente_dni': self.paciente.dni if self.paciente else None,
+            'medico_id': self.medico_id,
+            'especialidad_id': self.especialidad_id,
+            'enfermedad_id': self.enfermedad_id
+        }
 
 class Auditoria(db.Model):
     __tablename__ = 'auditoria'
