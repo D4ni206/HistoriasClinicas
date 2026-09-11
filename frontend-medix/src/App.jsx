@@ -1,6 +1,92 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import * as docx from 'docx-preview'
 
 const API_BASE = 'http://127.0.0.1:5000/api'
+
+// Visor interactivo para documentos de Microsoft Word (.docx)
+function DocxViewer({ url }) {
+  const containerRef = useRef(null)
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let cancelado = false
+    const renderizar = async () => {
+      setCargando(true)
+      setError(null)
+      try {
+        const res = await fetch(url)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const blob = await res.blob()
+        if (!cancelado && containerRef.current) {
+          containerRef.current.innerHTML = ''
+          await docx.renderAsync(blob, containerRef.current, null, {
+            className: 'docx-preview-doc',
+            inWrapper: true,
+            ignoreWidth: false,
+            ignoreHeight: false
+          })
+        }
+      } catch (err) {
+        if (!cancelado) setError('No se pudo procesar la vista previa del archivo Word.')
+      } finally {
+        if (!cancelado) setCargando(false)
+      }
+    }
+    renderizar()
+    return () => { cancelado = true }
+  }, [url])
+
+  return (
+    <div style={{ width: '100%', height: '75vh', overflow: 'auto', backgroundColor: '#e5e7eb', borderRadius: '8px', padding: '16px' }}>
+      {cargando && (
+        <div style={{ textAlign: 'center', color: '#1f2937', padding: '50px 20px', fontSize: '15px' }}>
+          ⏳ Procesando y renderizando documento Word (.docx)...
+        </div>
+      )}
+      {error && (
+        <div style={{ textAlign: 'center', color: '#b91c1c', padding: '30px' }}>
+          <p style={{ fontWeight: '600' }}>{error}</p>
+          <a
+            href={url.replace('?view=1', '')}
+            style={{
+              display: 'inline-block',
+              marginTop: '10px',
+              padding: '8px 16px',
+              backgroundColor: '#2563eb',
+              color: 'white',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              fontWeight: '600'
+            }}
+          >
+            ⬇️ Descargar archivo Word
+          </a>
+        </div>
+      )}
+      <div ref={containerRef} style={{ display: cargando || error ? 'none' : 'block' }} />
+    </div>
+  )
+}
+
+// Visor para archivos de texto plano
+function TextViewer({ url }) {
+  const [texto, setTexto] = useState('')
+  const [cargando, setCargando] = useState(true)
+
+  useEffect(() => {
+    fetch(url)
+      .then(r => r.text())
+      .then(t => { setTexto(t); setCargando(false) })
+      .catch(() => setCargando(false))
+  }, [url])
+
+  return (
+    <div style={{ width: '100%', height: '75vh', overflow: 'auto', backgroundColor: '#ffffff', borderRadius: '8px', padding: '20px' }}>
+      {cargando ? <p style={{ color: '#4b5563' }}>Cargando texto...</p> : <pre style={{ margin: 0, fontFamily: 'monospace', whiteSpace: 'pre-wrap', color: '#111827', fontSize: '13px' }}>{texto}</pre>}
+    </div>
+  )
+}
 
 export default function App() {
   const [tab, setTab] = useState('documentos') // 'documentos' | 'pacientes'
@@ -21,7 +107,9 @@ export default function App() {
   // Panel / Visor de documento
   const [documentoEnVista, setDocumentoEnVista] = useState(null)
   const esPdf = (nombre = '') => nombre.toLowerCase().endsWith('.pdf')
+  const esDocx = (nombre = '') => /\.(docx|doc)$/i.test(nombre)
   const esImagen = (nombre = '') => /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(nombre)
+  const esTexto = (nombre = '') => /\.(txt|csv|log|json|xml)$/i.test(nombre)
 
   useEffect(() => {
     cargarDatos()
@@ -584,6 +672,8 @@ export default function App() {
                     backgroundColor: '#ffffff'
                   }}
                 />
+              ) : esDocx(documentoEnVista.nombre_archivo) ? (
+                <DocxViewer url={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`} />
               ) : esImagen(documentoEnVista.nombre_archivo) ? (
                 <div style={{ textAlign: 'center', width: '100%', maxHeight: '75vh', overflow: 'auto' }}>
                   <img
@@ -598,6 +688,8 @@ export default function App() {
                     }}
                   />
                 </div>
+              ) : esTexto(documentoEnVista.nombre_archivo) ? (
+                <TextViewer url={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`} />
               ) : (
                 <div style={{ textAlign: 'center', color: '#f3f4f6', padding: '40px' }}>
                   <p style={{ fontSize: '16px', marginBottom: '12px' }}>
