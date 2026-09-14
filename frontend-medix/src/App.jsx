@@ -88,7 +88,326 @@ function TextViewer({ url }) {
   )
 }
 
+// Componente de Login con fondo institucional y efecto de desenfoque (blur)
+function LoginView({ onLoginSuccess }) {
+  const [username, setUsername] = useState('admin')
+  const [password, setPassword] = useState('admin123')
+  const [mostrarPassword, setMostrarPassword] = useState(false)
+  const [cargando, setCargando] = useState(false)
+  const [error, setError] = useState('')
+  const [desenfoque, setDesenfoque] = useState(8) // Valor de blur en px
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const u = username.trim()
+    const p = password.trim()
+    if (!u || !p) {
+      setError('Por favor completa todos los campos.')
+      return
+    }
+
+    setCargando(true)
+    setError('')
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        localStorage.setItem('medix_usuario', JSON.stringify(data.usuario))
+        onLoginSuccess(data.usuario)
+      } else {
+        setError(data.mensaje || 'Error al iniciar sesión. Verifique sus credenciales.')
+      }
+    } catch (err) {
+      setError('Error de conexión con el backend de Medix.')
+    } finally {
+      setCargando(false)
+    }
+  }
+
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      width: '100vw',
+      height: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      zIndex: 9999
+    }}>
+      {/* Capa de Fondo con Imagen de Inauguración y Desenfoque */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: '-30px',
+          backgroundImage: "url('/fondo_login.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: `blur(${desenfoque}px) brightness(0.7)`,
+          transform: 'scale(1.06)',
+          transition: 'filter 0.25s ease',
+          zIndex: 1
+        }}
+      />
+
+      {/* Capa de Viñeta y Gradiente para Alto Contraste */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.42) 0%, rgba(15, 23, 42, 0.78) 100%)',
+          zIndex: 2
+        }}
+      />
+
+      {/* Control interactivo de desenfoque */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        right: '20px',
+        zIndex: 10,
+        backgroundColor: 'rgba(15, 23, 42, 0.75)',
+        backdropFilter: 'blur(8px)',
+        color: '#f8fafc',
+        padding: '6px 14px',
+        borderRadius: '20px',
+        fontSize: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+      }}>
+        <span>💧 Desenfoque: <b>{desenfoque}px</b></span>
+        <input
+          type="range"
+          min="0"
+          max="20"
+          value={desenfoque}
+          onChange={(e) => setDesenfoque(Number(e.target.value))}
+          style={{ width: '80px', cursor: 'pointer', accentColor: '#38bdf8' }}
+          title="Graduar la intensidad del desenfoque"
+        />
+      </div>
+
+      {/* Tarjeta de Inicio de Sesión (Glassmorphism) */}
+      <div style={{
+        position: 'relative',
+        zIndex: 10,
+        width: '100%',
+        maxWidth: '430px',
+        margin: '20px',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        borderRadius: '16px',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.7)',
+        padding: '36px 32px',
+        boxSizing: 'border-box'
+      }}>
+        {/* Cabecera Institucional */}
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div style={{
+            width: '64px',
+            height: '64px',
+            margin: '0 auto 12px',
+            backgroundColor: '#eff6ff',
+            border: '2px solid #bfdbfe',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '32px',
+            boxShadow: '0 4px 10px rgba(37, 99, 235, 0.15)'
+          }}>
+            🏥
+          </div>
+          <h2 style={{
+            fontSize: '18px',
+            fontWeight: '800',
+            color: '#1e3a8a',
+            margin: '0 0 4px 0',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}>
+            Hospital San Juan de Dios
+          </h2>
+          <p style={{ margin: '0 0 8px 0', color: '#0369a1', fontSize: '13px', fontWeight: '700', letterSpacing: '1px' }}>
+            PISCO - PERÚ
+          </p>
+          <div style={{
+            display: 'inline-block',
+            backgroundColor: '#f0fdf4',
+            color: '#15803d',
+            border: '1px solid #bbf7d0',
+            padding: '4px 12px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: '600'
+          }}>
+            🗂️ Medix | Historias Clínicas Digitales
+          </div>
+        </div>
+
+        {/* Mensaje de Error */}
+        {error && (
+          <div style={{
+            padding: '10px 14px',
+            borderRadius: '8px',
+            backgroundColor: '#fee2e2',
+            color: '#991b1b',
+            border: '1px solid #f87171',
+            fontSize: '13px',
+            marginBottom: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span>⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Formulario */}
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
+              👤 Usuario
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Ingresa tu usuario"
+              required
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '11px 14px',
+                borderRadius: '8px',
+                border: '1.5px solid #d1d5db',
+                fontSize: '14px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                backgroundColor: '#ffffff',
+                color: '#111827'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#2563eb'}
+              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+            />
+          </div>
+
+          <div style={{ marginBottom: '22px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
+              🔒 Contraseña
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={mostrarPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Ingresa tu contraseña"
+                required
+                style={{
+                  width: '100%',
+                  padding: '11px 44px 11px 14px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #d1d5db',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  backgroundColor: '#ffffff',
+                  color: '#111827'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#2563eb'}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+              />
+              <button
+                type="button"
+                onClick={() => setMostrarPassword(!mostrarPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  color: '#6b7280',
+                  padding: '4px'
+                }}
+                title={mostrarPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+              >
+                {mostrarPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={cargando}
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: cargando ? '#93c5fd' : '#2563eb',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: '700',
+              fontSize: '15px',
+              cursor: cargando ? 'not-allowed' : 'pointer',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            {cargando ? '⏳ Verificando credenciales...' : '🔓 Iniciar Sesión'}
+          </button>
+        </form>
+
+        {/* Credenciales por defecto */}
+        <div style={{
+          marginTop: '20px',
+          padding: '10px 12px',
+          backgroundColor: '#f8fafc',
+          borderRadius: '8px',
+          border: '1px dashed #cbd5e1',
+          fontSize: '12px',
+          color: '#64748b',
+          textAlign: 'center'
+        }}>
+          <span>Acceso por defecto: <b>admin</b> / <b>admin123</b></span>
+        </div>
+
+        {/* Pie de tarjeta */}
+        <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '11px', color: '#9ca3af' }}>
+          Sistema de Archivo y Gestión Documental © {new Date().getFullYear()}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
+  // Estado de usuario autenticado
+  const [usuario, setUsuario] = useState(() => {
+    try {
+      const u = localStorage.getItem('medix_usuario')
+      return u ? JSON.parse(u) : null
+    } catch {
+      return null
+    }
+  })
+
   const [pacientes, setPacientes] = useState([])
   const [loading, setLoading] = useState(false)
   const [mensaje, setMensaje] = useState({ tipo: '', texto: '' })
@@ -126,13 +445,15 @@ export default function App() {
   }
 
   useEffect(() => {
-    cargarDatos(true)
+    if (usuario) {
+      cargarDatos(true)
+    }
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') setDocumentoEnVista(null)
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [usuario])
 
   const notificar = (tipo, texto) => {
     setMensaje({ tipo, texto })
@@ -317,6 +638,11 @@ export default function App() {
 
   const totalArchivosSistema = pacientes.reduce((acc, p) => acc + (p.total_documentos || 0), 0)
 
+  // Si no hay sesión iniciada, mostrar la pantalla de Login con fondo desenfocado
+  if (!usuario) {
+    return <LoginView onLoginSuccess={(u) => { setUsuario(u); }} />
+  }
+
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '30px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1f2937' }}>
       {/* Encabezado Principal */}
@@ -328,16 +654,43 @@ export default function App() {
               <span style={{ fontSize: '18px', fontWeight: '500', color: '#4b5563' }}>| Expedientes Clínicos Digitales</span>
             </h1>
             <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>
-              Organización documental tipo carpetas por DNI con SQL Server y MinIO
+              Hospital San Juan de Dios de Pisco · Organización por DNI con SQL Server y MinIO
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <span style={{ backgroundColor: '#eff6ff', color: '#1e40af', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', border: '1px solid #bfdbfe' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ backgroundColor: '#eff6ff', color: '#1e40af', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', border: '1px solid #bfdbfe' }}>
               📁 {pacientes.length} {pacientes.length === 1 ? 'Carpeta' : 'Carpetas'}
             </span>
-            <span style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', border: '1px solid #bbf7d0' }}>
+            <span style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', border: '1px solid #bbf7d0' }}>
               📄 {totalArchivosSistema} {totalArchivosSistema === 1 ? 'Documento' : 'Documentos'}
             </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px', paddingLeft: '8px', borderLeft: '2px solid #e5e7eb' }}>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#1f2937', backgroundColor: '#f3f4f6', padding: '6px 10px', borderRadius: '8px', border: '1px solid #d1d5db' }}>
+                👤 {usuario.username} ({usuario.rol || 'Personal'})
+              </span>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('medix_usuario')
+                  setUsuario(null)
+                }}
+                style={{
+                  backgroundColor: '#fee2e2',
+                  color: '#991b1b',
+                  border: '1px solid #fca5a5',
+                  padding: '6px 12px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+                title="Cerrar sesión y volver a la pantalla de Login"
+              >
+                🚪 Salir
+              </button>
+            </div>
           </div>
         </div>
       </header>

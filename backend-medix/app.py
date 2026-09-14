@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
-from models import Paciente, Documento_Escaneado as Documento
+from models import Paciente, Documento_Escaneado as Documento, Usuario
 import boto3
 import os
 import uuid
@@ -38,10 +39,23 @@ def asegurar_bucket():
     except Exception as e:
         print(f"Aviso MinIO: {e}")
 
-# Crear tablas si no existen
+# Crear tablas si no existen e inicializar usuario admin
 with app.app_context():
     db.create_all()
     asegurar_bucket()
+    try:
+        if Usuario.query.count() == 0:
+            admin_inicial = Usuario(
+                username='admin',
+                password_hash=generate_password_hash('admin123'),
+                rol='Administrador'
+            )
+            db.session.add(admin_inicial)
+            db.session.commit()
+            print("Usuario admin inicial creado exitosamente (admin / admin123)")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Aviso al inicializar usuario admin: {e}")
 
 # ==========================================
 # RUTAS DE DIAGNÓSTICO
@@ -67,6 +81,49 @@ def inicio():
             }
         }
     })
+
+# ==========================================
+# RUTAS DE AUTENTICACIÓN
+# ==========================================
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    data = request.get_json() or {}
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+
+    if not username or not password:
+        return jsonify({"mensaje": "Por favor ingresa usuario y contraseña"}), 400
+
+    usuario = Usuario.query.filter_by(username=username).first()
+
+    # Si la tabla quedó vacía por algún motivo, crear el admin al vuelo
+    if not usuario and Usuario.query.count() == 0 and username == 'admin' and password == 'admin123':
+        usuario = Usuario(
+            username='admin',
+            password_hash=generate_password_hash('admin123'),
+            rol='Administrador'
+        )
+        db.session.add(usuario)
+        db.session.commit()
+
+    if not usuario or not check_password_hash(usuario.password_hash, password):
+        return jsonify({"mensaje": "Usuario o contraseña incorrectos"}), 401
+
+    return jsonify({
+        "mensaje": f"Bienvenido al sistema, {usuario.username}",
+        "usuario": {
+            "id": usuario.id,
+            "username": usuario.username,
+            "rol": usuario.rol
+        }
+    }), 200
+
+@app.route('/api/auth/me', methods=['GET'])
+def usuario_actual():
+    return jsonify({
+        "sistema": "Medix - Hospital San Juan de Dios de Pisco",
+        "estado": "autenticado"
+    }), 200
 
 # ==========================================
 # CRUD PACIENTES
