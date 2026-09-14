@@ -1,0 +1,55 @@
+-- 1. Tablas principales y catálogos (sin llaves foráneas dependientes)
+CREATE TABLE paciente (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    dni VARCHAR(20) UNIQUE NOT NULL
+);
+
+CREATE TABLE medico (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE estado_paciente (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    nombre_estado VARCHAR(50) UNIQUE NOT NULL
+);
+
+CREATE TABLE especialidad (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    nombre_especialidad VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE enfermedad_cie (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    descripcion VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE usuario (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    rol VARCHAR(50) NOT NULL
+);
+
+-- 2. Tabla principal de documentos 
+CREATE TABLE documento_escaneado (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    ruta_minio VARCHAR(255) NOT NULL,
+    fecha_subida DATETIME DEFAULT GETDATE(),
+    paciente_id INT NOT NULL FOREIGN KEY REFERENCES paciente(id),
+    medico_id INT FOREIGN KEY REFERENCES medico(id),
+    especialidad_id INT FOREIGN KEY REFERENCES especialidad(id),
+    enfermedad_id INT FOREIGN KEY REFERENCES enfermedad_cie(id)
+);
+
+-- 3. Tabla de auditoría (depende de usuarios y documentos)
+CREATE TABLE auditoria (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    accion VARCHAR(255) NOT NULL,
+    fecha_hora DATETIME DEFAULT GETDATE(),
+    usuario_id INT NOT NULL FOREIGN KEY REFERENCES usuario(id),
+    documento_id INT FOREIGN KEY REFERENCES documento_escaneado(id)
+);
+
+select*from documento_escaneado
