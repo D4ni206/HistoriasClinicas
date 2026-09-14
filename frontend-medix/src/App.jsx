@@ -41,7 +41,7 @@ function DocxViewer({ url }) {
     <div style={{ width: '100%', height: '75vh', overflow: 'auto', backgroundColor: '#e5e7eb', borderRadius: '8px', padding: '16px' }}>
       {cargando && (
         <div style={{ textAlign: 'center', color: '#1f2937', padding: '50px 20px', fontSize: '15px' }}>
-          ⏳ Procesando y renderizando documento Word (.docx)...
+          Procesando y renderizando documento Word (.docx)...
         </div>
       )}
       {error && (
@@ -60,7 +60,7 @@ function DocxViewer({ url }) {
               fontWeight: '600'
             }}
           >
-            ⬇️ Descargar archivo Word
+            Descargar archivo Word
           </a>
         </div>
       )}
@@ -95,7 +95,6 @@ function LoginView({ onLoginSuccess }) {
   const [mostrarPassword, setMostrarPassword] = useState(false)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
-  const [desenfoque, setDesenfoque] = useState(8) // Valor de blur en px
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -131,7 +130,8 @@ function LoginView({ onLoginSuccess }) {
   return (
     <div style={{
       position: 'fixed',
-      inset: 0,
+      top: 0,
+      left: 0,
       width: '100vw',
       height: '100vh',
       display: 'flex',
@@ -139,64 +139,40 @@ function LoginView({ onLoginSuccess }) {
       justifyContent: 'center',
       overflow: 'hidden',
       fontFamily: 'system-ui, -apple-system, sans-serif',
-      zIndex: 9999
+      zIndex: 9999,
+      backgroundColor: '#0f172a'
     }}>
-      {/* Capa de Fondo con Imagen de Inauguración y Desenfoque */}
+      {/* Fondo ajustado al tamaño de la pantalla con desenfoque */}
       <div
         style={{
           position: 'absolute',
-          inset: '-30px',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
           backgroundImage: "url('/fondo_login.jpg')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          filter: `blur(${desenfoque}px) brightness(0.7)`,
-          transform: 'scale(1.06)',
-          transition: 'filter 0.25s ease',
+          backgroundRepeat: 'no-repeat',
+          filter: 'blur(8px) brightness(0.65)',
           zIndex: 1
         }}
       />
 
-      {/* Capa de Viñeta y Gradiente para Alto Contraste */}
+      {/* Capa de contraste y oscurecimiento */}
       <div
         style={{
           position: 'absolute',
-          inset: 0,
-          background: 'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.42) 0%, rgba(15, 23, 42, 0.78) 100%)',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(15, 23, 42, 0.45)',
           zIndex: 2
         }}
       />
 
-      {/* Control interactivo de desenfoque */}
-      <div style={{
-        position: 'absolute',
-        top: '20px',
-        right: '20px',
-        zIndex: 10,
-        backgroundColor: 'rgba(15, 23, 42, 0.75)',
-        backdropFilter: 'blur(8px)',
-        color: '#f8fafc',
-        padding: '6px 14px',
-        borderRadius: '20px',
-        fontSize: '12px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-      }}>
-        <span>💧 Desenfoque: <b>{desenfoque}px</b></span>
-        <input
-          type="range"
-          min="0"
-          max="20"
-          value={desenfoque}
-          onChange={(e) => setDesenfoque(Number(e.target.value))}
-          style={{ width: '80px', cursor: 'pointer', accentColor: '#38bdf8' }}
-          title="Graduar la intensidad del desenfoque"
-        />
-      </div>
-
-      {/* Tarjeta de Inicio de Sesión (Glassmorphism) */}
+      {/* Tarjeta de Inicio de Sesión */}
       <div style={{
         position: 'relative',
         zIndex: 10,
@@ -214,8 +190,8 @@ function LoginView({ onLoginSuccess }) {
         {/* Cabecera Institucional */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <div style={{
-            width: '64px',
-            height: '64px',
+            width: '56px',
+            height: '56px',
             margin: '0 auto 12px',
             backgroundColor: '#eff6ff',
             border: '2px solid #bfdbfe',
@@ -223,10 +199,11 @@ function LoginView({ onLoginSuccess }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '32px',
             boxShadow: '0 4px 10px rgba(37, 99, 235, 0.15)'
           }}>
-            🏥
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
           </div>
           <h2 style={{
             fontSize: '18px',
@@ -251,7 +228,7 @@ function LoginView({ onLoginSuccess }) {
             fontSize: '12px',
             fontWeight: '600'
           }}>
-            🗂️ Medix | Historias Clínicas Digitales
+            Medix · Historias Clínicas Digitales
           </div>
         </div>
 
@@ -269,7 +246,7 @@ function LoginView({ onLoginSuccess }) {
             alignItems: 'center',
             gap: '8px'
           }}>
-            <span>⚠️</span>
+            <span style={{ fontWeight: '700' }}>[Aviso]</span>
             <span>{error}</span>
           </div>
         )}
@@ -278,7 +255,7 @@ function LoginView({ onLoginSuccess }) {
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
-              👤 Usuario
+              Usuario
             </label>
             <input
               type="text"
@@ -305,7 +282,7 @@ function LoginView({ onLoginSuccess }) {
 
           <div style={{ marginBottom: '22px' }}>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
-              🔒 Contraseña
+              Contraseña
             </label>
             <div style={{ position: 'relative' }}>
               <input
@@ -316,7 +293,7 @@ function LoginView({ onLoginSuccess }) {
                 required
                 style={{
                   width: '100%',
-                  padding: '11px 44px 11px 14px',
+                  padding: '11px 70px 11px 14px',
                   borderRadius: '8px',
                   border: '1.5px solid #d1d5db',
                   fontSize: '14px',
@@ -339,13 +316,13 @@ function LoginView({ onLoginSuccess }) {
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '16px',
-                  color: '#6b7280',
-                  padding: '4px'
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  color: '#2563eb',
+                  padding: '4px 6px'
                 }}
-                title={mostrarPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
               >
-                {mostrarPassword ? '🙈' : '👁️'}
+                {mostrarPassword ? 'Ocultar' : 'Ver'}
               </button>
             </div>
           </div>
@@ -370,7 +347,7 @@ function LoginView({ onLoginSuccess }) {
               gap: '8px'
             }}
           >
-            {cargando ? '⏳ Verificando credenciales...' : '🔓 Iniciar Sesión'}
+            {cargando ? 'Verificando credenciales...' : 'Iniciar Sesión'}
           </button>
         </form>
 
@@ -437,11 +414,48 @@ export default function App() {
   const esTexto = (nombre = '') => /\.(txt|csv|log|json|xml)$/i.test(nombre)
 
   const obtenerIconoArchivo = (nombre = '') => {
-    if (esPdf(nombre)) return '📑'
-    if (esDocx(nombre)) return '📘'
-    if (esImagen(nombre)) return '🖼️'
-    if (esTexto(nombre)) return '📝'
-    return '📄'
+    let tipo = 'DOC'
+    let bg = '#f3f4f6'
+    let color = '#374151'
+    let border = '#d1d5db'
+
+    if (esPdf(nombre)) {
+      tipo = 'PDF'
+      bg = '#fee2e2'
+      color = '#991b1b'
+      border = '#fca5a5'
+    } else if (esDocx(nombre)) {
+      tipo = 'DOCX'
+      bg = '#dbeafe'
+      color = '#1e40af'
+      border = '#93c5fd'
+    } else if (esImagen(nombre)) {
+      tipo = 'IMG'
+      bg = '#dcfce7'
+      color = '#166534'
+      border = '#86efac'
+    } else if (esTexto(nombre)) {
+      tipo = 'TXT'
+      bg = '#fef3c7'
+      color = '#92400e'
+      border = '#fde68a'
+    }
+
+    return (
+      <span style={{
+        display: 'inline-block',
+        padding: '2px 6px',
+        fontSize: '11px',
+        fontWeight: '700',
+        borderRadius: '4px',
+        backgroundColor: bg,
+        color: color,
+        border: `1px solid ${border}`,
+        letterSpacing: '0.5px'
+      }}>
+        {tipo}
+      </span>
+    )
   }
 
   useEffect(() => {
@@ -650,7 +664,7 @@ export default function App() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <div>
             <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#111827', margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span>🗂️ Medix</span>
+              <span>Medix</span>
               <span style={{ fontSize: '18px', fontWeight: '500', color: '#4b5563' }}>| Expedientes Clínicos Digitales</span>
             </h1>
             <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>
@@ -659,14 +673,14 @@ export default function App() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span style={{ backgroundColor: '#eff6ff', color: '#1e40af', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', border: '1px solid #bfdbfe' }}>
-              📁 {pacientes.length} {pacientes.length === 1 ? 'Carpeta' : 'Carpetas'}
+              Carpetas: {pacientes.length}
             </span>
             <span style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', border: '1px solid #bbf7d0' }}>
-              📄 {totalArchivosSistema} {totalArchivosSistema === 1 ? 'Documento' : 'Documentos'}
+              Documentos: {totalArchivosSistema}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px', paddingLeft: '8px', borderLeft: '2px solid #e5e7eb' }}>
               <span style={{ fontSize: '13px', fontWeight: '600', color: '#1f2937', backgroundColor: '#f3f4f6', padding: '6px 10px', borderRadius: '8px', border: '1px solid #d1d5db' }}>
-                👤 {usuario.username} ({usuario.rol || 'Personal'})
+                Usuario: {usuario.username} ({usuario.rol || 'Personal'})
               </span>
               <button
                 onClick={() => {
@@ -681,14 +695,11 @@ export default function App() {
                   borderRadius: '8px',
                   fontSize: '13px',
                   fontWeight: '700',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
+                  cursor: 'pointer'
                 }}
                 title="Cerrar sesión y volver a la pantalla de Login"
               >
-                🚪 Salir
+                Cerrar Sesión
               </button>
             </div>
           </div>
@@ -710,7 +721,7 @@ export default function App() {
           boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
         }}>
           <span style={{ fontWeight: '500' }}>{mensaje.texto}</span>
-          <button onClick={() => setMensaje({ tipo: '', texto: '' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
+          <button onClick={() => setMensaje({ tipo: '', texto: '' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>X</button>
         </div>
       )}
 
@@ -724,7 +735,7 @@ export default function App() {
         boxShadow: '0 2px 5px rgba(0,0,0,0.04)'
       }}>
         <h2 style={{ fontSize: '17px', fontWeight: '700', margin: '0 0 14px 0', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>📤 Subir Documento a una Carpeta</span>
+          <span>Subir Documento a una Carpeta</span>
         </h2>
 
         <form onSubmit={handleUpload}>
@@ -800,7 +811,6 @@ export default function App() {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <span>📁</span>
                   <span>
                     <strong>Carpeta existente detectada:</strong> El archivo se agregará al expediente del <strong>DNI {pacienteDetectado.dni}</strong> (que contiene actualmente {pacienteDetectado.total_documentos} {pacienteDetectado.total_documentos === 1 ? 'documento' : 'documentos'}).
                   </span>
@@ -817,7 +827,6 @@ export default function App() {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <span>🆕</span>
                   <span>
                     <strong>Nueva carpeta:</strong> Se creará un nuevo expediente clínico para el DNI <strong>{dni.trim()}</strong>.
                   </span>
@@ -854,7 +863,9 @@ export default function App() {
               backgroundColor: '#ffffff'
             }}
           />
-          <span style={{ position: 'absolute', left: '12px', top: '9px', color: '#9ca3af' }}>🔍</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '12px', top: '11px' }}>
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
           {busquedaDni && (
             <button
               onClick={() => setBusquedaDni('')}
@@ -866,10 +877,11 @@ export default function App() {
                 border: 'none',
                 cursor: 'pointer',
                 color: '#9ca3af',
-                fontSize: '14px'
+                fontSize: '13px',
+                fontWeight: 'bold'
               }}
             >
-              ✕
+              X
             </button>
           )}
         </div>
@@ -889,7 +901,7 @@ export default function App() {
               color: '#374151'
             }}
           >
-            📂 Expandir todas
+            Expandir todas
           </button>
           <button
             onClick={colapsarTodas}
@@ -904,7 +916,7 @@ export default function App() {
               color: '#374151'
             }}
           >
-            📁 Colapsar todas
+            Colapsar todas
           </button>
           <button
             onClick={() => cargarDatos(false)}
@@ -919,7 +931,7 @@ export default function App() {
               color: '#374151'
             }}
           >
-            🔄 Actualizar
+            Actualizar
           </button>
         </div>
       </div>
@@ -927,7 +939,7 @@ export default function App() {
       {/* LISTADO DE CARPETAS / EXPEDIENTES CLÍNICOS */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '50px 20px', color: '#6b7280' }}>
-          ⏳ Cargando expedientes clínicos...
+          Cargando expedientes clínicos...
         </div>
       ) : pacientesFiltrados.length === 0 ? (
         <div style={{
@@ -980,8 +992,16 @@ export default function App() {
                 >
                   {/* Info del DNI */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{ fontSize: '24px' }}>
-                      {estaAbierta ? '📂' : '📁'}
+                    <span style={{
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: estaAbierta ? '#dbeafe' : '#e5e7eb',
+                      color: estaAbierta ? '#1e40af' : '#4b5563',
+                      letterSpacing: '0.5px'
+                    }}>
+                      {estaAbierta ? 'ABIERTA' : 'CARPETA'}
                     </span>
                     <div>
                       {editandoPaciente === pac.id ? (
@@ -1054,7 +1074,7 @@ export default function App() {
                       }}
                       title="Agregar un nuevo documento a este DNI"
                     >
-                      <span>➕</span> Agregar archivo
+                      + Agregar archivo
                     </button>
 
                     {editandoPaciente !== pac.id && (
@@ -1075,7 +1095,7 @@ export default function App() {
                         }}
                         title="Modificar DNI"
                       >
-                        ✏️ Editar
+                        Editar DNI
                       </button>
                     )}
 
@@ -1093,7 +1113,7 @@ export default function App() {
                       }}
                       title="Eliminar carpeta y todos sus archivos"
                     >
-                      🗑️
+                      Borrar
                     </button>
 
                     <button
@@ -1126,7 +1146,7 @@ export default function App() {
                         color: '#6b7280'
                       }}>
                         <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
-                          📂 Esta carpeta está vacía actualmente.
+                          Esta carpeta no contiene documentos actualmente.
                         </p>
                         <button
                           onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
@@ -1141,7 +1161,7 @@ export default function App() {
                             fontWeight: '600'
                           }}
                         >
-                          ➕ Subir primer documento a este DNI
+                          + Subir primer documento a este DNI
                         </button>
                       </div>
                     ) : (
@@ -1158,7 +1178,7 @@ export default function App() {
                           <tbody>
                             {docs.map((doc) => (
                               <tr key={doc.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '10px 14px', fontSize: '18px' }}>
+                                <td style={{ padding: '10px 14px' }}>
                                   {obtenerIconoArchivo(doc.nombre_archivo)}
                                 </td>
                                 <td style={{ padding: '10px 14px', fontWeight: '500', color: '#1e293b' }}>
@@ -1183,7 +1203,7 @@ export default function App() {
                                       }}
                                       title="Vista previa en panel"
                                     >
-                                      👁️ Ver
+                                      Ver
                                     </button>
 
                                     <a
@@ -1199,7 +1219,7 @@ export default function App() {
                                       }}
                                       title="Descargar copia física"
                                     >
-                                      ⬇️ Descargar
+                                      Descargar
                                     </a>
 
                                     <button
@@ -1216,7 +1236,7 @@ export default function App() {
                                       }}
                                       title="Eliminar este archivo"
                                     >
-                                      🗑️
+                                      Eliminar
                                     </button>
                                   </div>
                                 </td>
@@ -1296,7 +1316,7 @@ export default function App() {
                     fontWeight: '600'
                   }}
                 >
-                  ⬇️ Descargar
+                  Descargar
                 </a>
                 <button
                   onClick={() => setDocumentoEnVista(null)}
@@ -1311,7 +1331,7 @@ export default function App() {
                     color: '#374151'
                   }}
                 >
-                  ✕ Cerrar
+                  Cerrar
                 </button>
               </div>
             </div>
@@ -1361,7 +1381,7 @@ export default function App() {
               ) : (
                 <div style={{ textAlign: 'center', color: '#f3f4f6', padding: '40px' }}>
                   <p style={{ fontSize: '16px', marginBottom: '12px' }}>
-                    📄 Este tipo de archivo no admite previsualización directa en el navegador.
+                    Este tipo de archivo no admite previsualización directa en el navegador.
                   </p>
                   <a
                     href={`${API_BASE}/documentos/${documentoEnVista.id}/archivo`}
@@ -1375,7 +1395,7 @@ export default function App() {
                       fontWeight: '600'
                     }}
                   >
-                    ⬇️ Descargar archivo
+                    Descargar archivo
                   </a>
                 </div>
               )}
