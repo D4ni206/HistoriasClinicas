@@ -190,39 +190,48 @@ function LoginView({ onLoginSuccess }) {
         {/* Cabecera Institucional */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <div style={{
-            width: '56px',
-            height: '56px',
-            margin: '0 auto 12px',
-            backgroundColor: '#eff6ff',
-            border: '2px solid #bfdbfe',
+            width: '100px',
+            height: '100px',
+            margin: '0 auto 14px',
+            backgroundColor: '#ffffff',
+            border: '2.5px solid #A7C7D9',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(37, 99, 235, 0.15)'
+            boxShadow: '0 4px 14px rgba(167, 199, 217, 0.45)',
+            overflow: 'hidden',
+            padding: '8px',
+            boxSizing: 'border-box'
           }}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
+            <img
+              src="/logo_hospital.png"
+              alt="Logo Hospital San Juan de Dios de Pisco"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain'
+              }}
+            />
           </div>
           <h2 style={{
             fontSize: '18px',
             fontWeight: '800',
-            color: '#1e3a8a',
+            color: '#0f2942',
             margin: '0 0 4px 0',
             textTransform: 'uppercase',
             letterSpacing: '0.5px'
           }}>
             Hospital San Juan de Dios
           </h2>
-          <p style={{ margin: '0 0 8px 0', color: '#0369a1', fontSize: '13px', fontWeight: '700', letterSpacing: '1px' }}>
-            PISCO - PERÚ
+          <p style={{ margin: '0 0 8px 0', color: '#1e3a5f', fontSize: '13px', fontWeight: '700', letterSpacing: '1px' }}>
+            PISCO - PERÚ · UE-404
           </p>
           <div style={{
             display: 'inline-block',
-            backgroundColor: '#f0fdf4',
-            color: '#15803d',
-            border: '1px solid #bbf7d0',
+            backgroundColor: '#CFE7D6',
+            color: '#134e2b',
+            border: '1px solid #9ec6ac',
             padding: '4px 12px',
             borderRadius: '12px',
             fontSize: '12px',
@@ -237,9 +246,9 @@ function LoginView({ onLoginSuccess }) {
           <div style={{
             padding: '10px 14px',
             borderRadius: '8px',
-            backgroundColor: '#fee2e2',
-            color: '#991b1b',
-            border: '1px solid #f87171',
+            backgroundColor: '#F3C7B6',
+            color: '#70220e',
+            border: '1px solid #e19d85',
             fontSize: '13px',
             marginBottom: '18px',
             display: 'flex',
@@ -275,7 +284,7 @@ function LoginView({ onLoginSuccess }) {
                 backgroundColor: '#ffffff',
                 color: '#111827'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#2563eb'}
+              onFocus={(e) => e.target.style.borderColor = '#A7C7D9'}
               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             />
           </div>
@@ -302,7 +311,7 @@ function LoginView({ onLoginSuccess }) {
                   backgroundColor: '#ffffff',
                   color: '#111827'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#2563eb'}
+                onFocus={(e) => e.target.style.borderColor = '#A7C7D9'}
                 onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
               />
               <button
@@ -318,7 +327,7 @@ function LoginView({ onLoginSuccess }) {
                   cursor: 'pointer',
                   fontSize: '12px',
                   fontWeight: '600',
-                  color: '#2563eb',
+                  color: '#0c354e',
                   padding: '4px 6px'
                 }}
               >
@@ -333,14 +342,14 @@ function LoginView({ onLoginSuccess }) {
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: cargando ? '#93c5fd' : '#2563eb',
-              color: 'white',
-              border: 'none',
+              backgroundColor: cargando ? '#d5e4ec' : '#A7C7D9',
+              color: '#0c354e',
+              border: '1px solid #84aabd',
               borderRadius: '8px',
               fontWeight: '700',
               fontSize: '15px',
               cursor: cargando ? 'not-allowed' : 'pointer',
-              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+              boxShadow: '0 4px 14px rgba(167, 199, 217, 0.45)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -355,11 +364,11 @@ function LoginView({ onLoginSuccess }) {
         <div style={{
           marginTop: '20px',
           padding: '10px 12px',
-          backgroundColor: '#f8fafc',
+          backgroundColor: '#FFF2B6',
           borderRadius: '8px',
-          border: '1px dashed #cbd5e1',
+          border: '1px dashed #F6E38F',
           fontSize: '12px',
-          color: '#64748b',
+          color: '#634706',
           textAlign: 'center'
         }}>
           <span>Acceso por defecto: <b>admin</b> / <b>admin123</b></span>
@@ -421,24 +430,24 @@ export default function App() {
 
     if (esPdf(nombre)) {
       tipo = 'PDF'
-      bg = '#fee2e2'
-      color = '#991b1b'
-      border = '#fca5a5'
+      bg = '#F3C7B6'
+      color = '#70220e'
+      border = '#e19d85'
     } else if (esDocx(nombre)) {
       tipo = 'DOCX'
-      bg = '#dbeafe'
-      color = '#1e40af'
-      border = '#93c5fd'
+      bg = '#A7C7D9'
+      color = '#0c354e'
+      border = '#84aabd'
     } else if (esImagen(nombre)) {
       tipo = 'IMG'
-      bg = '#dcfce7'
-      color = '#166534'
-      border = '#86efac'
+      bg = '#CFE7D6'
+      color = '#134e2b'
+      border = '#9ec6ac'
     } else if (esTexto(nombre)) {
       tipo = 'TXT'
-      bg = '#fef3c7'
-      color = '#92400e'
-      border = '#fde68a'
+      bg = '#FFF2B6'
+      color = '#634706'
+      border = '#F6E38F'
     }
 
     return (
@@ -660,26 +669,42 @@ export default function App() {
   return (
     <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '30px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1f2937' }}>
       {/* Encabezado Principal */}
-      <header style={{ marginBottom: '24px', borderBottom: '2px solid #e5e7eb', paddingBottom: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-          <div>
-            <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#111827', margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span>Medix</span>
-              <span style={{ fontSize: '18px', fontWeight: '500', color: '#4b5563' }}>| Expedientes Clínicos Digitales</span>
-            </h1>
-            <p style={{ margin: 0, color: '#6b7280', fontSize: '14px' }}>
-              Hospital San Juan de Dios de Pisco · Organización por DNI con SQL Server y MinIO
-            </p>
+      <header style={{ marginBottom: '24px', borderBottom: '2px solid #A7C7D9', paddingBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <img
+              src="/logo_hospital.png"
+              alt="Hospital San Juan de Dios de Pisco"
+              style={{
+                height: '56px',
+                width: 'auto',
+                objectFit: 'contain',
+                backgroundColor: '#ffffff',
+                borderRadius: '8px',
+                padding: '4px 8px',
+                border: '1.5px solid #A7C7D9',
+                boxShadow: '0 2px 6px rgba(167, 199, 217, 0.3)'
+              }}
+            />
+            <div>
+              <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f2942', margin: '0 0 3px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>Medix</span>
+                <span style={{ fontSize: '16px', fontWeight: '500', color: '#4b5563' }}>| Expedientes Clínicos Digitales</span>
+              </h1>
+              <p style={{ margin: 0, color: '#6b7280', fontSize: '13px' }}>
+                Hospital San Juan de Dios de Pisco · UE-404
+              </p>
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ backgroundColor: '#eff6ff', color: '#1e40af', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', border: '1px solid #bfdbfe' }}>
+            <span style={{ backgroundColor: '#A7C7D9', color: '#0c354e', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '700', border: '1px solid #84aabd' }}>
               Carpetas: {pacientes.length}
             </span>
-            <span style={{ backgroundColor: '#f0fdf4', color: '#166534', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', border: '1px solid #bbf7d0' }}>
+            <span style={{ backgroundColor: '#CFE7D6', color: '#134e2b', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '700', border: '1px solid #9ec6ac' }}>
               Documentos: {totalArchivosSistema}
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px', paddingLeft: '8px', borderLeft: '2px solid #e5e7eb' }}>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: '#1f2937', backgroundColor: '#f3f4f6', padding: '6px 10px', borderRadius: '8px', border: '1px solid #d1d5db' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px', paddingLeft: '8px', borderLeft: '2px solid #A7C7D9' }}>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#634706', backgroundColor: '#FFF2B6', padding: '6px 12px', borderRadius: '8px', border: '1px solid #F6E38F' }}>
                 Usuario: {usuario.username} ({usuario.rol || 'Personal'})
               </span>
               <button
@@ -688,9 +713,9 @@ export default function App() {
                   setUsuario(null)
                 }}
                 style={{
-                  backgroundColor: '#fee2e2',
-                  color: '#991b1b',
-                  border: '1px solid #fca5a5',
+                  backgroundColor: '#F3C7B6',
+                  color: '#70220e',
+                  border: '1px solid #e19d85',
                   padding: '6px 12px',
                   borderRadius: '8px',
                   fontSize: '13px',
@@ -712,29 +737,29 @@ export default function App() {
           padding: '12px 18px',
           borderRadius: '8px',
           marginBottom: '20px',
-          backgroundColor: mensaje.tipo === 'exito' ? '#def7ec' : '#fde8e8',
-          color: mensaje.tipo === 'exito' ? '#03543f' : '#9b1c1c',
-          border: `1px solid ${mensaje.tipo === 'exito' ? '#84e1bc' : '#f8b4b4'}`,
+          backgroundColor: mensaje.tipo === 'exito' ? '#CFE7D6' : '#F3C7B6',
+          color: mensaje.tipo === 'exito' ? '#134e2b' : '#70220e',
+          border: `1px solid ${mensaje.tipo === 'exito' ? '#9ec6ac' : '#e19d85'}`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
         }}>
-          <span style={{ fontWeight: '500' }}>{mensaje.texto}</span>
-          <button onClick={() => setMensaje({ tipo: '', texto: '' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>X</button>
+          <span style={{ fontWeight: '600' }}>{mensaje.texto}</span>
+          <button onClick={() => setMensaje({ tipo: '', texto: '' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: 'inherit' }}>X</button>
         </div>
       )}
 
       {/* Panel de Subida con Detección Automática de Carpeta */}
       <div style={{
         background: '#ffffff',
-        border: '1px solid #e5e7eb',
+        border: '1.5px solid #A7C7D9',
         borderRadius: '12px',
         padding: '22px',
         marginBottom: '28px',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.04)'
+        boxShadow: '0 4px 12px rgba(167, 199, 217, 0.2)'
       }}>
-        <h2 style={{ fontSize: '17px', fontWeight: '700', margin: '0 0 14px 0', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <h2 style={{ fontSize: '17px', fontWeight: '700', margin: '0 0 14px 0', color: '#0f2942', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span>Subir Documento a una Carpeta</span>
         </h2>
 
@@ -751,9 +776,12 @@ export default function App() {
                   boxSizing: 'border-box',
                   padding: '10px 14px',
                   borderRadius: '8px',
-                  border: '1px solid #d1d5db',
-                  fontSize: '14px'
+                  border: '1.5px solid #d1d5db',
+                  fontSize: '14px',
+                  outline: 'none'
                 }}
+                onFocus={(e) => e.target.style.borderColor = '#A7C7D9'}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
                 required
               />
             </div>
@@ -769,7 +797,7 @@ export default function App() {
                   boxSizing: 'border-box',
                   padding: '8px',
                   borderRadius: '8px',
-                  border: '1px solid #d1d5db',
+                  border: '1.5px solid #d1d5db',
                   fontSize: '14px',
                   backgroundColor: '#f9fafb'
                 }}
@@ -782,14 +810,14 @@ export default function App() {
               disabled={subiendo}
               style={{
                 padding: '10px 22px',
-                backgroundColor: subiendo ? '#9ca3af' : '#2563eb',
-                color: 'white',
-                border: 'none',
+                backgroundColor: subiendo ? '#d5e4ec' : '#A7C7D9',
+                color: '#0c354e',
+                border: '1px solid #84aabd',
                 borderRadius: '8px',
                 fontWeight: '700',
                 cursor: subiendo ? 'not-allowed' : 'pointer',
                 fontSize: '14px',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                boxShadow: '0 2px 6px rgba(167, 199, 217, 0.35)'
               }}
             >
               {subiendo ? 'Subiendo a MinIO...' : 'Guardar en Carpeta'}
@@ -803,9 +831,9 @@ export default function App() {
                 <div style={{
                   padding: '8px 14px',
                   borderRadius: '6px',
-                  backgroundColor: '#eff6ff',
-                  border: '1px solid #bfdbfe',
-                  color: '#1e40af',
+                  backgroundColor: '#CFE7D6',
+                  border: '1px solid #9ec6ac',
+                  color: '#134e2b',
                   fontSize: '13px',
                   display: 'flex',
                   alignItems: 'center',
@@ -819,9 +847,9 @@ export default function App() {
                 <div style={{
                   padding: '8px 14px',
                   borderRadius: '6px',
-                  backgroundColor: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  color: '#166534',
+                  backgroundColor: '#FFF2B6',
+                  border: '1px solid #F6E38F',
+                  color: '#634706',
                   fontSize: '13px',
                   display: 'flex',
                   alignItems: 'center',
@@ -858,12 +886,13 @@ export default function App() {
               boxSizing: 'border-box',
               padding: '9px 14px 9px 36px',
               borderRadius: '8px',
-              border: '1px solid #d1d5db',
+              border: '1.5px solid #A7C7D9',
               fontSize: '14px',
-              backgroundColor: '#ffffff'
+              backgroundColor: '#ffffff',
+              outline: 'none'
             }}
           />
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '12px', top: '11px' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '12px', top: '11px' }}>
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
           {busquedaDni && (
@@ -892,13 +921,13 @@ export default function App() {
             onClick={expandirTodas}
             style={{
               padding: '7px 14px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #d1d5db',
+              backgroundColor: '#A7C7D9',
+              border: '1px solid #84aabd',
               borderRadius: '6px',
               fontSize: '12px',
-              fontWeight: '600',
+              fontWeight: '700',
               cursor: 'pointer',
-              color: '#374151'
+              color: '#0c354e'
             }}
           >
             Expandir todas
@@ -922,13 +951,13 @@ export default function App() {
             onClick={() => cargarDatos(false)}
             style={{
               padding: '7px 14px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #d1d5db',
+              backgroundColor: '#CFE7D6',
+              border: '1px solid #9ec6ac',
               borderRadius: '6px',
               fontSize: '12px',
-              fontWeight: '600',
+              fontWeight: '700',
               cursor: 'pointer',
-              color: '#374151'
+              color: '#134e2b'
             }}
           >
             Actualizar
@@ -968,9 +997,9 @@ export default function App() {
                 key={pac.id}
                 style={{
                   backgroundColor: '#ffffff',
-                  border: estaAbierta ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                  border: estaAbierta ? '2px solid #A7C7D9' : '1px solid #e5e7eb',
                   borderRadius: '10px',
-                  boxShadow: estaAbierta ? '0 4px 12px rgba(59, 130, 246, 0.08)' : '0 1px 3px rgba(0,0,0,0.03)',
+                  boxShadow: estaAbierta ? '0 4px 14px rgba(167, 199, 217, 0.25)' : '0 1px 3px rgba(0,0,0,0.03)',
                   overflow: 'hidden',
                   transition: 'all 0.15s ease'
                 }}
@@ -979,13 +1008,13 @@ export default function App() {
                 <div
                   style={{
                     padding: '14px 18px',
-                    backgroundColor: estaAbierta ? '#f0f7ff' : '#f9fafb',
+                    backgroundColor: estaAbierta ? '#f2f7fa' : '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     flexWrap: 'wrap',
                     gap: '12px',
-                    borderBottom: estaAbierta ? '1px solid #bfdbfe' : 'none',
+                    borderBottom: estaAbierta ? '1.5px solid #A7C7D9' : 'none',
                     cursor: 'pointer'
                   }}
                   onClick={() => toggleCarpeta(pac.id)}
@@ -997,8 +1026,9 @@ export default function App() {
                       fontWeight: '700',
                       padding: '3px 8px',
                       borderRadius: '4px',
-                      backgroundColor: estaAbierta ? '#dbeafe' : '#e5e7eb',
-                      color: estaAbierta ? '#1e40af' : '#4b5563',
+                      backgroundColor: estaAbierta ? '#A7C7D9' : '#e5e7eb',
+                      color: estaAbierta ? '#0c354e' : '#4b5563',
+                      border: estaAbierta ? '1px solid #84aabd' : '1px solid #d1d5db',
                       letterSpacing: '0.5px'
                     }}>
                       {estaAbierta ? 'ABIERTA' : 'CARPETA'}
@@ -1013,30 +1043,31 @@ export default function App() {
                             type="text"
                             value={nuevoDni}
                             onChange={(e) => setNuevoDni(e.target.value)}
-                            style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px', fontWeight: 'bold' }}
+                            style={{ padding: '4px 8px', borderRadius: '6px', border: '1.5px solid #A7C7D9', fontSize: '14px', fontWeight: 'bold', outline: 'none' }}
                             autoFocus
                           />
                           <button
                             onClick={() => handleGuardarDni(pac.id)}
-                            style={{ padding: '4px 10px', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
+                            style={{ padding: '4px 10px', backgroundColor: '#CFE7D6', color: '#134e2b', border: '1px solid #9ec6ac', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
                           >
                             Guardar
                           </button>
                           <button
                             onClick={() => setEditandoPaciente(null)}
-                            style={{ padding: '4px 10px', backgroundColor: '#9ca3af', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' }}
+                            style={{ padding: '4px 10px', backgroundColor: '#F3C7B6', color: '#70220e', border: '1px solid #e19d85', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
                           >
                             Cancelar
                           </button>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontSize: '17px', fontWeight: '800', color: '#111827' }}>
+                          <span style={{ fontSize: '17px', fontWeight: '800', color: '#0f2942' }}>
                             DNI: {pac.dni}
                           </span>
                           <span style={{
-                            backgroundColor: docs.length > 0 ? '#dcfce7' : '#fee2e2',
-                            color: docs.length > 0 ? '#166534' : '#991b1b',
+                            backgroundColor: docs.length > 0 ? '#CFE7D6' : '#F3C7B6',
+                            color: docs.length > 0 ? '#134e2b' : '#70220e',
+                            border: docs.length > 0 ? '1px solid #9ec6ac' : '1px solid #e19d85',
                             padding: '3px 9px',
                             borderRadius: '12px',
                             fontSize: '12px',
@@ -1060,17 +1091,18 @@ export default function App() {
                     <button
                       onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
                       style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#2563eb',
-                        color: 'white',
-                        border: 'none',
+                        padding: '6px 14px',
+                        backgroundColor: '#A7C7D9',
+                        color: '#0c354e',
+                        border: '1px solid #84aabd',
                         borderRadius: '6px',
                         fontSize: '12px',
-                        fontWeight: '600',
+                        fontWeight: '700',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px'
+                        gap: '4px',
+                        boxShadow: '0 2px 4px rgba(167, 199, 217, 0.3)'
                       }}
                       title="Agregar un nuevo documento a este DNI"
                     >
@@ -1085,12 +1117,12 @@ export default function App() {
                         }}
                         style={{
                           padding: '6px 10px',
-                          backgroundColor: '#ffffff',
-                          border: '1px solid #d1d5db',
+                          backgroundColor: '#FFF2B6',
+                          border: '1px solid #F6E38F',
                           borderRadius: '6px',
                           fontSize: '12px',
-                          fontWeight: '600',
-                          color: '#374151',
+                          fontWeight: '700',
+                          color: '#634706',
                           cursor: 'pointer'
                         }}
                         title="Modificar DNI"
@@ -1103,12 +1135,12 @@ export default function App() {
                       onClick={() => handleEliminarPaciente(pac.id, pac.dni)}
                       style={{
                         padding: '6px 10px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #fca5a5',
+                        backgroundColor: '#F3C7B6',
+                        border: '1px solid #e19d85',
                         borderRadius: '6px',
                         fontSize: '12px',
-                        fontWeight: '600',
-                        color: '#dc2626',
+                        fontWeight: '700',
+                        color: '#70220e',
                         cursor: 'pointer'
                       }}
                       title="Eliminar carpeta y todos sus archivos"
@@ -1140,25 +1172,25 @@ export default function App() {
                       <div style={{
                         padding: '24px',
                         textAlign: 'center',
-                        backgroundColor: '#f9fafb',
+                        backgroundColor: '#FFF2B6',
                         borderRadius: '8px',
-                        border: '1px dashed #d1d5db',
-                        color: '#6b7280'
+                        border: '1px dashed #F6E38F',
+                        color: '#634706'
                       }}>
-                        <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                        <p style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: '600' }}>
                           Esta carpeta no contiene documentos actualmente.
                         </p>
                         <button
                           onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
                           style={{
-                            padding: '6px 14px',
-                            backgroundColor: '#2563eb',
-                            color: 'white',
-                            border: 'none',
+                            padding: '7px 16px',
+                            backgroundColor: '#A7C7D9',
+                            color: '#0c354e',
+                            border: '1px solid #84aabd',
                             borderRadius: '6px',
                             fontSize: '13px',
                             cursor: 'pointer',
-                            fontWeight: '600'
+                            fontWeight: '700'
                           }}
                         >
                           + Subir primer documento a este DNI
@@ -1168,77 +1200,78 @@ export default function App() {
                       <div style={{ overflowX: 'auto' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                           <thead>
-                            <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b' }}>
-                              <th style={{ padding: '10px 14px', textAlign: 'left' }}>Tipo</th>
-                              <th style={{ padding: '10px 14px', textAlign: 'left' }}>Nombre del Archivo</th>
-                              <th style={{ padding: '10px 14px', textAlign: 'left' }}>Fecha de Subida</th>
-                              <th style={{ padding: '10px 14px', textAlign: 'center' }}>Acciones</th>
+                            <tr style={{ backgroundColor: '#f2f7fa', borderBottom: '2px solid #A7C7D9', color: '#0f2942' }}>
+                              <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '700' }}>Tipo</th>
+                              <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '700' }}>Nombre del Archivo</th>
+                              <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '700' }}>Fecha de Subida</th>
+                              <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: '700' }}>Acciones</th>
                             </tr>
                           </thead>
                           <tbody>
                             {docs.map((doc) => (
-                              <tr key={doc.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                              <tr key={doc.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                                 <td style={{ padding: '10px 14px' }}>
                                   {obtenerIconoArchivo(doc.nombre_archivo)}
                                 </td>
-                                <td style={{ padding: '10px 14px', fontWeight: '500', color: '#1e293b' }}>
+                                <td style={{ padding: '10px 14px', fontWeight: '600', color: '#0f2942' }}>
                                   {doc.nombre_archivo}
                                 </td>
-                                <td style={{ padding: '10px 14px', color: '#64748b' }}>
+                                <td style={{ padding: '10px 14px', color: '#475569' }}>
                                   {doc.fecha_subida || '—'}
                                 </td>
                                 <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                                  <div style={{ display: 'inline-flex', gap: '6px' }}>
-                                    <button
-                                      onClick={() => setDocumentoEnVista(doc)}
-                                      style={{
-                                        padding: '5px 10px',
-                                        backgroundColor: '#10b981',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '5px',
-                                        fontSize: '12px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer'
-                                      }}
-                                      title="Vista previa en panel"
-                                    >
-                                      Ver
-                                    </button>
+                                <div style={{ display: 'inline-flex', gap: '8px' }}>
+                                  <button
+                                    onClick={() => setDocumentoEnVista(doc)}
+                                    style={{
+                                      padding: '5px 12px',
+                                      backgroundColor: '#CFE7D6',
+                                      color: '#134e2b',
+                                      border: '1px solid #9ec6ac',
+                                      borderRadius: '6px',
+                                      fontSize: '12px',
+                                      fontWeight: '700',
+                                      cursor: 'pointer'
+                                    }}
+                                    title="Vista previa en panel"
+                                  >
+                                    Ver
+                                  </button>
 
-                                    <a
-                                      href={`${API_BASE}/documentos/${doc.id}/archivo`}
-                                      style={{
-                                        padding: '5px 10px',
-                                        backgroundColor: '#6366f1',
-                                        color: 'white',
-                                        borderRadius: '5px',
-                                        textDecoration: 'none',
-                                        fontSize: '12px',
-                                        fontWeight: '600'
-                                      }}
-                                      title="Descargar copia física"
-                                    >
-                                      Descargar
-                                    </a>
+                                  <a
+                                    href={`${API_BASE}/documentos/${doc.id}/archivo`}
+                                    style={{
+                                      padding: '5px 12px',
+                                      backgroundColor: '#A7C7D9',
+                                      color: '#0c354e',
+                                      border: '1px solid #84aabd',
+                                      borderRadius: '6px',
+                                      textDecoration: 'none',
+                                      fontSize: '12px',
+                                      fontWeight: '700'
+                                    }}
+                                    title="Descargar copia física"
+                                  >
+                                    Descargar
+                                  </a>
 
-                                    <button
-                                      onClick={() => handleEliminarDocumento(doc.id, doc.nombre_archivo, pac.id)}
-                                      style={{
-                                        padding: '5px 10px',
-                                        backgroundColor: '#ef4444',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '5px',
-                                        fontSize: '12px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer'
-                                      }}
-                                      title="Eliminar este archivo"
-                                    >
-                                      Eliminar
-                                    </button>
-                                  </div>
+                                  <button
+                                    onClick={() => handleEliminarDocumento(doc.id, doc.nombre_archivo, pac.id)}
+                                    style={{
+                                      padding: '5px 12px',
+                                      backgroundColor: '#F3C7B6',
+                                      color: '#70220e',
+                                      border: '1px solid #e19d85',
+                                      borderRadius: '6px',
+                                      fontSize: '12px',
+                                      fontWeight: '700',
+                                      cursor: 'pointer'
+                                    }}
+                                    title="Eliminar este archivo"
+                                  >
+                                    Eliminar
+                                  </button>
+                                </div>
                                 </td>
                               </tr>
                             ))}
@@ -1281,25 +1314,26 @@ export default function App() {
               display: 'flex',
               flexDirection: 'column',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+              border: '2px solid #A7C7D9',
               overflow: 'hidden'
             }}
           >
             {/* Cabecera del Panel */}
             <div style={{
               padding: '16px 20px',
-              borderBottom: '1px solid #e5e7eb',
+              borderBottom: '2px solid #A7C7D9',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              backgroundColor: '#f9fafb'
+              backgroundColor: '#f2f7fa'
             }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: '17px', color: '#111827', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <h3 style={{ margin: 0, fontSize: '17px', color: '#0f2942', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span>{obtenerIconoArchivo(documentoEnVista.nombre_archivo)}</span>
                   <span>{documentoEnVista.nombre_archivo}</span>
                 </h3>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#4b5563' }}>
-                  Carpeta DNI: <strong style={{ color: '#0369a1' }}>{documentoEnVista.paciente_dni || 'Sin DNI'}</strong> | Subido el: {documentoEnVista.fecha_subida || '—'}
+                <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#475569' }}>
+                  Carpeta DNI: <strong style={{ color: '#0c354e', backgroundColor: '#CFE7D6', padding: '2px 8px', borderRadius: '4px', border: '1px solid #9ec6ac' }}>{documentoEnVista.paciente_dni || 'Sin DNI'}</strong> | Subido el: {documentoEnVista.fecha_subida || '—'}
                 </p>
               </div>
 
@@ -1308,13 +1342,15 @@ export default function App() {
                   href={`${API_BASE}/documentos/${documentoEnVista.id}/archivo`}
                   style={{
                     padding: '8px 14px',
-                    backgroundColor: '#6366f1',
-                    color: 'white',
+                    backgroundColor: '#A7C7D9',
+                    color: '#0c354e',
+                    border: '1px solid #84aabd',
                     borderRadius: '6px',
                     textDecoration: 'none',
                     fontSize: '13px',
-                    fontWeight: '600'
+                    fontWeight: '700'
                   }}
+                  title="Descargar archivo físico"
                 >
                   Descargar
                 </a>
@@ -1322,13 +1358,13 @@ export default function App() {
                   onClick={() => setDocumentoEnVista(null)}
                   style={{
                     padding: '8px 14px',
-                    backgroundColor: '#e5e7eb',
-                    border: 'none',
+                    backgroundColor: '#F3C7B6',
+                    color: '#70220e',
+                    border: '1px solid #e19d85',
                     borderRadius: '6px',
                     cursor: 'pointer',
                     fontSize: '13px',
-                    fontWeight: '700',
-                    color: '#374151'
+                    fontWeight: '700'
                   }}
                 >
                   Cerrar
@@ -1388,11 +1424,12 @@ export default function App() {
                     style={{
                       display: 'inline-block',
                       padding: '10px 18px',
-                      backgroundColor: '#2563eb',
-                      color: 'white',
+                      backgroundColor: '#A7C7D9',
+                      color: '#0c354e',
+                      border: '1px solid #84aabd',
                       borderRadius: '6px',
                       textDecoration: 'none',
-                      fontWeight: '600'
+                      fontWeight: '700'
                     }}
                   >
                     Descargar archivo
