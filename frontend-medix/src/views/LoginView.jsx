@@ -124,7 +124,7 @@ export default function LoginView({ onLoginSuccess }) {
               letterSpacing: '-1px'
             }}>
               BANCO DE<br />
-              HISTORIAS<br />
+              HISTORIAS
               CLINICAS
             </h1>
 
