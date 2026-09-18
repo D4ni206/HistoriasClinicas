@@ -129,33 +129,41 @@ function LoginView({ onLoginSuccess }) {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
       width: '100vw',
+      height: '100vh',
       backgroundColor: '#FAF7F5',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '24px',
+      padding: '20px',
       boxSizing: 'border-box',
+      overflow: 'hidden',
+      zIndex: 9999,
       fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '1240px',
-        minHeight: '660px',
+        maxWidth: '1140px',
+        height: 'min(620px, 90vh)',
         display: 'flex',
-        flexWrap: 'wrap',
+        flexDirection: 'row',
         alignItems: 'stretch',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         gap: '40px'
       }}>
         {/* PANEL IZQUIERDO: Tarjeta Amarilla Institucional */}
         <div style={{
-          flex: '1 1 540px',
-          minHeight: '640px',
+          flex: '1.2 1 0',
+          minWidth: 0,
+          height: '100%',
           backgroundColor: '#FEF7A7',
-          borderRadius: '36px',
-          padding: '44px 48px',
+          borderRadius: '32px',
+          padding: '36px 42px',
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
@@ -172,14 +180,14 @@ function LoginView({ onLoginSuccess }) {
               src="/logo_hospital.png"
               alt="Hospital San Juan de Dios de Pisco"
               style={{
-                height: '62px',
+                height: '60px',
                 width: 'auto',
                 objectFit: 'contain',
                 mixBlendMode: 'multiply'
               }}
             />
             <span style={{
-              fontSize: '19px',
+              fontSize: '18px',
               fontWeight: '900',
               fontStyle: 'italic',
               letterSpacing: '-0.3px',
@@ -191,13 +199,13 @@ function LoginView({ onLoginSuccess }) {
           </div>
 
           {/* Bloque Central: BANCO DE HISTORIAS CLINICAS */}
-          <div style={{ margin: 'auto 0', padding: '36px 0' }}>
+          <div style={{ margin: 'auto 0', padding: '20px 0' }}>
             <h1 style={{
-              fontSize: 'clamp(36px, 4.8vw, 64px)',
+              fontSize: 'clamp(28px, 3.8vw, 54px)',
               fontWeight: '900',
               lineHeight: '1.05',
               color: '#D28A4A',
-              margin: '0 0 24px 0',
+              margin: '0 0 18px 0',
               textTransform: 'uppercase',
               letterSpacing: '-1px'
             }}>
@@ -208,13 +216,13 @@ function LoginView({ onLoginSuccess }) {
 
             <p style={{
               margin: 0,
-              fontSize: '15px',
+              fontSize: '14px',
               fontWeight: '500',
               lineHeight: '1.45',
               color: '#8A8765',
               textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-              maxWidth: '460px'
+              letterSpacing: '0.5px',
+              maxWidth: '440px'
             }}>
               SISTEMA QUE AYUDA A VER HISTORIAS CLINICAS, DE FORMA RAPIDA Y SEGURA
             </p>
@@ -234,31 +242,34 @@ function LoginView({ onLoginSuccess }) {
 
         {/* PANEL DERECHO: Formulario de Iniciar Sesión */}
         <div style={{
-          flex: '1 1 420px',
+          flex: '1 1 0',
+          minWidth: '320px',
+          maxWidth: '420px',
+          height: '100%',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          padding: '24px 20px',
+          padding: '16px 12px',
           boxSizing: 'border-box'
         }}>
-          {/* Contenedor del Formulario */}
+          {/* Contenedor del Formulario centrado */}
           <div style={{
-            maxWidth: '380px',
+            maxWidth: '360px',
             width: '100%',
             margin: 'auto auto'
           }}>
             {/* Título y subtítulo */}
             <h2 style={{
-              fontSize: '34px',
+              fontSize: '32px',
               fontWeight: '800',
               color: '#000000',
-              margin: '0 0 8px 0',
+              margin: '0 0 6px 0',
               letterSpacing: '-0.5px'
             }}>
               Iniciar sesion
             </h2>
             <p style={{
-              margin: '0 0 36px 0',
+              margin: '0 0 28px 0',
               fontSize: '14px',
               color: '#71717a'
             }}>
