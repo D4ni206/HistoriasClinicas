@@ -126,6 +126,91 @@ def usuario_actual():
     }), 200
 
 # ==========================================
+# GESTIÓN DE USUARIOS
+# ==========================================
+@app.route('/api/usuarios', methods=['GET'])
+def listar_usuarios():
+    usuarios = Usuario.query.order_by(Usuario.id.asc()).all()
+    return jsonify([u.to_dict() for u in usuarios]), 200
+
+@app.route('/api/usuarios', methods=['POST'])
+def crear_usuario():
+    data = request.get_json() or {}
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+    rol = data.get('rol', 'Personal').strip()
+
+    if not username or not password:
+        return jsonify({"mensaje": "El nombre de usuario y la contraseña son obligatorios"}), 400
+
+    if Usuario.query.filter_by(username=username).first():
+        return jsonify({"mensaje": f"El usuario '{username}' ya existe"}), 409
+
+    nuevo_usuario = Usuario(
+        username=username,
+        password_hash=generate_password_hash(password),
+        rol=rol
+    )
+    db.session.add(nuevo_usuario)
+    db.session.commit()
+    return jsonify({
+        "mensaje": f"Usuario '{username}' creado exitosamente",
+        "usuario": nuevo_usuario.to_dict()
+    }), 201
+
+@app.route('/api/usuarios/<int:id>', methods=['DELETE'])
+def eliminar_usuario(id):
+    usuario = Usuario.query.get_or_404(id)
+    if usuario.username.lower() == 'admin':
+        return jsonify({"mensaje": "No se puede eliminar la cuenta del Administrador principal"}), 403
+
+    db.session.delete(usuario)
+    db.session.commit()
+    return jsonify({"mensaje": f"Usuario '{usuario.username}' eliminado exitosamente"}), 200
+
+# ==========================================
+# ESTADO DEL SISTEMA (CONFIGURACIÓN)
+# ==========================================
+@app.route('/api/sistema/estado', methods=['GET'])
+def estado_sistema():
+    bd_ok = False
+    total_pacientes = 0
+    total_docs = 0
+    try:
+        total_pacientes = Paciente.query.count()
+        total_docs = Documento.query.count()
+        bd_ok = True
+    except Exception as e:
+        print(f"Error comprobando BD: {e}")
+
+    minio_ok = False
+    bucket_existe = False
+    try:
+        buckets = [b['Name'] for b in s3_client.list_buckets().get('Buckets', [])]
+        minio_ok = True
+        bucket_existe = BUCKET_NAME in buckets
+    except Exception as e:
+        print(f"Error comprobando MinIO: {e}")
+
+    return jsonify({
+        "institucion": "Hospital San Juan de Dios de Pisco",
+        "unidad_ejecutora": "UE-404",
+        "sistema": "Medix - Banco de Historias Clínicas",
+        "base_datos": {
+            "estado": "conectado" if bd_ok else "error",
+            "motor": "Microsoft SQL Server",
+            "total_pacientes": total_pacientes,
+            "total_documentos": total_docs
+        },
+        "almacenamiento": {
+            "estado": "conectado" if minio_ok else "error",
+            "tipo": "MinIO Object Storage (S3 API)",
+            "bucket": BUCKET_NAME,
+            "bucket_disponible": bucket_existe
+        }
+    }), 200
+
+# ==========================================
 # CRUD PACIENTES
 # ==========================================
 @app.route('/api/pacientes', methods=['GET'])

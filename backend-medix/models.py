@@ -45,6 +45,13 @@ class Usuario(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     rol = db.Column(db.String(50), nullable=False) # Ej: 'Administrador', 'Recepcion'
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'rol': self.rol
+        }
+
 class Documento_Escaneado(db.Model):
     __tablename__ = 'documento_escaneado'
     id = db.Column(db.Integer, primary_key=True)
