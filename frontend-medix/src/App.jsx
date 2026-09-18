@@ -88,7 +88,7 @@ function TextViewer({ url }) {
   )
 }
 
-// Componente de Login con fondo institucional y efecto de desenfoque (blur)
+// Componente de Login con diseño institucional de dos paneles (Banco de Historias Clínicas)
 function LoginView({ onLoginSuccess }) {
   const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('admin123')
@@ -129,254 +129,331 @@ function LoginView({ onLoginSuccess }) {
 
   return (
     <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
+      minHeight: '100vh',
       width: '100vw',
-      height: '100vh',
+      backgroundColor: '#FAF7F5',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      overflow: 'hidden',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      zIndex: 9999,
-      backgroundColor: '#0f172a'
+      padding: '24px',
+      boxSizing: 'border-box',
+      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Fondo ajustado al tamaño de la pantalla con desenfoque */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundImage: "url('/fondo_login.jpg')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          filter: 'blur(8px) brightness(0.65)',
-          zIndex: 1
-        }}
-      />
-
-      {/* Capa de contraste y oscurecimiento */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(15, 23, 42, 0.45)',
-          zIndex: 2
-        }}
-      />
-
-      {/* Tarjeta de Inicio de Sesión */}
       <div style={{
-        position: 'relative',
-        zIndex: 10,
         width: '100%',
-        maxWidth: '430px',
-        margin: '20px',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderRadius: '16px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.7)',
-        padding: '36px 32px',
-        boxSizing: 'border-box'
+        maxWidth: '1240px',
+        minHeight: '660px',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'stretch',
+        justifyContent: 'space-between',
+        gap: '40px'
       }}>
-        {/* Cabecera Institucional */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        {/* PANEL IZQUIERDO: Tarjeta Amarilla Institucional */}
+        <div style={{
+          flex: '1 1 540px',
+          minHeight: '640px',
+          backgroundColor: '#FEF7A7',
+          borderRadius: '36px',
+          padding: '44px 48px',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          boxShadow: '0 10px 30px rgba(220, 190, 80, 0.12)'
+        }}>
+          {/* Cabecera: Logo y Nombre del Hospital */}
           <div style={{
-            width: '100px',
-            height: '100px',
-            margin: '0 auto 14px',
-            backgroundColor: '#ffffff',
-            border: '2.5px solid #A7C7D9',
-            borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(167, 199, 217, 0.45)',
-            overflow: 'hidden',
-            padding: '8px',
-            boxSizing: 'border-box'
+            gap: '16px'
           }}>
             <img
               src="/logo_hospital.png"
-              alt="Logo Hospital San Juan de Dios de Pisco"
+              alt="Hospital San Juan de Dios de Pisco"
               style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain'
+                height: '62px',
+                width: 'auto',
+                objectFit: 'contain',
+                mixBlendMode: 'multiply'
               }}
             />
+            <span style={{
+              fontSize: '19px',
+              fontWeight: '900',
+              fontStyle: 'italic',
+              letterSpacing: '-0.3px',
+              color: '#000000',
+              textTransform: 'uppercase'
+            }}>
+              HOSPITAL SAN JUAN DE DIOS - PISCO
+            </span>
           </div>
-          <h2 style={{
-            fontSize: '18px',
-            fontWeight: '800',
-            color: '#0f2942',
-            margin: '0 0 4px 0',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            Hospital San Juan de Dios
-          </h2>
-          <p style={{ margin: '0 0 8px 0', color: '#1e3a5f', fontSize: '13px', fontWeight: '700', letterSpacing: '1px' }}>
-            PISCO - PERÚ · UE-404
-          </p>
-          <div style={{
-            display: 'inline-block',
-            backgroundColor: '#CFE7D6',
-            color: '#134e2b',
-            border: '1px solid #9ec6ac',
-            padding: '4px 12px',
-            borderRadius: '12px',
-            fontSize: '12px',
-            fontWeight: '600'
-          }}>
-            Medix · Historias Clínicas Digitales
+
+          {/* Bloque Central: BANCO DE HISTORIAS CLINICAS */}
+          <div style={{ margin: 'auto 0', padding: '36px 0' }}>
+            <h1 style={{
+              fontSize: 'clamp(36px, 4.8vw, 64px)',
+              fontWeight: '900',
+              lineHeight: '1.05',
+              color: '#D28A4A',
+              margin: '0 0 24px 0',
+              textTransform: 'uppercase',
+              letterSpacing: '-1px'
+            }}>
+              BANCO DE<br />
+              HISTORIAS<br />
+              CLINICAS
+            </h1>
+
+            <p style={{
+              margin: 0,
+              fontSize: '15px',
+              fontWeight: '500',
+              lineHeight: '1.45',
+              color: '#8A8765',
+              textTransform: 'uppercase',
+              letterSpacing: '0.6px',
+              maxWidth: '460px'
+            }}>
+              SISTEMA QUE AYUDA A VER HISTORIAS CLINICAS, DE FORMA RAPIDA Y SEGURA
+            </p>
+          </div>
+
+          {/* Pie del Panel Izquierdo */}
+          <div>
+            <span style={{
+              fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+              fontSize: '13px',
+              color: '#262626'
+            }}>
+              Reduce tiempo de busqueda manual
+            </span>
           </div>
         </div>
 
-        {/* Mensaje de Error */}
-        {error && (
+        {/* PANEL DERECHO: Formulario de Iniciar Sesión */}
+        <div style={{
+          flex: '1 1 420px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          padding: '24px 20px',
+          boxSizing: 'border-box'
+        }}>
+          {/* Contenedor del Formulario */}
           <div style={{
-            padding: '10px 14px',
-            borderRadius: '8px',
-            backgroundColor: '#F3C7B6',
-            color: '#70220e',
-            border: '1px solid #e19d85',
-            fontSize: '13px',
-            marginBottom: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
+            maxWidth: '380px',
+            width: '100%',
+            margin: 'auto auto'
           }}>
-            <span style={{ fontWeight: '700' }}>[Aviso]</span>
-            <span>{error}</span>
-          </div>
-        )}
+            {/* Título y subtítulo */}
+            <h2 style={{
+              fontSize: '34px',
+              fontWeight: '800',
+              color: '#000000',
+              margin: '0 0 8px 0',
+              letterSpacing: '-0.5px'
+            }}>
+              Iniciar sesion
+            </h2>
+            <p style={{
+              margin: '0 0 36px 0',
+              fontSize: '14px',
+              color: '#71717a'
+            }}>
+              Bienvenido, ingrese sus credenciales
+            </p>
 
-        {/* Formulario */}
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
-              Usuario
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ingresa tu usuario"
-              required
-              autoFocus
-              style={{
-                width: '100%',
-                padding: '11px 14px',
-                borderRadius: '8px',
-                border: '1.5px solid #d1d5db',
-                fontSize: '14px',
-                outline: 'none',
-                boxSizing: 'border-box',
-                backgroundColor: '#ffffff',
-                color: '#111827'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#A7C7D9'}
-              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-            />
-          </div>
+            {/* Error banner si falla el login */}
+            {error && (
+              <div style={{
+                padding: '10px 16px',
+                borderRadius: '16px',
+                backgroundColor: '#FDE8E8',
+                color: '#9B1C1C',
+                border: '1px solid #F8B4B4',
+                fontSize: '13px',
+                fontWeight: '600',
+                marginBottom: '20px',
+                textAlign: 'center'
+              }}>
+                {error}
+              </div>
+            )}
 
-          <div style={{ marginBottom: '22px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#374151', marginBottom: '6px' }}>
-              Contraseña
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={mostrarPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Ingresa tu contraseña"
-                required
+            {/* Formulario */}
+            <form onSubmit={handleSubmit}>
+              {/* Campo USUARIO */}
+              <div style={{ marginBottom: '22px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  color: '#18181b',
+                  marginBottom: '8px',
+                  letterSpacing: '0.5px'
+                }}>
+                  USUARIO
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Ingrese su usuario"
+                  required
+                  style={{
+                    width: '100%',
+                    height: '48px',
+                    backgroundColor: '#D9D9D9',
+                    border: '2px solid #E5B458',
+                    borderRadius: '24px',
+                    padding: '0 20px',
+                    fontSize: '15px',
+                    color: '#18181b',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.2s, background-color 0.2s'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#C99335'}
+                  onBlur={(e) => e.target.style.borderColor = '#E5B458'}
+                />
+              </div>
+
+              {/* Campo CONTRASEÑA */}
+              <div style={{ marginBottom: '8px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  color: '#18181b',
+                  marginBottom: '8px',
+                  letterSpacing: '0.5px'
+                }}>
+                  CONTRASEÑA
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={mostrarPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    style={{
+                      width: '100%',
+                      height: '48px',
+                      backgroundColor: '#D9D9D9',
+                      border: '2px solid #E5B458',
+                      borderRadius: '24px',
+                      padding: '0 54px 0 20px',
+                      fontSize: '15px',
+                      color: '#18181b',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      transition: 'border-color 0.2s, background-color 0.2s'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#C99335'}
+                    onBlur={(e) => e.target.style.borderColor = '#E5B458'}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setMostrarPassword(!mostrarPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '16px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      color: '#71717a',
+                      padding: '4px'
+                    }}
+                  >
+                    {mostrarPassword ? 'Ocultar' : 'Ver'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Olvidaste tu contraseña */}
+              <div style={{ textAlign: 'right', marginBottom: '26px' }}>
+                <a
+                  href="#recuperar"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    alert('Para restablecer su contraseña, por favor acérquese a la oficina de Soporte TI del Hospital San Juan de Dios.')
+                  }}
+                  style={{
+                    fontSize: '13px',
+                    fontStyle: 'italic',
+                    color: '#B55D46',
+                    textDecoration: 'none',
+                    fontWeight: '500'
+                  }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </a>
+              </div>
+
+              {/* Botón Acceder al sistema */}
+              <button
+                type="submit"
+                disabled={cargando}
                 style={{
                   width: '100%',
-                  padding: '11px 70px 11px 14px',
-                  borderRadius: '8px',
-                  border: '1.5px solid #d1d5db',
-                  fontSize: '14px',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  backgroundColor: '#ffffff',
-                  color: '#111827'
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#A7C7D9'}
-                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-              />
-              <button
-                type="button"
-                onClick={() => setMostrarPassword(!mostrarPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '10px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
+                  height: '50px',
+                  backgroundColor: cargando ? '#e3b874' : '#DDA757',
+                  color: '#111111',
                   border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  color: '#0c354e',
-                  padding: '4px 6px'
+                  borderRadius: '25px',
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  cursor: cargando ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(221, 167, 87, 0.35)',
+                  transition: 'background-color 0.2s, transform 0.1s'
                 }}
               >
-                {mostrarPassword ? 'Ocultar' : 'Ver'}
+                {cargando ? 'Accediendo...' : 'Acceder al sistema'}
               </button>
+            </form>
+
+            {/* Ayuda de acceso institucional */}
+            <div style={{
+              marginTop: '20px',
+              padding: '8px 12px',
+              backgroundColor: '#FEF7A7',
+              borderRadius: '16px',
+              fontSize: '12px',
+              color: '#634706',
+              textAlign: 'center',
+              border: '1px solid #E5B458'
+            }}>
+              Acceso institucional: <strong>admin</strong> / <strong>admin123</strong>
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={cargando}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: cargando ? '#d5e4ec' : '#A7C7D9',
-              color: '#0c354e',
-              border: '1px solid #84aabd',
-              borderRadius: '8px',
-              fontWeight: '700',
-              fontSize: '15px',
-              cursor: cargando ? 'not-allowed' : 'pointer',
-              boxShadow: '0 4px 14px rgba(167, 199, 217, 0.45)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}
-          >
-            {cargando ? 'Verificando credenciales...' : 'Iniciar Sesión'}
-          </button>
-        </form>
-
-        {/* Credenciales por defecto */}
-        <div style={{
-          marginTop: '20px',
-          padding: '10px 12px',
-          backgroundColor: '#FFF2B6',
-          borderRadius: '8px',
-          border: '1px dashed #F6E38F',
-          fontSize: '12px',
-          color: '#634706',
-          textAlign: 'center'
-        }}>
-          <span>Acceso por defecto: <b>admin</b> / <b>admin123</b></span>
-        </div>
-
-        {/* Pie de tarjeta */}
-        <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '11px', color: '#9ca3af' }}>
-          Sistema de Archivo y Gestión Documental © {new Date().getFullYear()}
+          {/* Pie del Panel Derecho */}
+          <div style={{
+            textAlign: 'center',
+            fontSize: '12px',
+            color: '#52525b',
+            marginTop: '32px'
+          }}>
+            Acceso restringido al personal autorizado{' '}
+            <span
+              onClick={() => alert('Contacto Soporte TI:\nAnexo: 404\nEmail: soporte@hospitalsanjuandediospisco.gob.pe')}
+              style={{
+                color: '#BD6E38',
+                fontWeight: '600',
+                cursor: 'pointer',
+                textDecoration: 'underline'
+              }}
+            >
+              Soporte TI
+            </span>
+          </div>
         </div>
       </div>
     </div>
