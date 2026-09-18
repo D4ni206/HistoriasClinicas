@@ -10,7 +10,7 @@ export default function ConfiguracionView({
     <div style={{ maxWidth: '960px', width: '100%', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px', flexWrap: 'wrap', gap: '10px' }}>
         <div>
-          <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#0f2942', margin: '0 0 6px 0' }}>
+          <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#2B4A66', margin: '0 0 6px 0' }}>
             Configuración y Diagnóstico del Sistema
           </h2>
           <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
@@ -23,9 +23,9 @@ export default function ConfiguracionView({
           disabled={cargandoDiagnostico}
           style={{
             padding: '8px 16px',
-            backgroundColor: '#CFE7D6',
-            color: '#134e2b',
-            border: '1px solid #9ec6ac',
+            backgroundColor: '#6FE3B4',
+            color: '#0a5438',
+            border: '1px solid #4cc799',
             borderRadius: '6px',
             fontSize: '12px',
             fontWeight: '700',
@@ -41,13 +41,13 @@ export default function ConfiguracionView({
         {/* Tarjeta 1: Base de Datos SQL Server */}
         <div style={{
           backgroundColor: '#ffffff',
-          border: '1.5px solid #A7C7D9',
+          border: '1.5px solid #7FD6FF',
           borderRadius: '12px',
           padding: '20px',
-          boxShadow: '0 3px 10px rgba(167, 199, 217, 0.2)'
+          boxShadow: '0 3px 10px rgba(127, 214, 255, 0.2)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#0c354e', margin: 0 }}>
+            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#104060', margin: 0 }}>
               Base de Datos SQL Server
             </h3>
             <span style={{
@@ -55,9 +55,9 @@ export default function ConfiguracionView({
               borderRadius: '12px',
               fontSize: '11px',
               fontWeight: '700',
-              backgroundColor: diagnostico?.base_datos?.estado === 'conectado' ? '#CFE7D6' : '#F3C7B6',
-              color: diagnostico?.base_datos?.estado === 'conectado' ? '#134e2b' : '#70220e',
-              border: `1px solid ${diagnostico?.base_datos?.estado === 'conectado' ? '#9ec6ac' : '#e19d85'}`
+              backgroundColor: diagnostico?.base_datos?.estado === 'conectado' ? '#6FE3B4' : '#FFD6E8',
+              color: diagnostico?.base_datos?.estado === 'conectado' ? '#0a5438' : '#802048',
+              border: `1px solid ${diagnostico?.base_datos?.estado === 'conectado' ? '#4cc799' : '#f4a7c7'}`
             }}>
               {diagnostico?.base_datos?.estado === 'conectado' ? 'Operativo' : 'Verificar'}
             </span>
@@ -73,13 +73,13 @@ export default function ConfiguracionView({
         {/* Tarjeta 2: Almacenamiento MinIO S3 */}
         <div style={{
           backgroundColor: '#ffffff',
-          border: '1.5px solid #CFE7D6',
+          border: '1.5px solid #6FE3B4',
           borderRadius: '12px',
           padding: '20px',
-          boxShadow: '0 3px 10px rgba(158, 198, 172, 0.2)'
+          boxShadow: '0 3px 10px rgba(111, 227, 180, 0.2)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#134e2b', margin: 0 }}>
+            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#0a5438', margin: 0 }}>
               Almacenamiento S3 MinIO
             </h3>
             <span style={{
@@ -87,9 +87,9 @@ export default function ConfiguracionView({
               borderRadius: '12px',
               fontSize: '11px',
               fontWeight: '700',
-              backgroundColor: diagnostico?.almacenamiento?.estado === 'conectado' ? '#CFE7D6' : '#F3C7B6',
-              color: diagnostico?.almacenamiento?.estado === 'conectado' ? '#134e2b' : '#70220e',
-              border: `1px solid ${diagnostico?.almacenamiento?.estado === 'conectado' ? '#9ec6ac' : '#e19d85'}`
+              backgroundColor: diagnostico?.almacenamiento?.estado === 'conectado' ? '#6FE3B4' : '#FFD6E8',
+              color: diagnostico?.almacenamiento?.estado === 'conectado' ? '#0a5438' : '#802048',
+              border: `1px solid ${diagnostico?.almacenamiento?.estado === 'conectado' ? '#4cc799' : '#f4a7c7'}`
             }}>
               {diagnostico?.almacenamiento?.estado === 'conectado' ? 'Operativo' : 'Verificar'}
             </span>
@@ -105,13 +105,13 @@ export default function ConfiguracionView({
         {/* Tarjeta 3: Parámetros del Hospital */}
         <div style={{
           backgroundColor: '#ffffff',
-          border: '1.5px solid #FFF2B6',
+          border: '1.5px solid #7FD6FF',
           borderRadius: '12px',
           padding: '20px',
-          boxShadow: '0 3px 10px rgba(246, 227, 143, 0.2)'
+          boxShadow: '0 3px 10px rgba(127, 214, 255, 0.2)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#634706', margin: 0 }}>
+            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#2B4A66', margin: 0 }}>
               Entidad Hospitalaria
             </h3>
             <span style={{
@@ -119,9 +119,9 @@ export default function ConfiguracionView({
               borderRadius: '12px',
               fontSize: '11px',
               fontWeight: '700',
-              backgroundColor: '#FFF2B6',
-              color: '#634706',
-              border: '1px solid #F6E38F'
+              backgroundColor: '#FFF6FB',
+              color: '#2B4A66',
+              border: '1px solid #e2c5d5'
             }}>
               Pisco, Ica
             </span>
@@ -137,13 +137,13 @@ export default function ConfiguracionView({
         {/* Tarjeta 4: Seguridad y Soporte TI */}
         <div style={{
           backgroundColor: '#ffffff',
-          border: '1.5px solid #F3C7B6',
+          border: '1.5px solid #f4a7c7',
           borderRadius: '12px',
           padding: '20px',
-          boxShadow: '0 3px 10px rgba(243, 199, 182, 0.2)'
+          boxShadow: '0 3px 10px rgba(244, 167, 199, 0.2)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#70220e', margin: 0 }}>
+            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#802048', margin: 0 }}>
               Seguridad y Soporte
             </h3>
             <span style={{
@@ -151,9 +151,9 @@ export default function ConfiguracionView({
               borderRadius: '12px',
               fontSize: '11px',
               fontWeight: '700',
-              backgroundColor: '#F3C7B6',
-              color: '#70220e',
-              border: '1px solid #e19d85'
+              backgroundColor: '#FFD6E8',
+              color: '#802048',
+              border: '1px solid #f4a7c7'
             }}>
               Activo
             </span>

@@ -13,21 +13,21 @@ export default function VisorLateral({ documentoEnVista, onCerrar }) {
       maxWidth: '780px',
       height: '100vh',
       backgroundColor: '#ffffff',
-      borderLeft: '2px solid #A7C7D9',
+      borderLeft: '2px solid #7FD6FF',
       display: 'flex',
       flexDirection: 'column',
-      boxShadow: '-6px 0 25px rgba(0, 0, 0, 0.12)',
+      boxShadow: '-6px 0 25px rgba(43, 74, 102, 0.18)',
       zIndex: 30,
       boxSizing: 'border-box'
     }}>
       {/* Cabecera del Panel Derecho */}
       <div style={{
         padding: '14px 18px',
-        borderBottom: '2px solid #A7C7D9',
+        borderBottom: '2px solid #7FD6FF',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#f2f7fa',
+        backgroundColor: '#FFF6FB',
         flexWrap: 'wrap',
         gap: '10px'
       }}>
@@ -37,7 +37,7 @@ export default function VisorLateral({ documentoEnVista, onCerrar }) {
             <h3 style={{
               margin: 0,
               fontSize: '15px',
-              color: '#0f2942',
+              color: '#2B4A66',
               fontWeight: '700',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -47,8 +47,8 @@ export default function VisorLateral({ documentoEnVista, onCerrar }) {
               {documentoEnVista.nombre_archivo}
             </h3>
           </div>
-          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#475569' }}>
-            Carpeta DNI: <strong style={{ color: '#0c354e', backgroundColor: '#CFE7D6', padding: '1px 7px', borderRadius: '4px', border: '1px solid #9ec6ac' }}>{documentoEnVista.paciente_dni || 'Sin DNI'}</strong> | {documentoEnVista.fecha_subida || '—'}
+          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>
+            Carpeta DNI: <strong style={{ color: '#0a5438', backgroundColor: '#6FE3B4', padding: '1px 7px', borderRadius: '4px', border: '1px solid #4cc799' }}>{documentoEnVista.paciente_dni || 'Sin DNI'}</strong> | {documentoEnVista.fecha_subida || '—'}
           </p>
         </div>
 
@@ -57,9 +57,9 @@ export default function VisorLateral({ documentoEnVista, onCerrar }) {
             href={`${API_BASE}/documentos/${documentoEnVista.id}/archivo`}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#A7C7D9',
-              color: '#0c354e',
-              border: '1px solid #84aabd',
+              backgroundColor: '#7FD6FF',
+              color: '#104060',
+              border: '1px solid #54bde8',
               borderRadius: '6px',
               textDecoration: 'none',
               fontSize: '12px',
@@ -73,9 +73,9 @@ export default function VisorLateral({ documentoEnVista, onCerrar }) {
             onClick={onCerrar}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#F3C7B6',
-              color: '#70220e',
-              border: '1px solid #e19d85',
+              backgroundColor: '#FFD6E8',
+              color: '#802048',
+              border: '1px solid #f4a7c7',
               borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '12px',
@@ -145,9 +145,9 @@ export default function VisorLateral({ documentoEnVista, onCerrar }) {
               style={{
                 display: 'inline-block',
                 padding: '8px 16px',
-                backgroundColor: '#A7C7D9',
-                color: '#0c354e',
-                border: '1px solid #84aabd',
+                backgroundColor: '#7FD6FF',
+                color: '#104060',
+                border: '1px solid #54bde8',
                 borderRadius: '6px',
                 textDecoration: 'none',
                 fontWeight: '700',

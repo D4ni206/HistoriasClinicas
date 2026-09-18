@@ -47,7 +47,7 @@ export default function DashboardView({
       {/* Cabecera del Dashboard */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
         <div>
-          <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#0f2942', margin: 0 }}>
+          <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#2B4A66', margin: 0 }}>
             Expedientes Clínicos Digitales
           </h2>
           <p style={{ margin: '3px 0 0 0', fontSize: '13px', color: '#64748b' }}>
@@ -63,9 +63,9 @@ export default function DashboardView({
             onClick={() => navigate('/agregarhistoria')}
             style={{
               padding: '8px 14px',
-              backgroundColor: '#CFE7D6',
-              color: '#134e2b',
-              border: '1px solid #9ec6ac',
+              backgroundColor: '#6FE3B4',
+              color: '#0a5438',
+              border: '1px solid #4cc799',
               borderRadius: '6px',
               fontSize: '12px',
               fontWeight: '700',
@@ -73,7 +73,7 @@ export default function DashboardView({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              boxShadow: '0 2px 4px rgba(158, 198, 172, 0.4)'
+              boxShadow: '0 2px 4px rgba(111, 227, 180, 0.4)'
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -85,9 +85,9 @@ export default function DashboardView({
 
           {documentoEnVista && (
             <div style={{
-              backgroundColor: '#A7C7D9',
-              color: '#0c354e',
-              border: '1px solid #84aabd',
+              backgroundColor: '#7FD6FF',
+              color: '#104060',
+              border: '1px solid #54bde8',
               borderRadius: '20px',
               padding: '6px 12px',
               fontSize: '12px',
@@ -105,7 +105,7 @@ export default function DashboardView({
       {/* BARRA SELECTORA DE VISTAS DISTINTAS DEL DASHBOARD */}
       <div style={{
         backgroundColor: '#ffffff',
-        border: '1.5px solid #A7C7D9',
+        border: '1.5px solid #7FD6FF',
         borderRadius: '10px',
         padding: '6px 10px',
         marginBottom: '18px',
@@ -127,14 +127,14 @@ export default function DashboardView({
               gap: '7px',
               padding: '7px 14px',
               borderRadius: '6px',
-              border: vistaDashboard === 'carpetas' ? '1.5px solid #84aabd' : '1px solid transparent',
-              backgroundColor: vistaDashboard === 'carpetas' ? '#A7C7D9' : '#f8fafc',
-              color: vistaDashboard === 'carpetas' ? '#0c354e' : '#64748b',
+              border: vistaDashboard === 'carpetas' ? '1.5px solid #54bde8' : '1px solid transparent',
+              backgroundColor: vistaDashboard === 'carpetas' ? '#7FD6FF' : '#f8fafc',
+              color: vistaDashboard === 'carpetas' ? '#104060' : '#64748b',
               fontWeight: vistaDashboard === 'carpetas' ? '700' : '600',
               fontSize: '12px',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
-              boxShadow: vistaDashboard === 'carpetas' ? '0 2px 5px rgba(167, 199, 217, 0.4)' : 'none'
+              boxShadow: vistaDashboard === 'carpetas' ? '0 2px 5px rgba(127, 214, 255, 0.4)' : 'none'
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -152,14 +152,14 @@ export default function DashboardView({
               gap: '7px',
               padding: '7px 14px',
               borderRadius: '6px',
-              border: vistaDashboard === 'cuadricula' ? '1.5px solid #9ec6ac' : '1px solid transparent',
-              backgroundColor: vistaDashboard === 'cuadricula' ? '#CFE7D6' : '#f8fafc',
-              color: vistaDashboard === 'cuadricula' ? '#134e2b' : '#64748b',
+              border: vistaDashboard === 'cuadricula' ? '1.5px solid #4cc799' : '1px solid transparent',
+              backgroundColor: vistaDashboard === 'cuadricula' ? '#6FE3B4' : '#f8fafc',
+              color: vistaDashboard === 'cuadricula' ? '#0a5438' : '#64748b',
               fontWeight: vistaDashboard === 'cuadricula' ? '700' : '600',
               fontSize: '12px',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
-              boxShadow: vistaDashboard === 'cuadricula' ? '0 2px 5px rgba(158, 198, 172, 0.4)' : 'none'
+              boxShadow: vistaDashboard === 'cuadricula' ? '0 2px 5px rgba(111, 227, 180, 0.4)' : 'none'
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -180,14 +180,14 @@ export default function DashboardView({
               gap: '7px',
               padding: '7px 14px',
               borderRadius: '6px',
-              border: vistaDashboard === 'tabla-documentos' ? '1.5px solid #F6E38F' : '1px solid transparent',
-              backgroundColor: vistaDashboard === 'tabla-documentos' ? '#FFF2B6' : '#f8fafc',
-              color: vistaDashboard === 'tabla-documentos' ? '#634706' : '#64748b',
+              border: vistaDashboard === 'tabla-documentos' ? '1.5px solid #f4a7c7' : '1px solid transparent',
+              backgroundColor: vistaDashboard === 'tabla-documentos' ? '#FFD6E8' : '#f8fafc',
+              color: vistaDashboard === 'tabla-documentos' ? '#802048' : '#64748b',
               fontWeight: vistaDashboard === 'tabla-documentos' ? '700' : '600',
               fontSize: '12px',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
-              boxShadow: vistaDashboard === 'tabla-documentos' ? '0 2px 5px rgba(246, 227, 143, 0.4)' : 'none'
+              boxShadow: vistaDashboard === 'tabla-documentos' ? '0 2px 5px rgba(255, 214, 232, 0.5)' : 'none'
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -210,14 +210,14 @@ export default function DashboardView({
               gap: '7px',
               padding: '7px 14px',
               borderRadius: '6px',
-              border: vistaDashboard === 'analitica' ? '1.5px solid #e19d85' : '1px solid transparent',
-              backgroundColor: vistaDashboard === 'analitica' ? '#F3C7B6' : '#f8fafc',
-              color: vistaDashboard === 'analitica' ? '#70220e' : '#64748b',
+              border: vistaDashboard === 'analitica' ? '1.5px solid #2B4A66' : '1px solid transparent',
+              backgroundColor: vistaDashboard === 'analitica' ? '#FFF6FB' : '#f8fafc',
+              color: vistaDashboard === 'analitica' ? '#2B4A66' : '#64748b',
               fontWeight: vistaDashboard === 'analitica' ? '700' : '600',
               fontSize: '12px',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
-              boxShadow: vistaDashboard === 'analitica' ? '0 2px 5px rgba(243, 199, 182, 0.4)' : 'none'
+              boxShadow: vistaDashboard === 'analitica' ? '0 2px 5px rgba(43, 74, 102, 0.2)' : 'none'
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -256,7 +256,7 @@ export default function DashboardView({
           {/* Barra de Filtro y Controles de Expansión */}
           <div style={{
             backgroundColor: '#ffffff',
-            border: '1.5px solid #A7C7D9',
+            border: '1.5px solid #7FD6FF',
             borderRadius: '10px',
             padding: '12px 16px',
             marginBottom: '18px',
@@ -284,7 +284,7 @@ export default function DashboardView({
                   backgroundColor: '#f8fafc',
                   outline: 'none'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#A7C7D9'}
+                onFocus={(e) => e.target.style.borderColor = '#7FD6FF'}
                 onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
               />
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '10px', top: '10px' }}>
@@ -316,13 +316,13 @@ export default function DashboardView({
                 onClick={expandirTodas}
                 style={{
                   padding: '7px 12px',
-                  backgroundColor: '#A7C7D9',
-                  border: '1px solid #84aabd',
+                  backgroundColor: '#7FD6FF',
+                  border: '1px solid #54bde8',
                   borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  color: '#0c354e'
+                  color: '#104060'
                 }}
               >
                 Expandir todas
@@ -359,7 +359,7 @@ export default function DashboardView({
               borderRadius: '12px',
               color: '#64748b'
             }}>
-              <p style={{ fontSize: '17px', margin: '0 0 8px 0', fontWeight: '700', color: '#334155' }}>
+              <p style={{ fontSize: '17px', margin: '0 0 8px 0', fontWeight: '700', color: '#2B4A66' }}>
                 {busquedaDni ? `No se encontró ninguna carpeta con el DNI "${busquedaDni}"` : 'No hay expedientes clínicos registrados todavía.'}
               </p>
               <p style={{ fontSize: '13px', margin: '0 0 16px 0' }}>
@@ -369,9 +369,9 @@ export default function DashboardView({
                 onClick={() => navigate('/agregarhistoria')}
                 style={{
                   padding: '8px 18px',
-                  backgroundColor: '#A7C7D9',
-                  color: '#0c354e',
-                  border: '1px solid #84aabd',
+                  backgroundColor: '#6FE3B4',
+                  color: '#0a5438',
+                  border: '1px solid #4cc799',
                   borderRadius: '6px',
                   fontWeight: '700',
                   fontSize: '13px',
@@ -392,9 +392,9 @@ export default function DashboardView({
                     key={pac.id}
                     style={{
                       backgroundColor: '#ffffff',
-                      border: estaAbierta ? '2px solid #A7C7D9' : '1px solid #e2e8f0',
+                      border: estaAbierta ? '2px solid #7FD6FF' : '1px solid #e2e8f0',
                       borderRadius: '10px',
-                      boxShadow: estaAbierta ? '0 4px 14px rgba(167, 199, 217, 0.25)' : '0 1px 3px rgba(0,0,0,0.03)',
+                      boxShadow: estaAbierta ? '0 4px 14px rgba(127, 214, 255, 0.25)' : '0 1px 3px rgba(0,0,0,0.03)',
                       overflow: 'hidden',
                       transition: 'all 0.15s ease'
                     }}
@@ -403,13 +403,13 @@ export default function DashboardView({
                     <div
                       style={{
                         padding: '12px 16px',
-                        backgroundColor: estaAbierta ? '#f2f7fa' : '#ffffff',
+                        backgroundColor: estaAbierta ? '#FFF6FB' : '#ffffff',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         flexWrap: 'wrap',
                         gap: '10px',
-                        borderBottom: estaAbierta ? '1.5px solid #A7C7D9' : 'none',
+                        borderBottom: estaAbierta ? '1.5px solid #7FD6FF' : 'none',
                         cursor: 'pointer'
                       }}
                       onClick={() => toggleCarpeta(pac.id)}
@@ -421,9 +421,9 @@ export default function DashboardView({
                           fontWeight: '700',
                           padding: '2px 7px',
                           borderRadius: '4px',
-                          backgroundColor: estaAbierta ? '#A7C7D9' : '#e2e8f0',
-                          color: estaAbierta ? '#0c354e' : '#475569',
-                          border: estaAbierta ? '1px solid #84aabd' : '1px solid #cbd5e1',
+                          backgroundColor: estaAbierta ? '#7FD6FF' : '#e2e8f0',
+                          color: estaAbierta ? '#104060' : '#475569',
+                          border: estaAbierta ? '1px solid #54bde8' : '1px solid #cbd5e1',
                           letterSpacing: '0.5px'
                         }}>
                           {estaAbierta ? 'ABIERTA' : 'CARPETA'}
@@ -439,31 +439,31 @@ export default function DashboardView({
                                 type="text"
                                 value={nuevoDni}
                                 onChange={(e) => setNuevoDni(e.target.value)}
-                                style={{ padding: '4px 8px', borderRadius: '6px', border: '1.5px solid #A7C7D9', fontSize: '14px', fontWeight: 'bold', outline: 'none' }}
+                                style={{ padding: '4px 8px', borderRadius: '6px', border: '1.5px solid #7FD6FF', fontSize: '14px', fontWeight: 'bold', outline: 'none' }}
                                 autoFocus
                               />
                               <button
                                 onClick={() => handleGuardarDni(pac.id)}
-                                style={{ padding: '4px 10px', backgroundColor: '#CFE7D6', color: '#134e2b', border: '1px solid #9ec6ac', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
+                                style={{ padding: '4px 10px', backgroundColor: '#6FE3B4', color: '#0a5438', border: '1px solid #4cc799', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
                               >
                                 Guardar
                               </button>
                               <button
                                 onClick={() => setEditandoPaciente(null)}
-                                style={{ padding: '4px 10px', backgroundColor: '#F3C7B6', color: '#70220e', border: '1px solid #e19d85', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
+                                style={{ padding: '4px 10px', backgroundColor: '#FFD6E8', color: '#802048', border: '1px solid #f4a7c7', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
                               >
                                 Cancelar
                               </button>
                             </div>
                           ) : (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ fontSize: '16px', fontWeight: '800', color: '#0f2942' }}>
+                              <span style={{ fontSize: '16px', fontWeight: '800', color: '#2B4A66' }}>
                                 DNI: {pac.dni}
                               </span>
                               <span style={{
-                                backgroundColor: docs.length > 0 ? '#CFE7D6' : '#F3C7B6',
-                                color: docs.length > 0 ? '#134e2b' : '#70220e',
-                                border: docs.length > 0 ? '1px solid #9ec6ac' : '1px solid #e19d85',
+                                backgroundColor: docs.length > 0 ? '#6FE3B4' : '#FFD6E8',
+                                color: docs.length > 0 ? '#0a5438' : '#802048',
+                                border: docs.length > 0 ? '1px solid #4cc799' : '1px solid #f4a7c7',
                                 padding: '2px 8px',
                                 borderRadius: '12px',
                                 fontSize: '11px',
@@ -488,9 +488,9 @@ export default function DashboardView({
                           onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
                           style={{
                             padding: '5px 12px',
-                            backgroundColor: '#A7C7D9',
-                            color: '#0c354e',
-                            border: '1px solid #84aabd',
+                            backgroundColor: '#7FD6FF',
+                            color: '#104060',
+                            border: '1px solid #54bde8',
                             borderRadius: '6px',
                             fontSize: '11px',
                             fontWeight: '700',
@@ -498,7 +498,7 @@ export default function DashboardView({
                             display: 'flex',
                             alignItems: 'center',
                             gap: '4px',
-                            boxShadow: '0 2px 4px rgba(167, 199, 217, 0.3)'
+                            boxShadow: '0 2px 4px rgba(127, 214, 255, 0.3)'
                           }}
                           title="Agregar un nuevo documento a este DNI"
                         >
@@ -509,9 +509,9 @@ export default function DashboardView({
                           onClick={() => setPacienteParaNotas(pac)}
                           style={{
                             padding: '5px 10px',
-                            backgroundColor: '#FFF2B6',
-                            color: '#634706',
-                            border: '1px solid #F6E38F',
+                            backgroundColor: '#FFF6FB',
+                            color: '#2B4A66',
+                            border: '1px solid #e2c5d5',
                             borderRadius: '6px',
                             fontSize: '11px',
                             fontWeight: '700',
@@ -519,7 +519,7 @@ export default function DashboardView({
                             display: 'flex',
                             alignItems: 'center',
                             gap: '4px',
-                            boxShadow: '0 2px 4px rgba(246, 227, 143, 0.3)'
+                            boxShadow: '0 2px 4px rgba(226, 197, 213, 0.3)'
                           }}
                           title="Ver y agregar notas clínicas / evolución médica"
                         >
@@ -539,12 +539,12 @@ export default function DashboardView({
                             }}
                             style={{
                               padding: '5px 8px',
-                              backgroundColor: '#FFF2B6',
-                              border: '1px solid #F6E38F',
+                              backgroundColor: '#FFF6FB',
+                              border: '1px solid #e2c5d5',
                               borderRadius: '6px',
                               fontSize: '11px',
                               fontWeight: '700',
-                              color: '#634706',
+                              color: '#2B4A66',
                               cursor: 'pointer'
                             }}
                             title="Modificar DNI"
@@ -557,12 +557,12 @@ export default function DashboardView({
                           onClick={() => handleEliminarPaciente(pac.id, pac.dni)}
                           style={{
                             padding: '5px 8px',
-                            backgroundColor: '#F3C7B6',
-                            border: '1px solid #e19d85',
+                            backgroundColor: '#FFD6E8',
+                            border: '1px solid #f4a7c7',
                             borderRadius: '6px',
                             fontSize: '11px',
                             fontWeight: '700',
-                            color: '#70220e',
+                            color: '#802048',
                             cursor: 'pointer'
                           }}
                           title="Eliminar carpeta y todos sus archivos"
@@ -594,10 +594,10 @@ export default function DashboardView({
                           <div style={{
                             padding: '20px',
                             textAlign: 'center',
-                            backgroundColor: '#FFF2B6',
+                            backgroundColor: '#FFF6FB',
                             borderRadius: '8px',
-                            border: '1px dashed #F6E38F',
-                            color: '#634706'
+                            border: '1px dashed #e2c5d5',
+                            color: '#2B4A66'
                           }}>
                             <p style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '600' }}>
                               Esta carpeta no contiene documentos actualmente.
@@ -606,9 +606,9 @@ export default function DashboardView({
                               onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
                               style={{
                                 padding: '6px 14px',
-                                backgroundColor: '#A7C7D9',
-                                color: '#0c354e',
-                                border: '1px solid #84aabd',
+                                backgroundColor: '#7FD6FF',
+                                color: '#104060',
+                                border: '1px solid #54bde8',
                                 borderRadius: '6px',
                                 fontSize: '12px',
                                 cursor: 'pointer',
@@ -622,7 +622,7 @@ export default function DashboardView({
                           <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                               <thead>
-                                <tr style={{ backgroundColor: '#f2f7fa', borderBottom: '2px solid #A7C7D9', color: '#0f2942' }}>
+                                <tr style={{ backgroundColor: '#FFF6FB', borderBottom: '2px solid #7FD6FF', color: '#2B4A66' }}>
                                   <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: '700' }}>Tipo</th>
                                   <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: '700' }}>Nombre del Archivo</th>
                                   <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: '700' }}>Fecha de Subida</th>
@@ -637,14 +637,14 @@ export default function DashboardView({
                                       key={doc.id}
                                       style={{
                                         borderBottom: '1px solid #e2e8f0',
-                                        backgroundColor: esActivo ? '#e0f2fe' : 'transparent',
+                                        backgroundColor: esActivo ? '#FFF6FB' : 'transparent',
                                         transition: 'background-color 0.15s'
                                       }}
                                     >
                                       <td style={{ padding: '8px 12px' }}>
                                         {obtenerIconoArchivo(doc.nombre_archivo)}
                                       </td>
-                                      <td style={{ padding: '8px 12px', fontWeight: '600', color: '#0f2942' }}>
+                                      <td style={{ padding: '8px 12px', fontWeight: '600', color: '#2B4A66' }}>
                                         {doc.nombre_archivo}
                                       </td>
                                       <td style={{ padding: '8px 12px', color: '#475569', fontSize: '12px' }}>
@@ -656,9 +656,9 @@ export default function DashboardView({
                                             onClick={() => setDocumentoEnVista(doc)}
                                             style={{
                                               padding: '4px 10px',
-                                              backgroundColor: esActivo ? '#059669' : '#CFE7D6',
-                                              color: esActivo ? '#ffffff' : '#134e2b',
-                                              border: '1px solid #9ec6ac',
+                                              backgroundColor: esActivo ? '#6FE3B4' : '#FFF6FB',
+                                              color: esActivo ? '#0a5438' : '#2B4A66',
+                                              border: `1px solid ${esActivo ? '#4cc799' : '#e2c5d5'}`,
                                               borderRadius: '5px',
                                               fontSize: '11px',
                                               fontWeight: '700',
@@ -673,9 +673,9 @@ export default function DashboardView({
                                             href={`${API_BASE}/documentos/${doc.id}/archivo`}
                                             style={{
                                               padding: '4px 10px',
-                                              backgroundColor: '#A7C7D9',
-                                              color: '#0c354e',
-                                              border: '1px solid #84aabd',
+                                              backgroundColor: '#7FD6FF',
+                                              color: '#104060',
+                                              border: '1px solid #54bde8',
                                               borderRadius: '5px',
                                               textDecoration: 'none',
                                               fontSize: '11px',
@@ -690,9 +690,9 @@ export default function DashboardView({
                                             onClick={() => handleEliminarDocumento(doc.id, doc.nombre_archivo, pac.id)}
                                             style={{
                                               padding: '4px 10px',
-                                              backgroundColor: '#F3C7B6',
-                                              color: '#70220e',
-                                              border: '1px solid #e19d85',
+                                              backgroundColor: '#FFD6E8',
+                                              color: '#802048',
+                                              border: '1px solid #f4a7c7',
                                               borderRadius: '5px',
                                               fontSize: '11px',
                                               fontWeight: '700',
@@ -729,7 +729,7 @@ export default function DashboardView({
           {/* Barra de Filtro Rápido */}
           <div style={{
             backgroundColor: '#ffffff',
-            border: '1.5px solid #CFE7D6',
+            border: '1.5px solid #7FD6FF',
             borderRadius: '10px',
             padding: '12px 16px',
             marginBottom: '18px',
@@ -761,7 +761,7 @@ export default function DashboardView({
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
             </div>
-            <span style={{ fontSize: '12px', fontWeight: '700', color: '#134e2b' }}>
+            <span style={{ fontSize: '12px', fontWeight: '700', color: '#0a5438' }}>
               {pacientesFiltrados.length} carpetas visibles en el archivador
             </span>
           </div>
@@ -790,10 +790,10 @@ export default function DashboardView({
                     key={pac.id}
                     style={{
                       backgroundColor: '#ffffff',
-                      border: '1.5px solid #A7C7D9',
+                      border: '1.5px solid #7FD6FF',
                       borderRadius: '12px',
                       padding: '16px',
-                      boxShadow: '0 3px 10px rgba(167, 199, 217, 0.2)',
+                      boxShadow: '0 3px 10px rgba(127, 214, 255, 0.2)',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
@@ -808,8 +808,8 @@ export default function DashboardView({
                             width: '36px',
                             height: '36px',
                             borderRadius: '8px',
-                            backgroundColor: '#A7C7D9',
-                            color: '#0c354e',
+                            backgroundColor: '#7FD6FF',
+                            color: '#104060',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
@@ -819,7 +819,7 @@ export default function DashboardView({
                             </svg>
                           </div>
                           <div>
-                            <strong style={{ fontSize: '15px', color: '#0f2942', display: 'block' }}>
+                            <strong style={{ fontSize: '15px', color: '#2B4A66', display: 'block' }}>
                               DNI: {pac.dni}
                             </strong>
                             <span style={{ fontSize: '11px', color: '#64748b' }}>
@@ -832,9 +832,9 @@ export default function DashboardView({
                           fontWeight: '700',
                           padding: '3px 8px',
                           borderRadius: '12px',
-                          backgroundColor: docs.length > 0 ? '#CFE7D6' : '#FFF2B6',
-                          color: docs.length > 0 ? '#134e2b' : '#634706',
-                          border: docs.length > 0 ? '1px solid #9ec6ac' : '1px solid #F6E38F'
+                          backgroundColor: docs.length > 0 ? '#6FE3B4' : '#FFD6E8',
+                          color: docs.length > 0 ? '#0a5438' : '#802048',
+                          border: docs.length > 0 ? '1px solid #4cc799' : '1px solid #f4a7c7'
                         }}>
                           {docs.length} doc{docs.length !== 1 ? 's' : ''}
                         </span>
@@ -842,10 +842,10 @@ export default function DashboardView({
 
                       {/* Desglose de tipos */}
                       <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                        {countPdfs > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#F3C7B6', color: '#70220e', padding: '1px 6px', borderRadius: '4px' }}>{countPdfs} PDF</span>}
-                        {countDocx > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#A7C7D9', color: '#0c354e', padding: '1px 6px', borderRadius: '4px' }}>{countDocx} DOCX</span>}
-                        {countImg > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#CFE7D6', color: '#134e2b', padding: '1px 6px', borderRadius: '4px' }}>{countImg} IMG</span>}
-                        {countTxt > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#FFF2B6', color: '#634706', padding: '1px 6px', borderRadius: '4px' }}>{countTxt} TXT</span>}
+                        {countPdfs > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#FFD6E8', color: '#802048', padding: '1px 6px', borderRadius: '4px' }}>{countPdfs} PDF</span>}
+                        {countDocx > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#7FD6FF', color: '#104060', padding: '1px 6px', borderRadius: '4px' }}>{countDocx} DOCX</span>}
+                        {countImg > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#6FE3B4', color: '#0a5438', padding: '1px 6px', borderRadius: '4px' }}>{countImg} IMG</span>}
+                        {countTxt > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#FFF6FB', color: '#2B4A66', padding: '1px 6px', borderRadius: '4px' }}>{countTxt} TXT</span>}
                         {docs.length === 0 && <span style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>Sin archivos adjuntos</span>}
                       </div>
 
@@ -868,9 +868,9 @@ export default function DashboardView({
                                   onClick={() => setDocumentoEnVista(d)}
                                   style={{
                                     padding: '2px 7px',
-                                    backgroundColor: '#CFE7D6',
-                                    color: '#134e2b',
-                                    border: '1px solid #9ec6ac',
+                                    backgroundColor: '#6FE3B4',
+                                    color: '#0a5438',
+                                    border: '1px solid #4cc799',
                                     borderRadius: '4px',
                                     fontSize: '10px',
                                     fontWeight: '700',
@@ -899,9 +899,9 @@ export default function DashboardView({
                         style={{
                           flex: 1,
                           padding: '6px',
-                          backgroundColor: '#A7C7D9',
-                          color: '#0c354e',
-                          border: '1px solid #84aabd',
+                          backgroundColor: '#7FD6FF',
+                          color: '#104060',
+                          border: '1px solid #54bde8',
                           borderRadius: '5px',
                           fontSize: '11px',
                           fontWeight: '700',
@@ -914,9 +914,9 @@ export default function DashboardView({
                         onClick={() => setPacienteParaNotas(pac)}
                         style={{
                           padding: '6px 10px',
-                          backgroundColor: '#FFF2B6',
-                          color: '#634706',
-                          border: '1px solid #F6E38F',
+                          backgroundColor: '#FFF6FB',
+                          color: '#2B4A66',
+                          border: '1px solid #e2c5d5',
                           borderRadius: '5px',
                           fontSize: '11px',
                           fontWeight: '700',
@@ -949,9 +949,9 @@ export default function DashboardView({
                         onClick={() => handleEliminarPaciente(pac.id, pac.dni)}
                         style={{
                           padding: '6px 8px',
-                          backgroundColor: '#F3C7B6',
-                          color: '#70220e',
-                          border: '1px solid #e19d85',
+                          backgroundColor: '#FFD6E8',
+                          color: '#802048',
+                          border: '1px solid #f4a7c7',
                           borderRadius: '5px',
                           fontSize: '11px',
                           fontWeight: '700',
@@ -978,7 +978,7 @@ export default function DashboardView({
           {/* Barra de Filtros por Formato y Búsqueda */}
           <div style={{
             backgroundColor: '#ffffff',
-            border: '1.5px solid #F6E38F',
+            border: '1.5px solid #FFD6E8',
             borderRadius: '10px',
             padding: '12px 16px',
             marginBottom: '18px',
@@ -1022,8 +1022,8 @@ export default function DashboardView({
                   fontSize: '11px',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  border: filtroTipoDoc === 'todos' ? '1.5px solid #0f2942' : '1px solid #d1d5db',
-                  backgroundColor: filtroTipoDoc === 'todos' ? '#0f2942' : '#ffffff',
+                  border: filtroTipoDoc === 'todos' ? '1.5px solid #2B4A66' : '1px solid #d1d5db',
+                  backgroundColor: filtroTipoDoc === 'todos' ? '#2B4A66' : '#ffffff',
                   color: filtroTipoDoc === 'todos' ? '#ffffff' : '#475569'
                 }}
               >
@@ -1037,9 +1037,9 @@ export default function DashboardView({
                   fontSize: '11px',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  border: filtroTipoDoc === 'pdf' ? '1.5px solid #e19d85' : '1px solid #e2e8f0',
-                  backgroundColor: filtroTipoDoc === 'pdf' ? '#F3C7B6' : '#ffffff',
-                  color: '#70220e'
+                  border: filtroTipoDoc === 'pdf' ? '1.5px solid #f4a7c7' : '1px solid #e2e8f0',
+                  backgroundColor: filtroTipoDoc === 'pdf' ? '#FFD6E8' : '#ffffff',
+                  color: '#802048'
                 }}
               >
                 PDF ({totalPdfs})
@@ -1052,9 +1052,9 @@ export default function DashboardView({
                   fontSize: '11px',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  border: filtroTipoDoc === 'docx' ? '1.5px solid #84aabd' : '1px solid #e2e8f0',
-                  backgroundColor: filtroTipoDoc === 'docx' ? '#A7C7D9' : '#ffffff',
-                  color: '#0c354e'
+                  border: filtroTipoDoc === 'docx' ? '1.5px solid #54bde8' : '1px solid #e2e8f0',
+                  backgroundColor: filtroTipoDoc === 'docx' ? '#7FD6FF' : '#ffffff',
+                  color: '#104060'
                 }}
               >
                 Word DOCX ({totalDocx})
@@ -1067,9 +1067,9 @@ export default function DashboardView({
                   fontSize: '11px',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  border: filtroTipoDoc === 'imagen' ? '1.5px solid #9ec6ac' : '1px solid #e2e8f0',
-                  backgroundColor: filtroTipoDoc === 'imagen' ? '#CFE7D6' : '#ffffff',
-                  color: '#134e2b'
+                  border: filtroTipoDoc === 'imagen' ? '1.5px solid #4cc799' : '1px solid #e2e8f0',
+                  backgroundColor: filtroTipoDoc === 'imagen' ? '#6FE3B4' : '#ffffff',
+                  color: '#0a5438'
                 }}
               >
                 Imágenes ({totalImagenes})
@@ -1082,9 +1082,9 @@ export default function DashboardView({
                   fontSize: '11px',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  border: filtroTipoDoc === 'texto' ? '1.5px solid #F6E38F' : '1px solid #e2e8f0',
-                  backgroundColor: filtroTipoDoc === 'texto' ? '#FFF2B6' : '#ffffff',
-                  color: '#634706'
+                  border: filtroTipoDoc === 'texto' ? '1.5px solid #e2c5d5' : '1px solid #e2e8f0',
+                  backgroundColor: filtroTipoDoc === 'texto' ? '#FFF6FB' : '#ffffff',
+                  color: '#2B4A66'
                 }}
               >
                 Texto ({totalTextos})
@@ -1100,17 +1100,17 @@ export default function DashboardView({
               </p>
               <button
                 onClick={() => { setBusquedaDni(''); setFiltroTipoDoc('todos'); }}
-                style={{ padding: '6px 14px', backgroundColor: '#A7C7D9', color: '#0c354e', border: '1px solid #84aabd', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+                style={{ padding: '6px 14px', backgroundColor: '#7FD6FF', color: '#104060', border: '1px solid #54bde8', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
               >
                 Restablecer Filtros
               </button>
             </div>
           ) : (
-            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #A7C7D9', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 3px 12px rgba(0,0,0,0.04)', marginBottom: '30px' }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #7FD6FF', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 3px 12px rgba(0,0,0,0.04)', marginBottom: '30px' }}>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#f2f7fa', borderBottom: '2px solid #A7C7D9', color: '#0f2942' }}>
+                    <tr style={{ backgroundColor: '#FFF6FB', borderBottom: '2px solid #7FD6FF', color: '#2B4A66' }}>
                       <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '700' }}>Formato</th>
                       <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '700' }}>Nombre del Documento</th>
                       <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '700' }}>Paciente (DNI)</th>
@@ -1127,23 +1127,23 @@ export default function DashboardView({
                           key={doc.id}
                           style={{
                             borderBottom: '1px solid #e2e8f0',
-                            backgroundColor: esActivo ? '#e0f2fe' : 'transparent',
+                            backgroundColor: esActivo ? '#FFF6FB' : 'transparent',
                             transition: 'background-color 0.15s'
                           }}
                         >
                           <td style={{ padding: '9px 14px' }}>
                             {obtenerIconoArchivo(doc.nombre_archivo)}
                           </td>
-                          <td style={{ padding: '9px 14px', fontWeight: '600', color: '#0f2942' }}>
+                          <td style={{ padding: '9px 14px', fontWeight: '600', color: '#2B4A66' }}>
                             {doc.nombre_archivo}
                           </td>
                           <td style={{ padding: '9px 14px' }}>
                             <span
                               onClick={() => setBusquedaDni(doc.paciente_dni)}
                               style={{
-                                backgroundColor: '#CFE7D6',
-                                color: '#134e2b',
-                                border: '1px solid #9ec6ac',
+                                backgroundColor: '#6FE3B4',
+                                color: '#0a5438',
+                                border: '1px solid #4cc799',
                                 padding: '2px 8px',
                                 borderRadius: '4px',
                                 fontSize: '11px',
@@ -1167,9 +1167,9 @@ export default function DashboardView({
                                 onClick={() => setDocumentoEnVista(doc)}
                                 style={{
                                   padding: '4px 10px',
-                                  backgroundColor: esActivo ? '#059669' : '#CFE7D6',
-                                  color: esActivo ? '#ffffff' : '#134e2b',
-                                  border: '1px solid #9ec6ac',
+                                  backgroundColor: esActivo ? '#6FE3B4' : '#FFF6FB',
+                                  color: esActivo ? '#0a5438' : '#2B4A66',
+                                  border: `1px solid ${esActivo ? '#4cc799' : '#e2c5d5'}`,
                                   borderRadius: '5px',
                                   fontSize: '11px',
                                   fontWeight: '700',
@@ -1183,9 +1183,9 @@ export default function DashboardView({
                                 href={`${API_BASE}/documentos/${doc.id}/archivo`}
                                 style={{
                                   padding: '4px 10px',
-                                  backgroundColor: '#A7C7D9',
-                                  color: '#0c354e',
-                                  border: '1px solid #84aabd',
+                                  backgroundColor: '#7FD6FF',
+                                  color: '#104060',
+                                  border: '1px solid #54bde8',
                                   borderRadius: '5px',
                                   textDecoration: 'none',
                                   fontSize: '11px',
@@ -1199,9 +1199,9 @@ export default function DashboardView({
                                 onClick={() => handleEliminarDocumento(doc.id, doc.nombre_archivo, doc.paciente_id)}
                                 style={{
                                   padding: '4px 10px',
-                                  backgroundColor: '#F3C7B6',
-                                  color: '#70220e',
-                                  border: '1px solid #e19d85',
+                                  backgroundColor: '#FFD6E8',
+                                  color: '#802048',
+                                  border: '1px solid #f4a7c7',
                                   borderRadius: '5px',
                                   fontSize: '11px',
                                   fontWeight: '700',
@@ -1232,32 +1232,32 @@ export default function DashboardView({
           {/* 4 Métricas Clave */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
             {/* Tarjeta 1: Carpetas */}
-            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #A7C7D9', borderRadius: '10px', padding: '16px', boxShadow: '0 2px 6px rgba(167, 199, 217, 0.2)' }}>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#0c354e', textTransform: 'uppercase' }}>Carpetas Clínicas</span>
-              <strong style={{ display: 'block', fontSize: '28px', color: '#0f2942', margin: '4px 0' }}>{pacientes.length}</strong>
+            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #7FD6FF', borderRadius: '10px', padding: '16px', boxShadow: '0 2px 6px rgba(127, 214, 255, 0.2)' }}>
+              <span style={{ fontSize: '11px', fontWeight: '700', color: '#104060', textTransform: 'uppercase' }}>Carpetas Clínicas</span>
+              <strong style={{ display: 'block', fontSize: '28px', color: '#2B4A66', margin: '4px 0' }}>{pacientes.length}</strong>
               <span style={{ fontSize: '12px', color: '#64748b' }}>Expedientes únicos por DNI</span>
             </div>
 
             {/* Tarjeta 2: Documentos */}
-            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #CFE7D6', borderRadius: '10px', padding: '16px', boxShadow: '0 2px 6px rgba(158, 198, 172, 0.2)' }}>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#134e2b', textTransform: 'uppercase' }}>Documentos Totales</span>
-              <strong style={{ display: 'block', fontSize: '28px', color: '#134e2b', margin: '4px 0' }}>{totalArchivosSistema}</strong>
+            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #6FE3B4', borderRadius: '10px', padding: '16px', boxShadow: '0 2px 6px rgba(111, 227, 180, 0.2)' }}>
+              <span style={{ fontSize: '11px', fontWeight: '700', color: '#0a5438', textTransform: 'uppercase' }}>Documentos Totales</span>
+              <strong style={{ display: 'block', fontSize: '28px', color: '#0a5438', margin: '4px 0' }}>{totalArchivosSistema}</strong>
               <span style={{ fontSize: '12px', color: '#64748b' }}>Almacenados en MinIO S3</span>
             </div>
 
             {/* Tarjeta 3: Promedio */}
-            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #F6E38F', borderRadius: '10px', padding: '16px', boxShadow: '0 2px 6px rgba(246, 227, 143, 0.2)' }}>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#634706', textTransform: 'uppercase' }}>Promedio por Carpeta</span>
-              <strong style={{ display: 'block', fontSize: '28px', color: '#634706', margin: '4px 0' }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #e2c5d5', borderRadius: '10px', padding: '16px', boxShadow: '0 2px 6px rgba(226, 197, 213, 0.3)' }}>
+              <span style={{ fontSize: '11px', fontWeight: '700', color: '#2B4A66', textTransform: 'uppercase' }}>Promedio por Carpeta</span>
+              <strong style={{ display: 'block', fontSize: '28px', color: '#2B4A66', margin: '4px 0' }}>
                 {pacientes.length > 0 ? (totalArchivosSistema / pacientes.length).toFixed(1) : 0}
               </strong>
               <span style={{ fontSize: '12px', color: '#64748b' }}>Documentos por paciente</span>
             </div>
 
             {/* Tarjeta 4: Formato Predominante */}
-            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #e19d85', borderRadius: '10px', padding: '16px', boxShadow: '0 2px 6px rgba(243, 199, 182, 0.2)' }}>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: '#70220e', textTransform: 'uppercase' }}>Formato Principal</span>
-              <strong style={{ display: 'block', fontSize: '22px', color: '#70220e', margin: '8px 0 4px 0' }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #f4a7c7', borderRadius: '10px', padding: '16px', boxShadow: '0 2px 6px rgba(244, 167, 199, 0.3)' }}>
+              <span style={{ fontSize: '11px', fontWeight: '700', color: '#802048', textTransform: 'uppercase' }}>Formato Principal</span>
+              <strong style={{ display: 'block', fontSize: '22px', color: '#802048', margin: '8px 0 4px 0' }}>
                 {totalDocx >= totalPdfs ? 'Word (.docx)' : 'PDF (.pdf)'}
               </strong>
               <span style={{ fontSize: '12px', color: '#64748b' }}>{Math.max(totalDocx, totalPdfs)} archivos registrados</span>
@@ -1265,8 +1265,8 @@ export default function DashboardView({
           </div>
 
           {/* Tarjeta de Distribución Documental */}
-          <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #A7C7D9', borderRadius: '10px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#0f2942', margin: '0 0 12px 0' }}>
+          <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #7FD6FF', borderRadius: '10px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#2B4A66', margin: '0 0 12px 0' }}>
               Distribución de Documentos por Formato
             </h3>
 
@@ -1275,35 +1275,35 @@ export default function DashboardView({
               <div>
                 <div style={{ display: 'flex', height: '18px', borderRadius: '9px', overflow: 'hidden', backgroundColor: '#f1f5f9', marginBottom: '14px' }}>
                   {totalDocx > 0 && (
-                    <div style={{ width: `${(totalDocx / totalArchivosSistema) * 100}%`, backgroundColor: '#A7C7D9' }} title={`Word: ${totalDocx}`} />
+                    <div style={{ width: `${(totalDocx / totalArchivosSistema) * 100}%`, backgroundColor: '#7FD6FF' }} title={`Word: ${totalDocx}`} />
                   )}
                   {totalPdfs > 0 && (
-                    <div style={{ width: `${(totalPdfs / totalArchivosSistema) * 100}%`, backgroundColor: '#F3C7B6' }} title={`PDF: ${totalPdfs}`} />
+                    <div style={{ width: `${(totalPdfs / totalArchivosSistema) * 100}%`, backgroundColor: '#FFD6E8' }} title={`PDF: ${totalPdfs}`} />
                   )}
                   {totalImagenes > 0 && (
-                    <div style={{ width: `${(totalImagenes / totalArchivosSistema) * 100}%`, backgroundColor: '#CFE7D6' }} title={`Imágenes: ${totalImagenes}`} />
+                    <div style={{ width: `${(totalImagenes / totalArchivosSistema) * 100}%`, backgroundColor: '#6FE3B4' }} title={`Imágenes: ${totalImagenes}`} />
                   )}
                   {totalTextos > 0 && (
-                    <div style={{ width: `${(totalTextos / totalArchivosSistema) * 100}%`, backgroundColor: '#FFF2B6' }} title={`Texto: ${totalTextos}`} />
+                    <div style={{ width: `${(totalTextos / totalArchivosSistema) * 100}%`, backgroundColor: '#FFF6FB', border: '1px solid #e2c5d5' }} title={`Texto: ${totalTextos}`} />
                   )}
                 </div>
 
                 {/* Leyenda */}
                 <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#A7C7D9', display: 'inline-block' }} />
+                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#7FD6FF', display: 'inline-block' }} />
                     <span>Word (.docx): <strong>{totalDocx}</strong> ({((totalDocx / totalArchivosSistema) * 100).toFixed(0)}%)</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#F3C7B6', display: 'inline-block' }} />
+                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#FFD6E8', display: 'inline-block' }} />
                     <span>PDF: <strong>{totalPdfs}</strong> ({((totalPdfs / totalArchivosSistema) * 100).toFixed(0)}%)</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#CFE7D6', display: 'inline-block' }} />
+                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#6FE3B4', display: 'inline-block' }} />
                     <span>Imágenes: <strong>{totalImagenes}</strong> ({((totalImagenes / totalArchivosSistema) * 100).toFixed(0)}%)</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#FFF2B6', display: 'inline-block' }} />
+                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#FFF6FB', border: '1px solid #e2c5d5', display: 'inline-block' }} />
                     <span>Texto: <strong>{totalTextos}</strong> ({((totalTextos / totalArchivosSistema) * 100).toFixed(0)}%)</span>
                   </div>
                 </div>
@@ -1316,8 +1316,8 @@ export default function DashboardView({
           {/* Dos Columnas: Últimos Documentos y Carpetas Principales */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '16px' }}>
             {/* Columna 1: Últimos Documentos Subidos */}
-            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #CFE7D6', borderRadius: '10px', padding: '18px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#134e2b', margin: '0 0 12px 0' }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #6FE3B4', borderRadius: '10px', padding: '18px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#0a5438', margin: '0 0 12px 0' }}>
                 Últimos Documentos Subidos
               </h3>
               {todosLosDocumentos.length === 0 ? (
@@ -1341,7 +1341,7 @@ export default function DashboardView({
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
                         {obtenerIconoArchivo(d.nombre_archivo)}
                         <div style={{ overflow: 'hidden' }}>
-                          <span style={{ fontSize: '12px', fontWeight: '700', color: '#0f2942', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <span style={{ fontSize: '12px', fontWeight: '700', color: '#2B4A66', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {d.nombre_archivo}
                           </span>
                           <span style={{ fontSize: '11px', color: '#64748b' }}>
@@ -1353,9 +1353,9 @@ export default function DashboardView({
                         onClick={() => setDocumentoEnVista(d)}
                         style={{
                           padding: '4px 10px',
-                          backgroundColor: '#CFE7D6',
-                          color: '#134e2b',
-                          border: '1px solid #9ec6ac',
+                          backgroundColor: '#6FE3B4',
+                          color: '#0a5438',
+                          border: '1px solid #4cc799',
                           borderRadius: '5px',
                           fontSize: '11px',
                           fontWeight: '700',
@@ -1372,8 +1372,8 @@ export default function DashboardView({
             </div>
 
             {/* Columna 2: Expedientes con Mayor Documentación */}
-            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #A7C7D9', borderRadius: '10px', padding: '18px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#0c354e', margin: '0 0 12px 0' }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1.5px solid #7FD6FF', borderRadius: '10px', padding: '18px', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#104060', margin: '0 0 12px 0' }}>
                 Expedientes con Mayor Documentación
               </h3>
               {pacientes.length === 0 ? (
@@ -1401,8 +1401,8 @@ export default function DashboardView({
                             width: '20px',
                             height: '20px',
                             borderRadius: '50%',
-                            backgroundColor: idx === 0 ? '#FEF7A7' : '#e2e8f0',
-                            color: '#0f2942',
+                            backgroundColor: idx === 0 ? '#FFD6E8' : '#e2e8f0',
+                            color: idx === 0 ? '#802048' : '#2B4A66',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1412,7 +1412,7 @@ export default function DashboardView({
                             {idx + 1}
                           </span>
                           <div>
-                            <strong style={{ fontSize: '13px', color: '#0f2942', display: 'block' }}>
+                            <strong style={{ fontSize: '13px', color: '#2B4A66', display: 'block' }}>
                               DNI {p.dni}
                             </strong>
                             <span style={{ fontSize: '11px', color: '#64748b' }}>
@@ -1425,8 +1425,8 @@ export default function DashboardView({
                           <span style={{
                             padding: '2px 8px',
                             borderRadius: '12px',
-                            backgroundColor: '#CFE7D6',
-                            color: '#134e2b',
+                            backgroundColor: '#6FE3B4',
+                            color: '#0a5438',
                             fontSize: '11px',
                             fontWeight: '700'
                           }}>
@@ -1439,9 +1439,9 @@ export default function DashboardView({
                             }}
                             style={{
                               padding: '4px 8px',
-                              backgroundColor: '#A7C7D9',
-                              color: '#0c354e',
-                              border: '1px solid #84aabd',
+                              backgroundColor: '#7FD6FF',
+                              color: '#104060',
+                              border: '1px solid #54bde8',
                               borderRadius: '5px',
                               fontSize: '11px',
                               fontWeight: '700',

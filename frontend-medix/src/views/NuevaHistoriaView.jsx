@@ -16,7 +16,7 @@ export default function NuevaHistoriaView({
   return (
     <div style={{ maxWidth: '800px', width: '100%', margin: '0 auto' }}>
       <div style={{ marginBottom: '22px' }}>
-        <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#0f2942', margin: '0 0 6px 0' }}>
+        <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#2B4A66', margin: '0 0 6px 0' }}>
           Agregar Nueva Historia Clínica
         </h2>
         <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
@@ -27,16 +27,16 @@ export default function NuevaHistoriaView({
       {/* Tarjeta del Formulario Principal */}
       <div style={{
         backgroundColor: '#ffffff',
-        border: '2px solid #A7C7D9',
+        border: '2px solid #7FD6FF',
         borderRadius: '12px',
         padding: '28px',
-        boxShadow: '0 4px 16px rgba(167, 199, 217, 0.25)',
+        boxShadow: '0 4px 16px rgba(127, 214, 255, 0.25)',
         marginBottom: '20px'
       }}>
         <form onSubmit={handleUpload}>
           {/* Campo DNI */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#0f2942', marginBottom: '8px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#2B4A66', marginBottom: '8px' }}>
               DNI DEL PACIENTE (8 dígitos)
             </label>
             <input
@@ -54,9 +54,9 @@ export default function NuevaHistoriaView({
                 fontSize: '15px',
                 fontWeight: '600',
                 outline: 'none',
-                backgroundColor: '#f8fafc'
+                backgroundColor: '#FFF6FB'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#A7C7D9'}
+              onFocus={(e) => e.target.style.borderColor = '#7FD6FF'}
               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             />
           </div>
@@ -68,9 +68,9 @@ export default function NuevaHistoriaView({
                 <div style={{
                   padding: '12px 16px',
                   borderRadius: '8px',
-                  backgroundColor: '#CFE7D6',
-                  border: '1.5px solid #9ec6ac',
-                  color: '#134e2b',
+                  backgroundColor: '#6FE3B4',
+                  border: '1.5px solid #4cc799',
+                  color: '#0a5438',
                   fontSize: '13px',
                   lineHeight: '1.4'
                 }}>
@@ -80,9 +80,9 @@ export default function NuevaHistoriaView({
                 <div style={{
                   padding: '12px 16px',
                   borderRadius: '8px',
-                  backgroundColor: '#FFF2B6',
-                  border: '1.5px solid #F6E38F',
-                  color: '#634706',
+                  backgroundColor: '#FFD6E8',
+                  border: '1.5px solid #f4a7c7',
+                  color: '#802048',
                   fontSize: '13px',
                   lineHeight: '1.4'
                 }}>
@@ -94,16 +94,16 @@ export default function NuevaHistoriaView({
 
           {/* Campo Selector de Archivo */}
           <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#0f2942', marginBottom: '8px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#2B4A66', marginBottom: '8px' }}>
               DOCUMENTO / ARCHIVO ADJUNTO
             </label>
             <div
               style={{
-                border: '2px dashed #A7C7D9',
+                border: '2px dashed #7FD6FF',
                 borderRadius: '8px',
                 padding: '24px',
                 textAlign: 'center',
-                backgroundColor: '#f8fafc',
+                backgroundColor: '#FFF6FB',
                 cursor: 'pointer'
               }}
               onClick={() => fileInputRef.current && fileInputRef.current.click()}
@@ -116,14 +116,14 @@ export default function NuevaHistoriaView({
                 style={{ display: 'none' }}
                 required
               />
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0c354e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 10px auto', display: 'block' }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2B4A66" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto 10px auto', display: 'block' }}>
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
               {file ? (
                 <div>
-                  <span style={{ fontSize: '14px', fontWeight: '700', color: '#0f2942', display: 'block' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '700', color: '#2B4A66', display: 'block' }}>
                     Archivo seleccionado: {file.name}
                   </span>
                   <span style={{ fontSize: '12px', color: '#64748b' }}>
@@ -132,7 +132,7 @@ export default function NuevaHistoriaView({
                 </div>
               ) : (
                 <div>
-                  <span style={{ fontSize: '14px', fontWeight: '700', color: '#0c354e', display: 'block' }}>
+                  <span style={{ fontSize: '14px', fontWeight: '700', color: '#2B4A66', display: 'block' }}>
                     Haz clic aquí para seleccionar el archivo de historia clínica
                   </span>
                   <span style={{ fontSize: '12px', color: '#64748b' }}>
@@ -151,14 +151,14 @@ export default function NuevaHistoriaView({
               style={{
                 flex: 1,
                 padding: '12px 20px',
-                backgroundColor: subiendo ? '#d5e4ec' : '#A7C7D9',
-                color: '#0c354e',
-                border: '1.5px solid #84aabd',
+                backgroundColor: subiendo ? '#bbf7d0' : '#6FE3B4',
+                color: '#0a5438',
+                border: '1.5px solid #4cc799',
                 borderRadius: '8px',
                 fontWeight: '700',
                 fontSize: '14px',
                 cursor: subiendo ? 'not-allowed' : 'pointer',
-                boxShadow: '0 3px 6px rgba(167, 199, 217, 0.4)',
+                boxShadow: '0 3px 6px rgba(111, 227, 180, 0.4)',
                 transition: 'all 0.15s ease'
               }}
             >
@@ -171,7 +171,7 @@ export default function NuevaHistoriaView({
               style={{
                 padding: '12px 18px',
                 backgroundColor: '#ffffff',
-                color: '#334155',
+                color: '#2B4A66',
                 border: '1.5px solid #d1d5db',
                 borderRadius: '8px',
                 fontWeight: '600',
@@ -187,11 +187,11 @@ export default function NuevaHistoriaView({
 
       {/* Tarjeta de Información */}
       <div style={{
-        backgroundColor: '#FFF2B6',
-        border: '1px solid #F6E38F',
+        backgroundColor: '#FFF6FB',
+        border: '1px solid #7FD6FF',
         borderRadius: '10px',
         padding: '16px 20px',
-        color: '#634706',
+        color: '#2B4A66',
         fontSize: '12px',
         lineHeight: '1.5'
       }}>

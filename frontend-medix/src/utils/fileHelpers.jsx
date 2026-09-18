@@ -11,24 +11,24 @@ export const obtenerIconoArchivo = (nombre = '') => {
 
   if (esPdf(nombre)) {
     tipo = 'PDF'
-    bg = '#F3C7B6'
-    color = '#70220e'
-    border = '#e19d85'
+    bg = '#FFD6E8'
+    color = '#802048'
+    border = '#f4a7c7'
   } else if (esDocx(nombre)) {
     tipo = 'DOCX'
-    bg = '#A7C7D9'
-    color = '#0c354e'
-    border = '#84aabd'
+    bg = '#7FD6FF'
+    color = '#104060'
+    border = '#54bde8'
   } else if (esImagen(nombre)) {
     tipo = 'IMG'
-    bg = '#CFE7D6'
-    color = '#134e2b'
-    border = '#9ec6ac'
+    bg = '#6FE3B4'
+    color = '#0a5438'
+    border = '#4cc799'
   } else if (esTexto(nombre)) {
     tipo = 'TXT'
-    bg = '#FFF2B6'
-    color = '#634706'
-    border = '#F6E38F'
+    bg = '#FFF6FB'
+    color = '#2B4A66'
+    border = '#e2c5d5'
   }
 
   return (

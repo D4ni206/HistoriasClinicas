@@ -11,7 +11,7 @@ export default function UsuariosView({
   return (
     <div style={{ maxWidth: '1000px', width: '100%', margin: '0 auto' }}>
       <div style={{ marginBottom: '22px' }}>
-        <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#0f2942', margin: '0 0 6px 0' }}>
+        <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#2B4A66', margin: '0 0 6px 0' }}>
           Crear y Gestionar Usuarios
         </h2>
         <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
@@ -23,18 +23,18 @@ export default function UsuariosView({
         {/* Formulario Crear Usuario */}
         <div style={{
           backgroundColor: '#ffffff',
-          border: '2px solid #F6E38F',
+          border: '2px solid #7FD6FF',
           borderRadius: '12px',
           padding: '22px',
-          boxShadow: '0 4px 14px rgba(246, 227, 143, 0.25)'
+          boxShadow: '0 4px 14px rgba(127, 214, 255, 0.25)'
         }}>
-          <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#634706', margin: '0 0 16px 0', borderBottom: '1px solid #F6E38F', paddingBottom: '8px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#2B4A66', margin: '0 0 16px 0', borderBottom: '1px solid #7FD6FF', paddingBottom: '8px' }}>
             Registrar Nuevo Usuario
           </h3>
 
           <form onSubmit={handleCrearUsuario}>
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#2B4A66', marginBottom: '5px' }}>
                 NOMBRE DE USUARIO
               </label>
               <input
@@ -50,16 +50,16 @@ export default function UsuariosView({
                   borderRadius: '6px',
                   border: '1.5px solid #d1d5db',
                   fontSize: '13px',
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: '#FFF6FB',
                   outline: 'none'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#F6E38F'}
+                onFocus={(e) => e.target.style.borderColor = '#7FD6FF'}
                 onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
               />
             </div>
 
             <div style={{ marginBottom: '14px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#2B4A66', marginBottom: '5px' }}>
                 CONTRASEÑA
               </label>
               <input
@@ -75,16 +75,16 @@ export default function UsuariosView({
                   borderRadius: '6px',
                   border: '1.5px solid #d1d5db',
                   fontSize: '13px',
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: '#FFF6FB',
                   outline: 'none'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#F6E38F'}
+                onFocus={(e) => e.target.style.borderColor = '#7FD6FF'}
                 onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
               />
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#2B4A66', marginBottom: '5px' }}>
                 ROL INSTITUCIONAL
               </label>
               <select
@@ -116,14 +116,14 @@ export default function UsuariosView({
               style={{
                 width: '100%',
                 padding: '11px',
-                backgroundColor: creandoUsuario ? '#fef08a' : '#FFF2B6',
-                color: '#634706',
-                border: '1.5px solid #F6E38F',
+                backgroundColor: creandoUsuario ? '#c4eeff' : '#7FD6FF',
+                color: '#104060',
+                border: '1.5px solid #54bde8',
                 borderRadius: '8px',
                 fontWeight: '700',
                 fontSize: '13px',
                 cursor: creandoUsuario ? 'not-allowed' : 'pointer',
-                boxShadow: '0 2px 5px rgba(246, 227, 143, 0.4)'
+                boxShadow: '0 2px 5px rgba(127, 214, 255, 0.4)'
               }}
             >
               {creandoUsuario ? 'Guardando...' : 'Crear Usuario'}
@@ -140,7 +140,7 @@ export default function UsuariosView({
           boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#0f2942', margin: 0 }}>
+            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#2B4A66', margin: 0 }}>
               Usuarios del Sistema ({usuarios.length})
             </h3>
             <button
@@ -178,31 +178,31 @@ export default function UsuariosView({
                 <tbody>
                   {usuarios.map((u) => {
                     const esAdmin = u.username.toLowerCase() === 'admin'
-                    let rolBg = '#f1f5f9'
-                    let rolColor = '#475569'
-                    let rolBorder = '#cbd5e1'
+                    let rolBg = '#FFF6FB'
+                    let rolColor = '#2B4A66'
+                    let rolBorder = '#e2c5d5'
                     if (u.rol === 'Administrador') {
-                      rolBg = '#F3C7B6'
-                      rolColor = '#70220e'
-                      rolBorder = '#e19d85'
+                      rolBg = '#FFD6E8'
+                      rolColor = '#802048'
+                      rolBorder = '#f4a7c7'
                     } else if (u.rol === 'Médico') {
-                      rolBg = '#A7C7D9'
-                      rolColor = '#0c354e'
-                      rolBorder = '#84aabd'
+                      rolBg = '#7FD6FF'
+                      rolColor = '#104060'
+                      rolBorder = '#54bde8'
                     } else if (u.rol === 'Enfermera') {
-                      rolBg = '#CFE7D6'
-                      rolColor = '#134e2b'
-                      rolBorder = '#9ec6ac'
+                      rolBg = '#6FE3B4'
+                      rolColor = '#0a5438'
+                      rolBorder = '#4cc799'
                     } else if (u.rol === 'Soporte TI') {
-                      rolBg = '#FFF2B6'
-                      rolColor = '#634706'
-                      rolBorder = '#F6E38F'
+                      rolBg = '#FFF6FB'
+                      rolColor = '#2B4A66'
+                      rolBorder = '#e2c5d5'
                     }
 
                     return (
                       <tr key={u.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                         <td style={{ padding: '8px 10px', color: '#64748b' }}>#{u.id}</td>
-                        <td style={{ padding: '8px 10px', fontWeight: '700', color: '#0f2942' }}>
+                        <td style={{ padding: '8px 10px', fontWeight: '700', color: '#2B4A66' }}>
                           {u.username}
                           {esAdmin && (
                             <span style={{ marginLeft: '6px', fontSize: '10px', color: '#64748b' }}>(Principal)</span>
@@ -229,9 +229,9 @@ export default function UsuariosView({
                               onClick={() => handleEliminarUsuario(u.id, u.username)}
                               style={{
                                 padding: '3px 8px',
-                                backgroundColor: '#F3C7B6',
-                                color: '#70220e',
-                                border: '1px solid #e19d85',
+                                backgroundColor: '#FFD6E8',
+                                color: '#802048',
+                                border: '1px solid #f4a7c7',
                                 borderRadius: '4px',
                                 fontSize: '11px',
                                 fontWeight: '700',

@@ -417,7 +417,7 @@ function AppContent() {
       overflow: 'hidden',
       backgroundColor: '#f8fafc',
       fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      color: '#1e293b',
+      color: '#2B4A66',
       display: 'flex'
     }}>
       {/* 1. PANEL IZQUIERDO: HERRAMIENTAS Y NAVEGACIÓN MODULAR */}
@@ -445,9 +445,9 @@ function AppContent() {
             padding: '10px 16px',
             borderRadius: '8px',
             marginBottom: '16px',
-            backgroundColor: mensaje.tipo === 'exito' ? '#CFE7D6' : '#F3C7B6',
-            color: mensaje.tipo === 'exito' ? '#134e2b' : '#70220e',
-            border: `1px solid ${mensaje.tipo === 'exito' ? '#9ec6ac' : '#e19d85'}`,
+            backgroundColor: mensaje.tipo === 'exito' ? '#6FE3B4' : '#FFD6E8',
+            color: mensaje.tipo === 'exito' ? '#0a5438' : '#802048',
+            border: `1px solid ${mensaje.tipo === 'exito' ? '#4cc799' : '#f4a7c7'}`,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',

@@ -106,8 +106,8 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
           maxHeight: '90vh',
           backgroundColor: '#ffffff',
           borderRadius: '12px',
-          border: '1.5px solid #84aabd',
-          boxShadow: '0 10px 30px rgba(12, 53, 78, 0.25)',
+          border: '1.5px solid #7FD6FF',
+          boxShadow: '0 10px 30px rgba(43, 74, 102, 0.25)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden'
@@ -117,8 +117,8 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
         <div
           style={{
             padding: '16px 20px',
-            backgroundColor: '#A7C7D9',
-            borderBottom: '1.5px solid #84aabd',
+            backgroundColor: '#7FD6FF',
+            borderBottom: '1.5px solid #54bde8',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center'
@@ -130,7 +130,7 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
                 width: '34px',
                 height: '34px',
                 borderRadius: '8px',
-                backgroundColor: '#0c354e',
+                backgroundColor: '#2B4A66',
                 color: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
@@ -146,11 +146,11 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
               </svg>
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#0c354e' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#2B4A66' }}>
                 Notas Clínicas y Evolución Médica
               </h3>
-              <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#0f2942', fontWeight: '600' }}>
-                Paciente DNI: <span style={{ backgroundColor: '#ffffff', padding: '1px 6px', borderRadius: '4px', border: '1px solid #84aabd' }}>{paciente.dni}</span> · Expediente #{paciente.id}
+              <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#104060', fontWeight: '600' }}>
+                Paciente DNI: <span style={{ backgroundColor: '#ffffff', padding: '1px 6px', borderRadius: '4px', border: '1px solid #54bde8' }}>{paciente.dni}</span> · Expediente #{paciente.id}
               </p>
             </div>
           </div>
@@ -159,12 +159,12 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
             onClick={onClose}
             style={{
               background: '#ffffff',
-              border: '1px solid #84aabd',
+              border: '1px solid #54bde8',
               borderRadius: '6px',
               padding: '6px 12px',
               fontSize: '12px',
               fontWeight: '700',
-              color: '#0c354e',
+              color: '#2B4A66',
               cursor: 'pointer'
             }}
           >
@@ -175,12 +175,12 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
         {/* Cuerpo del Modal con scroll */}
         <div style={{ padding: '20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '18px' }}>
           {/* Formulario de Redacción de Nota */}
-          <form onSubmit={handleGuardarNota} style={{ backgroundColor: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1.5px solid #e2e8f0' }}>
+          <form onSubmit={handleGuardarNota} style={{ backgroundColor: '#FFF6FB', padding: '16px', borderRadius: '8px', border: '1.5px solid #e2c5d5' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '800', color: '#0f2942', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '800', color: '#2B4A66', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                 Nueva Nota / Diagnóstico de Evolución
               </label>
-              <span style={{ fontSize: '11px', color: '#0c354e', fontWeight: '600' }}>
+              <span style={{ fontSize: '11px', color: '#104060', fontWeight: '600' }}>
                 Firmante: Dr. {usuario?.username || 'Médico'}
               </span>
             </div>
@@ -202,12 +202,12 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
                 resize: 'vertical',
                 backgroundColor: '#ffffff'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#A7C7D9'}
+              onFocus={(e) => e.target.style.borderColor = '#7FD6FF'}
               onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
             />
 
             {errorLocal && (
-              <div style={{ marginTop: '8px', fontSize: '12px', color: '#70220e', fontWeight: '600' }}>
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#802048', fontWeight: '600' }}>
                 {errorLocal}
               </div>
             )}
@@ -218,14 +218,14 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
                 disabled={guardando}
                 style={{
                   padding: '8px 18px',
-                  backgroundColor: guardando ? '#dbeafe' : '#A7C7D9',
-                  color: '#0c354e',
-                  border: '1.5px solid #84aabd',
+                  backgroundColor: guardando ? '#c4eeff' : '#7FD6FF',
+                  color: '#104060',
+                  border: '1.5px solid #54bde8',
                   borderRadius: '6px',
                   fontSize: '12px',
                   fontWeight: '700',
                   cursor: guardando ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 2px 4px rgba(167, 199, 217, 0.4)'
+                  boxShadow: '0 2px 4px rgba(127, 214, 255, 0.4)'
                 }}
               >
                 {guardando ? 'Guardando...' : 'Agregar Nota a la Historia'}
@@ -235,7 +235,7 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
 
           {/* Historial de Notas Anteriores */}
           <div>
-            <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: '800', color: '#2B4A66', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
               Historial de Notas Registradas ({notas.length})
             </h4>
 
@@ -244,7 +244,7 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
                 Cargando notas médicas...
               </p>
             ) : notas.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+              <div style={{ padding: '24px', textAlign: 'center', backgroundColor: '#FFF6FB', borderRadius: '8px', border: '1px dashed #e2c5d5' }}>
                 <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
                   Aún no se han registrado notas clínicas para este paciente.
                 </p>
@@ -264,7 +264,7 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#0c354e', backgroundColor: '#A7C7D9', padding: '2px 8px', borderRadius: '4px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#104060', backgroundColor: '#7FD6FF', padding: '2px 8px', borderRadius: '4px' }}>
                           {n.medico_nombre}
                         </span>
                         <span style={{ fontSize: '11px', color: '#64748b' }}>

@@ -102,13 +102,13 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
       {/* Cabecera */}
       <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#0f2942', margin: 0 }}>
+          <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#2B4A66', margin: 0 }}>
             Triaje y Signos Vitales
           </h2>
           <span style={{
-            backgroundColor: '#CFE7D6',
-            color: '#134e2b',
-            border: '1px solid #9ec6ac',
+            backgroundColor: '#6FE3B4',
+            color: '#0a5438',
+            border: '1px solid #4cc799',
             padding: '2px 8px',
             borderRadius: '12px',
             fontSize: '11px',
@@ -170,9 +170,9 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       justifyContent: 'space-between',
                       padding: '10px 12px',
                       borderRadius: '8px',
-                      border: esActivo ? '1.5px solid #9ec6ac' : '1px solid #f1f5f9',
-                      backgroundColor: esActivo ? '#CFE7D6' : '#ffffff',
-                      color: esActivo ? '#134e2b' : '#1e293b',
+                      border: esActivo ? '1.5px solid #4cc799' : '1px solid #f1f5f9',
+                      backgroundColor: esActivo ? '#6FE3B4' : '#ffffff',
+                      color: esActivo ? '#0a5438' : '#1e293b',
                       cursor: 'pointer',
                       textAlign: 'left',
                       transition: 'all 0.15s ease'
@@ -182,7 +182,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       <div style={{ fontWeight: '700', fontSize: '13px' }}>
                         DNI {p.dni}
                       </div>
-                      <div style={{ fontSize: '10px', color: esActivo ? '#134e2b' : '#64748b' }}>
+                      <div style={{ fontSize: '10px', color: esActivo ? '#0a5438' : '#64748b' }}>
                         Expediente #{p.id}
                       </div>
                     </div>
@@ -209,21 +209,21 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
             {/* Formulario de Entrada */}
             <div style={{
               backgroundColor: '#ffffff',
-              border: '2px solid #CFE7D6',
+              border: '2px solid #6FE3B4',
               borderRadius: '12px',
               padding: '22px',
-              boxShadow: '0 4px 14px rgba(207, 231, 214, 0.35)'
+              boxShadow: '0 4px 14px rgba(111, 227, 180, 0.35)'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1.5px solid #CFE7D6', paddingBottom: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1.5px solid #6FE3B4', paddingBottom: '10px' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#134e2b' }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#0a5438' }}>
                     Registrar Nuevos Signos Vitales
                   </h3>
                   <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#475569' }}>
                     Paciente: <strong>DNI {pacienteSeleccionado.dni}</strong> · Expediente #{pacienteSeleccionado.id}
                   </p>
                 </div>
-                <span style={{ fontSize: '11px', color: '#134e2b', fontWeight: '700', backgroundColor: '#CFE7D6', padding: '3px 8px', borderRadius: '4px' }}>
+                <span style={{ fontSize: '11px', color: '#0a5438', fontWeight: '700', backgroundColor: '#6FE3B4', padding: '3px 8px', borderRadius: '4px' }}>
                   Responsable: {usuario?.username || 'Enfermera'}
                 </span>
               </div>
@@ -392,14 +392,14 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                     disabled={guardando}
                     style={{
                       padding: '10px 22px',
-                      backgroundColor: guardando ? '#bbf7d0' : '#CFE7D6',
-                      color: '#134e2b',
-                      border: '1.5px solid #9ec6ac',
+                      backgroundColor: guardando ? '#bbf7d0' : '#6FE3B4',
+                      color: '#0a5438',
+                      border: '1.5px solid #4cc799',
                       borderRadius: '8px',
                       fontWeight: '700',
                       fontSize: '13px',
                       cursor: guardando ? 'not-allowed' : 'pointer',
-                      boxShadow: '0 2px 5px rgba(158, 198, 172, 0.4)'
+                      boxShadow: '0 2px 5px rgba(111, 227, 180, 0.4)'
                     }}
                   >
                     {guardando ? 'Guardando...' : 'Guardar Signos Vitales'}
@@ -411,12 +411,12 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
             {/* Historial de Signos Vitales del Paciente */}
             <div style={{
               backgroundColor: '#ffffff',
-              border: '1.5px solid #e2e8f0',
+              border: '1.5px solid #7FD6FF',
               borderRadius: '12px',
               padding: '20px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
             }}>
-              <h4 style={{ margin: '0 0 14px 0', fontSize: '14px', fontWeight: '800', color: '#0f2942' }}>
+              <h4 style={{ margin: '0 0 14px 0', fontSize: '14px', fontWeight: '800', color: '#2B4A66' }}>
                 Historial de Tomas de Signos Vitales ({historialSignos.length})
               </h4>
 
@@ -434,7 +434,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                     <thead>
-                      <tr style={{ backgroundColor: '#f8fafc', borderBottom: '2px solid #e2e8f0', color: '#475569' }}>
+                      <tr style={{ backgroundColor: '#FFF6FB', borderBottom: '2px solid #7FD6FF', color: '#2B4A66' }}>
                         <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>Fecha y Hora</th>
                         <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>Presión</th>
                         <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>Peso</th>
@@ -449,13 +449,13 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       {historialSignos.map((s) => (
                         <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                           <td style={{ padding: '8px 10px', color: '#64748b', whiteSpace: 'nowrap' }}>{s.fecha}</td>
-                          <td style={{ padding: '8px 10px', fontWeight: '700', color: '#0f2942' }}>{s.presion_arterial || '—'}</td>
+                          <td style={{ padding: '8px 10px', fontWeight: '700', color: '#2B4A66' }}>{s.presion_arterial || '—'}</td>
                           <td style={{ padding: '8px 10px', fontWeight: '600' }}>{s.peso || '—'}</td>
                           <td style={{ padding: '8px 10px' }}>{s.talla || '—'}</td>
                           <td style={{ padding: '8px 10px' }}>{s.temperatura || '—'}</td>
                           <td style={{ padding: '8px 10px' }}>{s.frecuencia_cardiaca || '—'}</td>
                           <td style={{ padding: '8px 10px' }}>{s.saturacion_oxigeno || '—'}</td>
-                          <td style={{ padding: '8px 10px', color: '#134e2b', fontWeight: '600' }}>{s.enfermera_nombre}</td>
+                          <td style={{ padding: '8px 10px', color: '#0a5438', fontWeight: '600' }}>{s.enfermera_nombre}</td>
                         </tr>
                       ))}
                     </tbody>

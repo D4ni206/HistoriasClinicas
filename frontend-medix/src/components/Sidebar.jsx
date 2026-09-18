@@ -17,21 +17,21 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
   const esConfiguracion = currentPath === '/configuracion'
 
   // Colores de la tarjeta de usuario según su rol
-  let userBadgeBg = '#FFF2B6'
-  let userBadgeColor = '#634706'
-  let userBadgeBorder = '#F6E38F'
+  let userBadgeBg = '#FFF6FB'
+  let userBadgeColor = '#2B4A66'
+  let userBadgeBorder = '#e2c5d5'
   if (esAdmin) {
-    userBadgeBg = '#F3C7B6'
-    userBadgeColor = '#70220e'
-    userBadgeBorder = '#e19d85'
+    userBadgeBg = '#FFD6E8'
+    userBadgeColor = '#802048'
+    userBadgeBorder = '#f4a7c7'
   } else if (esMedico) {
-    userBadgeBg = '#A7C7D9'
-    userBadgeColor = '#0c354e'
-    userBadgeBorder = '#84aabd'
+    userBadgeBg = '#7FD6FF'
+    userBadgeColor = '#104060'
+    userBadgeBorder = '#54bde8'
   } else if (esEnfermera) {
-    userBadgeBg = '#CFE7D6'
-    userBadgeColor = '#134e2b'
-    userBadgeBorder = '#9ec6ac'
+    userBadgeBg = '#6FE3B4'
+    userBadgeColor = '#0a5438'
+    userBadgeBorder = '#4cc799'
   }
 
   return (
@@ -40,7 +40,7 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
       flex: '0 0 300px',
       height: '100vh',
       backgroundColor: '#ffffff',
-      borderRight: '1.5px solid #A7C7D9',
+      borderRight: '1.5px solid #7FD6FF',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'space-between',
@@ -50,7 +50,7 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
       {/* Contenido superior y menú con scroll independiente */}
       <div style={{ padding: '18px 16px', overflowY: 'auto', flex: 1 }}>
         {/* Cabecera Institucional */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', paddingBottom: '14px', borderBottom: '1.5px solid #A7C7D9' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', paddingBottom: '14px', borderBottom: '1.5px solid #7FD6FF' }}>
           <img
             src="/logo_hospital.png"
             alt="Hospital San Juan de Dios de Pisco"
@@ -61,18 +61,18 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
               backgroundColor: '#ffffff',
               borderRadius: '6px',
               padding: '2px 4px',
-              border: '1.5px solid #A7C7D9',
-              boxShadow: '0 2px 5px rgba(167, 199, 217, 0.3)'
+              border: '1.5px solid #7FD6FF',
+              boxShadow: '0 2px 5px rgba(127, 214, 255, 0.3)'
             }}
           />
           <div>
-            <h1 style={{ fontSize: '18px', fontWeight: '800', color: '#0f2942', margin: 0, lineHeight: '1.2' }}>
+            <h1 style={{ fontSize: '18px', fontWeight: '800', color: '#2B4A66', margin: 0, lineHeight: '1.2' }}>
               Medix
             </h1>
             <p style={{ margin: '2px 0 0 0', color: '#64748b', fontSize: '11px', fontWeight: '600' }}>
               HOSPITAL SAN JUAN DE DIOS · PISCO
             </p>
-            <span style={{ fontSize: '10px', color: '#0c354e', backgroundColor: '#CFE7D6', padding: '1px 6px', borderRadius: '4px', fontWeight: '700', border: '1px solid #9ec6ac' }}>
+            <span style={{ fontSize: '10px', color: '#0a5438', backgroundColor: '#6FE3B4', padding: '1px 6px', borderRadius: '4px', fontWeight: '700', border: '1px solid #4cc799' }}>
               UE-404
             </span>
           </div>
@@ -94,7 +94,7 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
             <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', color: userBadgeColor, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Usuario Conectado
             </span>
-            <strong style={{ fontSize: '13px', color: '#0f2942' }}>
+            <strong style={{ fontSize: '13px', color: '#2B4A66' }}>
               {usuario?.username || 'admin'}
             </strong>
             <span style={{
@@ -114,8 +114,8 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
             onClick={onLogout}
             style={{
               backgroundColor: '#ffffff',
-              color: '#70220e',
-              border: '1px solid #e19d85',
+              color: '#802048',
+              border: '1px solid #f4a7c7',
               padding: '5px 9px',
               borderRadius: '6px',
               fontSize: '11px',
@@ -131,7 +131,7 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
 
         {/* MENÚ DE HERRAMIENTAS / RUTAS POR ROL */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-          <span style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', paddingLeft: '4px' }}>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#2B4A66', textTransform: 'uppercase', letterSpacing: '0.8px', paddingLeft: '4px' }}>
             Herramientas Habilitadas
           </span>
 
@@ -145,15 +145,15 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
                 gap: '12px',
                 padding: '11px 14px',
                 borderRadius: '8px',
-                border: esDashboard ? '1.5px solid #84aabd' : '1px solid #e2e8f0',
-                backgroundColor: esDashboard ? '#A7C7D9' : '#ffffff',
-                color: esDashboard ? '#0c354e' : '#334155',
+                border: esDashboard ? '1.5px solid #54bde8' : '1px solid #e2e8f0',
+                backgroundColor: esDashboard ? '#7FD6FF' : '#ffffff',
+                color: esDashboard ? '#104060' : '#2B4A66',
                 fontWeight: esDashboard ? '700' : '600',
                 fontSize: '13px',
                 cursor: 'pointer',
                 textAlign: 'left',
                 transition: 'all 0.15s ease',
-                boxShadow: esDashboard ? '0 2px 6px rgba(167, 199, 217, 0.45)' : 'none'
+                boxShadow: esDashboard ? '0 2px 6px rgba(127, 214, 255, 0.45)' : 'none'
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -179,15 +179,15 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
                 gap: '12px',
                 padding: '11px 14px',
                 borderRadius: '8px',
-                border: esNuevaHistoria ? '1.5px solid #F6E38F' : '1px solid #e2e8f0',
-                backgroundColor: esNuevaHistoria ? '#FFF2B6' : '#ffffff',
-                color: esNuevaHistoria ? '#634706' : '#334155',
+                border: esNuevaHistoria ? '1.5px solid #f4a7c7' : '1px solid #e2e8f0',
+                backgroundColor: esNuevaHistoria ? '#FFD6E8' : '#ffffff',
+                color: esNuevaHistoria ? '#802048' : '#2B4A66',
                 fontWeight: esNuevaHistoria ? '700' : '600',
                 fontSize: '13px',
                 cursor: 'pointer',
                 textAlign: 'left',
                 transition: 'all 0.15s ease',
-                boxShadow: esNuevaHistoria ? '0 2px 6px rgba(246, 227, 143, 0.45)' : 'none'
+                boxShadow: esNuevaHistoria ? '0 2px 6px rgba(255, 214, 232, 0.45)' : 'none'
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -213,15 +213,15 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
                 gap: '12px',
                 padding: '11px 14px',
                 borderRadius: '8px',
-                border: esSignosVitales ? '1.5px solid #9ec6ac' : '1px solid #e2e8f0',
-                backgroundColor: esSignosVitales ? '#CFE7D6' : '#ffffff',
-                color: esSignosVitales ? '#134e2b' : '#334155',
+                border: esSignosVitales ? '1.5px solid #4cc799' : '1px solid #e2e8f0',
+                backgroundColor: esSignosVitales ? '#6FE3B4' : '#ffffff',
+                color: esSignosVitales ? '#0a5438' : '#2B4A66',
                 fontWeight: esSignosVitales ? '700' : '600',
                 fontSize: '13px',
                 cursor: 'pointer',
                 textAlign: 'left',
                 transition: 'all 0.15s ease',
-                boxShadow: esSignosVitales ? '0 2px 6px rgba(158, 198, 172, 0.45)' : 'none'
+                boxShadow: esSignosVitales ? '0 2px 6px rgba(111, 227, 180, 0.45)' : 'none'
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -244,15 +244,15 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
                 gap: '12px',
                 padding: '11px 14px',
                 borderRadius: '8px',
-                border: esUsuarios ? '1.5px solid #F6E38F' : '1px solid #e2e8f0',
-                backgroundColor: esUsuarios ? '#FFF2B6' : '#ffffff',
-                color: esUsuarios ? '#634706' : '#334155',
+                border: esUsuarios ? '1.5px solid #54bde8' : '1px solid #e2e8f0',
+                backgroundColor: esUsuarios ? '#FFF6FB' : '#ffffff',
+                color: '#2B4A66',
                 fontWeight: esUsuarios ? '700' : '600',
                 fontSize: '13px',
                 cursor: 'pointer',
                 textAlign: 'left',
                 transition: 'all 0.15s ease',
-                boxShadow: esUsuarios ? '0 2px 6px rgba(246, 227, 143, 0.45)' : 'none'
+                boxShadow: esUsuarios ? '0 2px 6px rgba(127, 214, 255, 0.35)' : 'none'
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -278,15 +278,15 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
                 gap: '12px',
                 padding: '11px 14px',
                 borderRadius: '8px',
-                border: esConfiguracion ? '1.5px solid #e19d85' : '1px solid #e2e8f0',
-                backgroundColor: esConfiguracion ? '#F3C7B6' : '#ffffff',
-                color: esConfiguracion ? '#70220e' : '#334155',
+                border: esConfiguracion ? '1.5px solid #f4a7c7' : '1px solid #e2e8f0',
+                backgroundColor: esConfiguracion ? '#FFD6E8' : '#ffffff',
+                color: esConfiguracion ? '#802048' : '#2B4A66',
                 fontWeight: esConfiguracion ? '700' : '600',
                 fontSize: '13px',
                 cursor: 'pointer',
                 textAlign: 'left',
                 transition: 'all 0.15s ease',
-                boxShadow: esConfiguracion ? '0 2px 6px rgba(243, 199, 182, 0.45)' : 'none'
+                boxShadow: esConfiguracion ? '0 2px 6px rgba(255, 214, 232, 0.45)' : 'none'
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -305,25 +305,25 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
         <div style={{ display: 'flex', gap: '8px', marginBottom: '18px' }}>
           <div style={{
             flex: 1,
-            backgroundColor: '#A7C7D9',
-            border: '1px solid #84aabd',
+            backgroundColor: '#7FD6FF',
+            border: '1px solid #54bde8',
             borderRadius: '8px',
             padding: '8px 10px',
             textAlign: 'center'
           }}>
-            <span style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: '#0c354e' }}>Carpetas</span>
-            <strong style={{ fontSize: '18px', color: '#0c354e' }}>{totalPacientes}</strong>
+            <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#104060' }}>Carpetas</span>
+            <strong style={{ fontSize: '18px', color: '#104060' }}>{totalPacientes}</strong>
           </div>
           <div style={{
             flex: 1,
-            backgroundColor: '#CFE7D6',
-            border: '1px solid #9ec6ac',
+            backgroundColor: '#6FE3B4',
+            border: '1px solid #4cc799',
             borderRadius: '8px',
             padding: '8px 10px',
             textAlign: 'center'
           }}>
-            <span style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: '#134e2b' }}>Documentos</span>
-            <strong style={{ fontSize: '18px', color: '#134e2b' }}>{totalDocumentos}</strong>
+            <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#0a5438' }}>Documentos</span>
+            <strong style={{ fontSize: '18px', color: '#0a5438' }}>{totalDocumentos}</strong>
           </div>
         </div>
       </div>
@@ -331,8 +331,8 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
       {/* Pie del Panel Izquierdo */}
       <div style={{ padding: '12px 16px', borderTop: '1px solid #e2e8f0', fontSize: '11px', color: '#64748b', textAlign: 'center', backgroundColor: '#fafafa' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '2px' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
-          <span style={{ fontWeight: '700', color: '#0f2942' }}>Sistema Operativo</span>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#6FE3B4', border: '1px solid #4cc799', display: 'inline-block' }}></span>
+          <span style={{ fontWeight: '700', color: '#2B4A66' }}>Sistema Operativo</span>
         </div>
         Hospital San Juan de Dios - Pisco · UE-404
       </div>

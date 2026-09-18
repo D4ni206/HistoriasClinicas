@@ -48,14 +48,14 @@ export default function LoginView({ onLoginSuccess }) {
       bottom: 0,
       width: '100vw',
       height: '100vh',
-      backgroundColor: '#FAF7F5',
+      backgroundColor: '#FFF6FB',
       display: 'flex',
       flexDirection: 'row',
       overflow: 'hidden',
       zIndex: 9999,
       fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* PANEL IZQUIERDO: Tarjeta Amarilla Institucional que llena la mitad izquierda */}
+      {/* PANEL IZQUIERDO: Tarjeta Institucional que llena la mitad izquierda */}
       <div style={{
         flex: '1.2 1 0',
         height: '100vh',
@@ -66,14 +66,14 @@ export default function LoginView({ onLoginSuccess }) {
         <div style={{
           width: '100%',
           height: '100%',
-          backgroundColor: '#FEF7A7',
+          backgroundColor: '#7FD6FF',
           borderRadius: '36px',
           padding: 'clamp(32px, 5vh, 60px) clamp(36px, 5vw, 68px)',
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          boxShadow: '0 10px 35px rgba(220, 190, 80, 0.16)'
+          boxShadow: '0 10px 35px rgba(127, 214, 255, 0.3)'
         }}>
           {/* Cabecera: Logo y Nombre del Hospital */}
           <div style={{
@@ -82,13 +82,16 @@ export default function LoginView({ onLoginSuccess }) {
             gap: '18px'
           }}>
             <img
-              src="/logo_hospital.png"
+              src="/assets/logo_hospital.png"
               alt="Hospital San Juan de Dios de Pisco"
               style={{
                 height: '68px',
                 width: 'auto',
                 objectFit: 'contain',
-                mixBlendMode: 'multiply'
+                backgroundColor: '#ffffff',
+                padding: '4px 8px',
+                borderRadius: '12px',
+                boxShadow: '0 2px 8px rgba(43, 74, 102, 0.15)'
               }}
             />
             <span style={{
@@ -96,7 +99,7 @@ export default function LoginView({ onLoginSuccess }) {
               fontWeight: '900',
               fontStyle: 'italic',
               letterSpacing: '-0.3px',
-              color: '#000000',
+              color: '#2B4A66',
               textTransform: 'uppercase'
             }}>
               HOSPITAL SAN JUAN DE DIOS - PISCO
@@ -109,7 +112,7 @@ export default function LoginView({ onLoginSuccess }) {
               fontSize: 'clamp(38px, 4.8vw, 72px)',
               fontWeight: '900',
               lineHeight: '1.05',
-              color: '#D28A4A',
+              color: '#2B4A66',
               margin: '0 0 22px 0',
               textTransform: 'uppercase',
               letterSpacing: '-1px'
@@ -122,9 +125,9 @@ export default function LoginView({ onLoginSuccess }) {
             <p style={{
               margin: 0,
               fontSize: 'clamp(13px, 1.2vw, 16px)',
-              fontWeight: '500',
+              fontWeight: '600',
               lineHeight: '1.45',
-              color: '#8A8765',
+              color: '#104060',
               textTransform: 'uppercase',
               letterSpacing: '0.6px',
               maxWidth: '520px'
@@ -138,7 +141,8 @@ export default function LoginView({ onLoginSuccess }) {
             <span style={{
               fontFamily: 'Consolas, Monaco, "Courier New", monospace',
               fontSize: 'clamp(12px, 1.1vw, 14px)',
-              color: '#262626'
+              color: '#2B4A66',
+              fontWeight: '600'
             }}>
               Reduce tiempo de busqueda manual
             </span>
@@ -150,7 +154,7 @@ export default function LoginView({ onLoginSuccess }) {
       <div style={{
         flex: '1 1 0',
         height: '100vh',
-        backgroundColor: '#FAF7F5',
+        backgroundColor: '#FFF6FB',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -168,7 +172,7 @@ export default function LoginView({ onLoginSuccess }) {
           <h2 style={{
             fontSize: 'clamp(30px, 2.8vw, 38px)',
             fontWeight: '800',
-            color: '#000000',
+            color: '#2B4A66',
             margin: '0 0 8px 0',
             letterSpacing: '-0.5px'
           }}>
@@ -177,7 +181,7 @@ export default function LoginView({ onLoginSuccess }) {
           <p style={{
             margin: '0 0 32px 0',
             fontSize: '15px',
-            color: '#71717a'
+            color: '#64748b'
           }}>
             Bienvenido, ingrese sus credenciales
           </p>
@@ -187,9 +191,9 @@ export default function LoginView({ onLoginSuccess }) {
             <div style={{
               padding: '10px 16px',
               borderRadius: '16px',
-              backgroundColor: '#FDE8E8',
-              color: '#9B1C1C',
-              border: '1px solid #F8B4B4',
+              backgroundColor: '#FFD6E8',
+              color: '#802048',
+              border: '1px solid #f4a7c7',
               fontSize: '13px',
               fontWeight: '600',
               marginBottom: '20px',
@@ -207,7 +211,7 @@ export default function LoginView({ onLoginSuccess }) {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: '700',
-                color: '#18181b',
+                color: '#2B4A66',
                 marginBottom: '8px',
                 letterSpacing: '0.5px'
               }}>
@@ -222,18 +226,18 @@ export default function LoginView({ onLoginSuccess }) {
                 style={{
                   width: '100%',
                   height: '50px',
-                  backgroundColor: '#D9D9D9',
-                  border: '2px solid #E5B458',
+                  backgroundColor: '#ffffff',
+                  border: '2px solid #7FD6FF',
                   borderRadius: '25px',
                   padding: '0 22px',
                   fontSize: '15px',
-                  color: '#18181b',
+                  color: '#2B4A66',
                   outline: 'none',
                   boxSizing: 'border-box',
                   transition: 'border-color 0.2s, background-color 0.2s'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#C99335'}
-                onBlur={(e) => e.target.style.borderColor = '#E5B458'}
+                onFocus={(e) => e.target.style.borderColor = '#2B4A66'}
+                onBlur={(e) => e.target.style.borderColor = '#7FD6FF'}
               />
             </div>
 
@@ -243,7 +247,7 @@ export default function LoginView({ onLoginSuccess }) {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: '700',
-                color: '#18181b',
+                color: '#2B4A66',
                 marginBottom: '8px',
                 letterSpacing: '0.5px'
               }}>
@@ -259,18 +263,18 @@ export default function LoginView({ onLoginSuccess }) {
                   style={{
                     width: '100%',
                     height: '50px',
-                    backgroundColor: '#D9D9D9',
-                    border: '2px solid #E5B458',
+                    backgroundColor: '#ffffff',
+                    border: '2px solid #7FD6FF',
                     borderRadius: '25px',
                     padding: '0 54px 0 22px',
                     fontSize: '15px',
-                    color: '#18181b',
+                    color: '#2B4A66',
                     outline: 'none',
                     boxSizing: 'border-box',
                     transition: 'border-color 0.2s, background-color 0.2s'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#C99335'}
-                  onBlur={(e) => e.target.style.borderColor = '#E5B458'}
+                  onFocus={(e) => e.target.style.borderColor = '#2B4A66'}
+                  onBlur={(e) => e.target.style.borderColor = '#7FD6FF'}
                 />
                 <button
                   type="button"
@@ -285,7 +289,7 @@ export default function LoginView({ onLoginSuccess }) {
                     cursor: 'pointer',
                     fontSize: '12px',
                     fontWeight: '700',
-                    color: '#71717a',
+                    color: '#64748b',
                     padding: '4px'
                   }}
                 >
@@ -305,9 +309,9 @@ export default function LoginView({ onLoginSuccess }) {
                 style={{
                   fontSize: '13px',
                   fontStyle: 'italic',
-                  color: '#B55D46',
+                  color: '#802048',
                   textDecoration: 'none',
-                  fontWeight: '500'
+                  fontWeight: '600'
                 }}
               >
                 ¿Olvidaste tu contraseña?
@@ -321,14 +325,14 @@ export default function LoginView({ onLoginSuccess }) {
               style={{
                 width: '100%',
                 height: '52px',
-                backgroundColor: cargando ? '#e3b874' : '#DDA757',
-                color: '#111111',
-                border: 'none',
+                backgroundColor: cargando ? '#bbf7d0' : '#6FE3B4',
+                color: '#0a5438',
+                border: '1.5px solid #4cc799',
                 borderRadius: '26px',
                 fontSize: '16px',
                 fontWeight: '700',
                 cursor: cargando ? 'not-allowed' : 'pointer',
-                boxShadow: '0 4px 14px rgba(221, 167, 87, 0.35)',
+                boxShadow: '0 4px 14px rgba(111, 227, 180, 0.4)',
                 transition: 'background-color 0.2s, transform 0.1s'
               }}
             >
@@ -339,13 +343,13 @@ export default function LoginView({ onLoginSuccess }) {
           {/* Ayuda de acceso institucional */}
           <div style={{
             marginTop: '20px',
-            padding: '8px 12px',
-            backgroundColor: '#FEF7A7',
+            padding: '10px 14px',
+            backgroundColor: '#FFD6E8',
             borderRadius: '16px',
             fontSize: '12px',
-            color: '#634706',
+            color: '#802048',
             textAlign: 'center',
-            border: '1px solid #E5B458'
+            border: '1px solid #f4a7c7'
           }}>
             Acceso institucional: <strong>admin</strong> / <strong>admin123</strong>
           </div>
@@ -355,7 +359,7 @@ export default function LoginView({ onLoginSuccess }) {
         <div style={{
           textAlign: 'center',
           fontSize: '13px',
-          color: '#52525b',
+          color: '#64748b',
           marginTop: 'auto',
           paddingTop: '20px'
         }}>
@@ -363,8 +367,8 @@ export default function LoginView({ onLoginSuccess }) {
           <span
             onClick={() => alert('Contacto Soporte TI:\nAnexo: 404\nEmail: soporte@hospitalsanjuandediospisco.gob.pe')}
             style={{
-              color: '#BD6E38',
-              fontWeight: '600',
+              color: '#2B4A66',
+              fontWeight: '700',
               cursor: 'pointer',
               textDecoration: 'underline'
             }}
