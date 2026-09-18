@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Card } from '@heroui/react'
 import { esPdf, esDocx, esImagen, esTexto, obtenerIconoArchivo } from '../utils/fileHelpers'
 
 export default function PacienteCard({
@@ -25,92 +26,65 @@ export default function PacienteCard({
   const docsAMostrar = expandido ? docs : docs.slice(0, 3)
 
   return (
-    <div
+    <Card
+      className="w-full"
       style={{
-        backgroundColor: '#ffffff',
-        border: '1.5px solid #7FD6FF',
-        borderRadius: '18px',
-        padding: '20px 18px',
-        boxShadow: '0 4px 16px rgba(127, 214, 255, 0.18)',
+        backgroundColor: '#18181b',
+        color: '#ffffff',
+        border: '1px solid #27272a',
+        borderRadius: '24px',
+        padding: '22px 20px',
+        boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.38)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
         boxSizing: 'border-box'
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)'
-        e.currentTarget.style.boxShadow = '0 8px 24px rgba(127, 214, 255, 0.3)'
+        e.currentTarget.style.transform = 'translateY(-3px)'
+        e.currentTarget.style.borderColor = '#3f3f46'
+        e.currentTarget.style.boxShadow = '0 16px 36px -4px rgba(0, 0, 0, 0.55)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = '0 4px 16px rgba(127, 214, 255, 0.18)'
+        e.currentTarget.style.borderColor = '#27272a'
+        e.currentTarget.style.boxShadow = '0 10px 30px -5px rgba(0, 0, 0, 0.38)'
       }}
     >
-      <div>
-        {/* Fila Superior: Icono de Carpeta, DNI, Expediente y Badge Total */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '14px',
-          gap: '12px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Icono de Carpeta en cuadro celeste */}
-            <div style={{
-              width: '42px',
-              height: '42px',
-              minWidth: '42px',
-              borderRadius: '10px',
-              backgroundColor: '#7FD6FF',
-              color: '#2B4A66',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 6px rgba(127, 214, 255, 0.35)'
-            }}>
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#2B4A66"
-                strokeWidth="2.3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-              </svg>
-            </div>
-
-            {/* DNI y Número de Expediente */}
-            <div>
-              <div style={{
-                fontSize: '16px',
-                fontWeight: '800',
-                color: '#2B4A66',
-                lineHeight: '1.2'
-              }}>
-                DNI: {paciente.dni}
-              </div>
-              <div style={{
-                fontSize: '12px',
-                color: '#64748b',
-                fontWeight: '600',
-                marginTop: '3px'
-              }}>
-                Expediente #{paciente.id}
-              </div>
-            </div>
+      <Card.Header style={{ padding: 0, display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {/* Fila Superior: Icono Circular HeroUI (como el $ de Acme Creator) y Total de Documentos */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            backgroundColor: '#27272a',
+            border: '1.5px solid rgba(255, 255, 255, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+          }}>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#7FD6FF"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+            </svg>
           </div>
 
-          {/* Pastilla Verde/Rosa con total de documentos */}
           <span style={{
-            fontSize: '12px',
+            fontSize: '11.5px',
             fontWeight: '700',
-            padding: '4px 12px',
-            borderRadius: '14px',
+            padding: '3px 10px',
+            borderRadius: '12px',
             backgroundColor: docs.length > 0 ? '#6FE3B4' : '#FFD6E8',
             color: docs.length > 0 ? '#0a5438' : '#802048',
             border: docs.length > 0 ? '1px solid #4cc799' : '1px solid #f4a7c7',
@@ -120,20 +94,39 @@ export default function PacienteCard({
           </span>
         </div>
 
-        {/* Fila de Resumen por Tipo (1 DOCX, 2 PDF, etc.) */}
-        <div style={{
-          display: 'flex',
-          gap: '6px',
-          flexWrap: 'wrap',
-          marginBottom: '14px'
-        }}>
+        {/* Título y Subtítulo estilo HeroUI ("Become an Acme Creator!") */}
+        <div>
+          <Card.Title style={{
+            fontSize: '17px',
+            fontWeight: '800',
+            color: '#ffffff',
+            letterSpacing: '-0.01em',
+            margin: 0,
+            lineHeight: '1.25'
+          }}>
+            DNI: {paciente.dni}
+          </Card.Title>
+          <Card.Description style={{
+            fontSize: '13px',
+            color: '#94a3b8',
+            fontWeight: '500',
+            marginTop: '4px',
+            margin: 0,
+            lineHeight: '1.4'
+          }}>
+            Expediente #{paciente.id}
+          </Card.Description>
+        </div>
+
+        {/* Badges de desglose de formatos */}
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {countDocx > 0 && (
             <span style={{
               backgroundColor: '#7FD6FF',
               color: '#104060',
               border: '1px solid #54bde8',
               borderRadius: '6px',
-              padding: '3px 8px',
+              padding: '2px 8px',
               fontSize: '11px',
               fontWeight: '800'
             }}>
@@ -146,7 +139,7 @@ export default function PacienteCard({
               color: '#802048',
               border: '1px solid #f4a7c7',
               borderRadius: '6px',
-              padding: '3px 8px',
+              padding: '2px 8px',
               fontSize: '11px',
               fontWeight: '800'
             }}>
@@ -159,7 +152,7 @@ export default function PacienteCard({
               color: '#0a5438',
               border: '1px solid #4cc799',
               borderRadius: '6px',
-              padding: '3px 8px',
+              padding: '2px 8px',
               fontSize: '11px',
               fontWeight: '800'
             }}>
@@ -168,11 +161,11 @@ export default function PacienteCard({
           )}
           {countTxt > 0 && (
             <span style={{
-              backgroundColor: '#FFF6FB',
-              color: '#2B4A66',
-              border: '1px solid #e2c5d5',
+              backgroundColor: '#27272a',
+              color: '#f1f5f9',
+              border: '1px solid #3f3f46',
               borderRadius: '6px',
-              padding: '3px 8px',
+              padding: '2px 8px',
               fontSize: '11px',
               fontWeight: '800'
             }}>
@@ -180,29 +173,26 @@ export default function PacienteCard({
             </span>
           )}
           {docs.length === 0 && (
-            <span style={{
-              fontSize: '11px',
-              color: '#94a3b8',
-              fontStyle: 'italic'
-            }}>
+            <span style={{ fontSize: '11px', color: '#71717a', fontStyle: 'italic' }}>
               Sin archivos adjuntos
             </span>
           )}
         </div>
+      </Card.Header>
 
+      <Card.Content style={{ padding: '14px 0', flex: 1 }}>
         {/* Caja Central: CONTENIDO RECIENTE */}
         <div style={{
-          backgroundColor: '#f8fafc',
-          border: '1px solid #eef2f6',
-          borderRadius: '12px',
-          padding: '12px 14px',
-          marginBottom: '16px'
+          backgroundColor: '#202024',
+          border: '1px solid #2e2e36',
+          borderRadius: '14px',
+          padding: '12px 14px'
         }}>
           <div style={{
             textAlign: 'center',
             fontSize: '11px',
             fontWeight: '800',
-            color: '#475569',
+            color: '#94a3b8',
             letterSpacing: '0.6px',
             textTransform: 'uppercase',
             marginBottom: '10px'
@@ -213,7 +203,7 @@ export default function PacienteCard({
           {docs.length === 0 ? (
             <div style={{
               textAlign: 'center',
-              color: '#94a3b8',
+              color: '#71717a',
               fontSize: '12px',
               padding: '8px 0',
               fontStyle: 'italic'
@@ -232,16 +222,14 @@ export default function PacienteCard({
                     gap: '8px'
                   }}
                 >
-                  {/* Pastilla identificadora del tipo */}
                   <div style={{ flexShrink: 0 }}>
                     {obtenerIconoArchivo(d.nombre_archivo)}
                   </div>
 
-                  {/* Nombre de archivo truncado */}
                   <span
                     style={{
                       fontSize: '12px',
-                      color: '#334155',
+                      color: '#e2e8f0',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -253,20 +241,19 @@ export default function PacienteCard({
                     {d.nombre_archivo}
                   </span>
 
-                  {/* Botón Ver (Verde) */}
                   <button
                     onClick={() => onVerDocumento && onVerDocumento(d)}
                     style={{
                       backgroundColor: '#6FE3B4',
                       color: '#0a5438',
-                      border: '1px solid #4cc799',
+                      border: 'none',
                       borderRadius: '5px',
                       padding: '3px 10px',
                       fontSize: '11px',
                       fontWeight: '700',
                       cursor: 'pointer',
                       flexShrink: 0,
-                      transition: 'background-color 0.15s ease'
+                      transition: 'opacity 0.15s ease'
                     }}
                     title="Ver archivo en el panel derecho"
                   >
@@ -275,7 +262,6 @@ export default function PacienteCard({
                 </div>
               ))}
 
-              {/* Si hay más de 3 documentos, permitir alternar expansión */}
               {docs.length > 3 && (
                 <div
                   onClick={() => setExpandido(!expandido)}
@@ -283,7 +269,7 @@ export default function PacienteCard({
                     textAlign: 'center',
                     fontSize: '11px',
                     fontWeight: '700',
-                    color: '#2B4A66',
+                    color: '#7FD6FF',
                     cursor: 'pointer',
                     marginTop: '4px',
                     padding: '2px 0'
@@ -295,14 +281,14 @@ export default function PacienteCard({
             </div>
           )}
         </div>
-      </div>
+      </Card.Content>
 
-      {/* Fila Inferior de Botones de Acción (4 botones) */}
-      <div style={{
+      <Card.Footer style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',
         gap: '6px',
-        paddingTop: '6px'
+        width: '100%',
+        padding: '6px 0 0 0'
       }}>
         {/* 1. + Archivo */}
         <button
@@ -310,8 +296,8 @@ export default function PacienteCard({
           style={{
             backgroundColor: '#7FD6FF',
             color: '#104060',
-            border: '1px solid #54bde8',
-            borderRadius: '7px',
+            border: 'none',
+            borderRadius: '8px',
             padding: '7px 4px',
             cursor: 'pointer',
             display: 'flex',
@@ -319,7 +305,8 @@ export default function PacienteCard({
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: '700',
-            minHeight: '38px'
+            minHeight: '38px',
+            transition: 'opacity 0.15s ease'
           }}
           title="Subir nuevo documento a este expediente"
         >
@@ -331,10 +318,10 @@ export default function PacienteCard({
         <button
           onClick={() => onAbrirNotas && onAbrirNotas(paciente)}
           style={{
-            backgroundColor: '#ffffff',
-            color: '#2B4A66',
-            border: '1.5px solid #cbd5e1',
-            borderRadius: '7px',
+            backgroundColor: '#27272a',
+            color: '#f8fafc',
+            border: '1px solid #3f3f46',
+            borderRadius: '8px',
             padding: '7px 4px',
             cursor: 'pointer',
             display: 'flex',
@@ -342,7 +329,8 @@ export default function PacienteCard({
             justifyContent: 'center',
             fontSize: '11px',
             fontWeight: '700',
-            minHeight: '38px'
+            minHeight: '38px',
+            transition: 'background-color 0.15s ease'
           }}
           title="Ver y redactar notas médicas"
         >
@@ -351,12 +339,15 @@ export default function PacienteCard({
 
         {/* 3. Ver Carpeta */}
         <button
-          onClick={() => onVerCarpeta && onVerCarpeta(paciente)}
+          onClick={() => {
+            setExpandido(!expandido)
+            if (onVerCarpeta) onVerCarpeta(paciente)
+          }}
           style={{
-            backgroundColor: '#ffffff',
-            color: '#2B4A66',
-            border: '1.5px solid #cbd5e1',
-            borderRadius: '7px',
+            backgroundColor: '#27272a',
+            color: '#f8fafc',
+            border: '1px solid #3f3f46',
+            borderRadius: '8px',
             padding: '7px 4px',
             cursor: 'pointer',
             display: 'flex',
@@ -366,11 +357,12 @@ export default function PacienteCard({
             fontSize: '11px',
             fontWeight: '700',
             lineHeight: '1.2',
-            minHeight: '38px'
+            minHeight: '38px',
+            transition: 'background-color 0.15s ease'
           }}
-          title="Abrir vista detallada de la carpeta"
+          title={expandido ? "Ocultar documentos adicionales" : "Ver todos los documentos del expediente"}
         >
-          <span>Ver</span>
+          <span>{expandido ? 'Cerrar' : 'Ver'}</span>
           <span>Carpeta</span>
         </button>
 
@@ -380,8 +372,8 @@ export default function PacienteCard({
           style={{
             backgroundColor: '#FFD6E8',
             color: '#802048',
-            border: '1px solid #f4a7c7',
-            borderRadius: '7px',
+            border: 'none',
+            borderRadius: '8px',
             padding: '7px 4px',
             cursor: 'pointer',
             display: 'flex',
@@ -389,13 +381,14 @@ export default function PacienteCard({
             justifyContent: 'center',
             fontSize: '11px',
             fontWeight: '700',
-            minHeight: '38px'
+            minHeight: '38px',
+            transition: 'opacity 0.15s ease'
           }}
           title="Eliminar expediente clínico"
         >
           Borrar
         </button>
-      </div>
-    </div>
+      </Card.Footer>
+    </Card>
   )
 }

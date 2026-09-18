@@ -128,14 +128,14 @@ export default function DashboardView({
               gap: '7px',
               padding: '7px 14px',
               borderRadius: '6px',
-              border: (vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') ? '1.5px solid #4cc799' : '1px solid transparent',
-              backgroundColor: (vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') ? '#6FE3B4' : '#f8fafc',
-              color: (vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') ? '#0a5438' : '#64748b',
-              fontWeight: (vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') ? '700' : '600',
+              border: (vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula') ? '1.5px solid #4cc799' : '1px solid transparent',
+              backgroundColor: (vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula') ? '#6FE3B4' : '#f8fafc',
+              color: (vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula') ? '#0a5438' : '#64748b',
+              fontWeight: (vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula') ? '700' : '600',
               fontSize: '12px',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
-              boxShadow: (vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') ? '0 2px 5px rgba(111, 227, 180, 0.4)' : 'none'
+              boxShadow: (vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula') ? '0 2px 5px rgba(111, 227, 180, 0.4)' : 'none'
             }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -144,32 +144,7 @@ export default function DashboardView({
               <rect x="14" y="14" width="7" height="7"></rect>
               <rect x="3" y="14" width="7" height="7"></rect>
             </svg>
-            <span>Tarjetas (Cards)</span>
-          </button>
-
-          {/* 2. Vista Carpetas (Acordeón) */}
-          <button
-            onClick={() => setVistaDashboard('carpetas')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '7px',
-              padding: '7px 14px',
-              borderRadius: '6px',
-              border: vistaDashboard === 'carpetas' ? '1.5px solid #54bde8' : '1px solid transparent',
-              backgroundColor: vistaDashboard === 'carpetas' ? '#7FD6FF' : '#f8fafc',
-              color: vistaDashboard === 'carpetas' ? '#104060' : '#64748b',
-              fontWeight: vistaDashboard === 'carpetas' ? '700' : '600',
-              fontSize: '12px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              boxShadow: vistaDashboard === 'carpetas' ? '0 2px 5px rgba(127, 214, 255, 0.4)' : 'none'
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span>Carpetas (Acordeón)</span>
+            <span>Tarjetas Clínicas (HeroUI)</span>
           </button>
 
           {/* 3. Vista Tabla General de Documentos */}
@@ -250,482 +225,9 @@ export default function DashboardView({
       </div>
 
       {/* =================================================================== */}
-      {/* 1. VISTA CARPETAS (ACORDEÓN JERÁRQUICO) */}
+      {/* 1. VISTA PRINCIPAL: TARJETAS DE EXPEDIENTES (HEROUI CARDS) */}
       {/* =================================================================== */}
-      {vistaDashboard === 'carpetas' && (
-        <>
-          {/* Barra de Filtro y Controles de Expansión */}
-          <div style={{
-            backgroundColor: '#ffffff',
-            border: '1.5px solid #7FD6FF',
-            borderRadius: '10px',
-            padding: '12px 16px',
-            marginBottom: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
-          }}>
-            {/* Buscador DNI */}
-            <div style={{ flex: '1 1 280px', position: 'relative' }}>
-              <input
-                type="text"
-                placeholder="Buscar carpeta por DNI de paciente..."
-                value={busquedaDni}
-                onChange={(e) => setBusquedaDni(e.target.value)}
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  padding: '8px 12px 8px 34px',
-                  borderRadius: '6px',
-                  border: '1.5px solid #d1d5db',
-                  fontSize: '13px',
-                  backgroundColor: '#f8fafc',
-                  outline: 'none'
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#7FD6FF'}
-                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-              />
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '10px', top: '10px' }}>
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              {busquedaDni && (
-                <button
-                  onClick={() => setBusquedaDni('')}
-                  style={{
-                    position: 'absolute',
-                    right: '8px',
-                    top: '7px',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#9ca3af',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  X
-                </button>
-              )}
-            </div>
-
-            {/* Controles de expansión */}
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button
-                onClick={expandirTodas}
-                style={{
-                  padding: '7px 12px',
-                  backgroundColor: '#7FD6FF',
-                  border: '1px solid #54bde8',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  color: '#104060'
-                }}
-              >
-                Expandir todas
-              </button>
-              <button
-                onClick={colapsarTodas}
-                style={{
-                  padding: '7px 12px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  color: '#374151'
-                }}
-              >
-                Colapsar todas
-              </button>
-            </div>
-          </div>
-
-          {/* Listado de Carpetas de Pacientes */}
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
-              Cargando expedientes clínicos...
-            </div>
-          ) : pacientesFiltrados.length === 0 ? (
-            <div style={{
-              padding: '50px 20px',
-              textAlign: 'center',
-              backgroundColor: '#ffffff',
-              border: '2px dashed #cbd5e1',
-              borderRadius: '12px',
-              color: '#64748b'
-            }}>
-              <p style={{ fontSize: '17px', margin: '0 0 8px 0', fontWeight: '700', color: '#2B4A66' }}>
-                {busquedaDni ? `No se encontró ninguna carpeta con el DNI "${busquedaDni}"` : 'No hay expedientes clínicos registrados todavía.'}
-              </p>
-              <p style={{ fontSize: '13px', margin: '0 0 16px 0' }}>
-                Utiliza la herramienta "Agregar nueva historia" para crear un expediente clínico o subir archivos.
-              </p>
-              <button
-                onClick={() => navigate('/agregarhistoria')}
-                style={{
-                  padding: '8px 18px',
-                  backgroundColor: '#6FE3B4',
-                  color: '#0a5438',
-                  border: '1px solid #4cc799',
-                  borderRadius: '6px',
-                  fontWeight: '700',
-                  fontSize: '13px',
-                  cursor: 'pointer'
-                }}
-              >
-                Ir a Agregar Nueva Historia
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', paddingBottom: '30px' }}>
-              {pacientesFiltrados.map((pac) => {
-                const estaAbierta = carpetasAbiertas.has(pac.id)
-                const docs = pac.documentos || []
-
-                return (
-                  <div
-                    key={pac.id}
-                    style={{
-                      backgroundColor: '#ffffff',
-                      border: estaAbierta ? '2px solid #7FD6FF' : '1px solid #e2e8f0',
-                      borderRadius: '10px',
-                      boxShadow: estaAbierta ? '0 4px 14px rgba(127, 214, 255, 0.25)' : '0 1px 3px rgba(0,0,0,0.03)',
-                      overflow: 'hidden',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {/* Cabecera de Carpeta */}
-                    <div
-                      style={{
-                        padding: '12px 16px',
-                        backgroundColor: estaAbierta ? '#FFF6FB' : '#ffffff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        flexWrap: 'wrap',
-                        gap: '10px',
-                        borderBottom: estaAbierta ? '1.5px solid #7FD6FF' : 'none',
-                        cursor: 'pointer'
-                      }}
-                      onClick={() => toggleCarpeta(pac.id)}
-                    >
-                      {/* Info DNI */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{
-                          fontSize: '10px',
-                          fontWeight: '700',
-                          padding: '2px 7px',
-                          borderRadius: '4px',
-                          backgroundColor: estaAbierta ? '#7FD6FF' : '#e2e8f0',
-                          color: estaAbierta ? '#104060' : '#475569',
-                          border: estaAbierta ? '1px solid #54bde8' : '1px solid #cbd5e1',
-                          letterSpacing: '0.5px'
-                        }}>
-                          {estaAbierta ? 'ABIERTA' : 'CARPETA'}
-                        </span>
-
-                        <div>
-                          {editandoPaciente === pac.id ? (
-                            <div
-                              style={{ display: 'flex', gap: '6px', alignItems: 'center' }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <input
-                                type="text"
-                                value={nuevoDni}
-                                onChange={(e) => setNuevoDni(e.target.value)}
-                                style={{ padding: '4px 8px', borderRadius: '6px', border: '1.5px solid #7FD6FF', fontSize: '14px', fontWeight: 'bold', outline: 'none' }}
-                                autoFocus
-                              />
-                              <button
-                                onClick={() => handleGuardarDni(pac.id)}
-                                style={{ padding: '4px 10px', backgroundColor: '#6FE3B4', color: '#0a5438', border: '1px solid #4cc799', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
-                              >
-                                Guardar
-                              </button>
-                              <button
-                                onClick={() => setEditandoPaciente(null)}
-                                style={{ padding: '4px 10px', backgroundColor: '#FFD6E8', color: '#802048', border: '1px solid #f4a7c7', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ fontSize: '16px', fontWeight: '800', color: '#2B4A66' }}>
-                                DNI: {pac.dni}
-                              </span>
-                              <span style={{
-                                backgroundColor: docs.length > 0 ? '#6FE3B4' : '#FFD6E8',
-                                color: docs.length > 0 ? '#0a5438' : '#802048',
-                                border: docs.length > 0 ? '1px solid #4cc799' : '1px solid #f4a7c7',
-                                padding: '2px 8px',
-                                borderRadius: '12px',
-                                fontSize: '11px',
-                                fontWeight: '700'
-                              }}>
-                                {docs.length} {docs.length === 1 ? 'archivo' : 'archivos'}
-                              </span>
-                            </div>
-                          )}
-                          <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#64748b' }}>
-                            Expediente clínico #{pac.id}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Botones de Cabecera */}
-                      <div
-                        style={{ display: 'flex', gap: '6px', alignItems: 'center' }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
-                          style={{
-                            padding: '5px 12px',
-                            backgroundColor: '#7FD6FF',
-                            color: '#104060',
-                            border: '1px solid #54bde8',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            boxShadow: '0 2px 4px rgba(127, 214, 255, 0.3)'
-                          }}
-                          title="Agregar un nuevo documento a este DNI"
-                        >
-                          + Agregar archivo
-                        </button>
-
-                        <button
-                          onClick={() => setPacienteParaNotas(pac)}
-                          style={{
-                            padding: '5px 10px',
-                            backgroundColor: '#FFF6FB',
-                            color: '#2B4A66',
-                            border: '1px solid #e2c5d5',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            boxShadow: '0 2px 4px rgba(226, 197, 213, 0.3)'
-                          }}
-                          title="Ver y agregar notas clínicas / evolución médica"
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                          </svg>
-                          Notas ({pac.total_notas || (pac.notas_medicas ? pac.notas_medicas.length : 0)})
-                        </button>
-
-                        {editandoPaciente !== pac.id && (
-                          <button
-                            onClick={() => {
-                              setEditandoPaciente(pac.id)
-                              setNuevoDni(pac.dni)
-                            }}
-                            style={{
-                              padding: '5px 8px',
-                              backgroundColor: '#FFF6FB',
-                              border: '1px solid #e2c5d5',
-                              borderRadius: '6px',
-                              fontSize: '11px',
-                              fontWeight: '700',
-                              color: '#2B4A66',
-                              cursor: 'pointer'
-                            }}
-                            title="Modificar DNI"
-                          >
-                            Editar DNI
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => handleEliminarPaciente(pac.id, pac.dni)}
-                          style={{
-                            padding: '5px 8px',
-                            backgroundColor: '#FFD6E8',
-                            border: '1px solid #f4a7c7',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            color: '#802048',
-                            cursor: 'pointer'
-                          }}
-                          title="Eliminar carpeta y todos sus archivos"
-                        >
-                          Borrar
-                        </button>
-
-                        <button
-                          onClick={() => toggleCarpeta(pac.id)}
-                          style={{
-                            padding: '4px 8px',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            color: '#64748b'
-                          }}
-                          title={estaAbierta ? 'Colapsar carpeta' : 'Abrir carpeta'}
-                        >
-                          {estaAbierta ? '▲' : '▼'}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Contenido Interno de la Carpeta */}
-                    {estaAbierta && (
-                      <div style={{ padding: '14px', backgroundColor: '#ffffff' }}>
-                        {docs.length === 0 ? (
-                          <div style={{
-                            padding: '20px',
-                            textAlign: 'center',
-                            backgroundColor: '#FFF6FB',
-                            borderRadius: '8px',
-                            border: '1px dashed #e2c5d5',
-                            color: '#2B4A66'
-                          }}>
-                            <p style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '600' }}>
-                              Esta carpeta no contiene documentos actualmente.
-                            </p>
-                            <button
-                              onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
-                              style={{
-                                padding: '6px 14px',
-                                backgroundColor: '#7FD6FF',
-                                color: '#104060',
-                                border: '1px solid #54bde8',
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                fontWeight: '700'
-                              }}
-                            >
-                              + Subir primer documento a este DNI
-                            </button>
-                          </div>
-                        ) : (
-                          <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                              <thead>
-                                <tr style={{ backgroundColor: '#FFF6FB', borderBottom: '2px solid #7FD6FF', color: '#2B4A66' }}>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: '700' }}>Tipo</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: '700' }}>Nombre del Archivo</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: '700' }}>Fecha de Subida</th>
-                                  <th style={{ padding: '9px 12px', textAlign: 'center', fontWeight: '700' }}>Acciones</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {docs.map((doc) => {
-                                  const esActivo = documentoEnVista && documentoEnVista.id === doc.id
-                                  return (
-                                    <tr
-                                      key={doc.id}
-                                      style={{
-                                        borderBottom: '1px solid #e2e8f0',
-                                        backgroundColor: esActivo ? '#FFF6FB' : 'transparent',
-                                        transition: 'background-color 0.15s'
-                                      }}
-                                    >
-                                      <td style={{ padding: '8px 12px' }}>
-                                        {obtenerIconoArchivo(doc.nombre_archivo)}
-                                      </td>
-                                      <td style={{ padding: '8px 12px', fontWeight: '600', color: '#2B4A66' }}>
-                                        {doc.nombre_archivo}
-                                      </td>
-                                      <td style={{ padding: '8px 12px', color: '#475569', fontSize: '12px' }}>
-                                        {doc.fecha_subida || '—'}
-                                      </td>
-                                      <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                        <div style={{ display: 'inline-flex', gap: '6px' }}>
-                                          <button
-                                            onClick={() => setDocumentoEnVista(doc)}
-                                            style={{
-                                              padding: '4px 10px',
-                                              backgroundColor: esActivo ? '#6FE3B4' : '#FFF6FB',
-                                              color: esActivo ? '#0a5438' : '#2B4A66',
-                                              border: `1px solid ${esActivo ? '#4cc799' : '#e2c5d5'}`,
-                                              borderRadius: '5px',
-                                              fontSize: '11px',
-                                              fontWeight: '700',
-                                              cursor: 'pointer'
-                                            }}
-                                            title="Ver en el panel lateral derecho"
-                                          >
-                                            {esActivo ? 'Viendo' : 'Ver'}
-                                          </button>
-
-                                          <a
-                                            href={`${API_BASE}/documentos/${doc.id}/archivo`}
-                                            style={{
-                                              padding: '4px 10px',
-                                              backgroundColor: '#7FD6FF',
-                                              color: '#104060',
-                                              border: '1px solid #54bde8',
-                                              borderRadius: '5px',
-                                              textDecoration: 'none',
-                                              fontSize: '11px',
-                                              fontWeight: '700'
-                                            }}
-                                            title="Descargar archivo físico"
-                                          >
-                                            Descargar
-                                          </a>
-
-                                          <button
-                                            onClick={() => handleEliminarDocumento(doc.id, doc.nombre_archivo, pac.id)}
-                                            style={{
-                                              padding: '4px 10px',
-                                              backgroundColor: '#FFD6E8',
-                                              color: '#802048',
-                                              border: '1px solid #f4a7c7',
-                                              borderRadius: '5px',
-                                              fontSize: '11px',
-                                              fontWeight: '700',
-                                              cursor: 'pointer'
-                                            }}
-                                            title="Eliminar este archivo"
-                                          >
-                                            Eliminar
-                                          </button>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  )
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* =================================================================== */}
-      {/* 1 / 2. VISTA TARJETAS (CARDS DE REGISTROS CLÍNICOS) */}
-      {/* =================================================================== */}
-      {(vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') && (
+      {(vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula') && (
         <>
           {/* Barra de Filtro Rápido */}
           <div style={{
@@ -744,7 +246,7 @@ export default function DashboardView({
             <div style={{ flex: '1 1 280px', position: 'relative' }}>
               <input
                 type="text"
-                placeholder="Filtrar registros por DNI..."
+                placeholder="Buscar expediente por DNI..."
                 value={busquedaDni}
                 onChange={(e) => setBusquedaDni(e.target.value)}
                 style={{
@@ -763,19 +265,19 @@ export default function DashboardView({
               </svg>
             </div>
             <span style={{ fontSize: '12px', fontWeight: '700', color: '#0a5438' }}>
-              {pacientesFiltrados.length} expedientes en vista de tarjetas
+              {pacientesFiltrados.length} expedientes en tarjetas clínicas (HeroUI)
             </span>
           </div>
 
-          {/* Grid de Registros con Componente PacienteCard */}
+          {/* Grid de Registros con Componente PacienteCard (HeroUI) */}
           {pacientesFiltrados.length === 0 ? (
             <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: '12px', border: '2px dashed #cbd5e1', color: '#64748b' }}>
-              No se encontraron registros coincidentes en la vista de tarjetas.
+              No se encontraron expedientes coincidentes en la vista de tarjetas.
             </div>
           ) : (
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
               gap: '20px',
               paddingBottom: '30px'
             }}>
@@ -787,8 +289,7 @@ export default function DashboardView({
                   onAgregarArchivo={agregarArchivoACarpeta}
                   onAbrirNotas={setPacienteParaNotas}
                   onVerCarpeta={(p) => {
-                    setVistaDashboard('carpetas')
-                    setCarpetasAbiertas(prev => new Set([...prev, p.id]))
+                    setPacienteParaNotas(p)
                   }}
                   onEliminar={handleEliminarPaciente}
                 />
