@@ -103,8 +103,9 @@ export default function UsuariosView({
                 }}
               >
                 <option value="Médico">Médico</option>
-                <option value="Recepción">Recepción</option>
+                <option value="Enfermera">Enfermera</option>
                 <option value="Administrador">Administrador</option>
+                <option value="Recepción">Recepción</option>
                 <option value="Soporte TI">Soporte TI</option>
               </select>
             </div>
@@ -177,9 +178,9 @@ export default function UsuariosView({
                 <tbody>
                   {usuarios.map((u) => {
                     const esAdmin = u.username.toLowerCase() === 'admin'
-                    let rolBg = '#CFE7D6'
-                    let rolColor = '#134e2b'
-                    let rolBorder = '#9ec6ac'
+                    let rolBg = '#f1f5f9'
+                    let rolColor = '#475569'
+                    let rolBorder = '#cbd5e1'
                     if (u.rol === 'Administrador') {
                       rolBg = '#F3C7B6'
                       rolColor = '#70220e'
@@ -188,6 +189,10 @@ export default function UsuariosView({
                       rolBg = '#A7C7D9'
                       rolColor = '#0c354e'
                       rolBorder = '#84aabd'
+                    } else if (u.rol === 'Enfermera') {
+                      rolBg = '#CFE7D6'
+                      rolColor = '#134e2b'
+                      rolBorder = '#9ec6ac'
                     } else if (u.rol === 'Soporte TI') {
                       rolBg = '#FFF2B6'
                       rolColor = '#634706'

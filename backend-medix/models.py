@@ -6,15 +6,22 @@ class Paciente(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     dni = db.Column(db.String(20), unique=True, nullable=False)
     documentos = db.relationship('Documento_Escaneado', backref='paciente', cascade='all, delete-orphan', lazy=True)
+    notas_medicas = db.relationship('NotaMedica', backref='paciente', cascade='all, delete-orphan', lazy=True, order_by='desc(NotaMedica.fecha)')
+    signos_vitales = db.relationship('SignosVitales', backref='paciente', cascade='all, delete-orphan', lazy=True, order_by='desc(SignosVitales.fecha)')
 
-    def to_dict(self, include_documentos=False):
+    def to_dict(self, include_documentos=False, include_detalles=True):
         data = {
             'id': self.id,
             'dni': self.dni,
-            'total_documentos': len(self.documentos) if self.documentos else 0
+            'total_documentos': len(self.documentos) if self.documentos else 0,
+            'total_notas': len(self.notas_medicas) if self.notas_medicas else 0,
+            'total_signos': len(self.signos_vitales) if self.signos_vitales else 0
         }
         if include_documentos:
             data['documentos'] = [d.to_dict() for d in self.documentos]
+        if include_detalles:
+            data['notas_medicas'] = [n.to_dict() for n in self.notas_medicas] if self.notas_medicas else []
+            data['signos_vitales'] = [s.to_dict() for s in self.signos_vitales] if self.signos_vitales else []
         return data
 
 class Medico(db.Model):
@@ -86,3 +93,51 @@ class Auditoria(db.Model):
     # Llaves foráneas para saber quién hizo qué
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     documento_id = db.Column(db.Integer, db.ForeignKey('documento_escaneado.id'), nullable=True)
+
+class NotaMedica(db.Model):
+    __tablename__ = 'nota_medica'
+    id = db.Column(db.Integer, primary_key=True)
+    paciente_id = db.Column(db.Integer, db.ForeignKey('paciente.id'), nullable=False)
+    medico_nombre = db.Column(db.String(100), nullable=False)
+    contenido = db.Column(db.Text, nullable=False)
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'paciente_id': self.paciente_id,
+            'paciente_dni': self.paciente.dni if self.paciente else None,
+            'medico_nombre': self.medico_nombre,
+            'contenido': self.contenido,
+            'fecha': self.fecha.strftime('%Y-%m-%d %H:%M:%S') if self.fecha else None
+        }
+
+class SignosVitales(db.Model):
+    __tablename__ = 'signos_vitales'
+    id = db.Column(db.Integer, primary_key=True)
+    paciente_id = db.Column(db.Integer, db.ForeignKey('paciente.id'), nullable=False)
+    enfermera_nombre = db.Column(db.String(100), nullable=False)
+    presion_arterial = db.Column(db.String(50), nullable=True)     # Ej: '120/80 mmHg'
+    peso = db.Column(db.String(50), nullable=True)                 # Ej: '70.5 kg'
+    talla = db.Column(db.String(50), nullable=True)                # Ej: '165 cm'
+    temperatura = db.Column(db.String(50), nullable=True)          # Ej: '36.8 °C'
+    frecuencia_cardiaca = db.Column(db.String(50), nullable=True)  # Ej: '72 lpm'
+    saturacion_oxigeno = db.Column(db.String(50), nullable=True)   # Ej: '98 %'
+    observaciones = db.Column(db.Text, nullable=True)
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'paciente_id': self.paciente_id,
+            'paciente_dni': self.paciente.dni if self.paciente else None,
+            'enfermera_nombre': self.enfermera_nombre,
+            'presion_arterial': self.presion_arterial,
+            'peso': self.peso,
+            'talla': self.talla,
+            'temperatura': self.temperatura,
+            'frecuencia_cardiaca': self.frecuencia_cardiaca,
+            'saturacion_oxigeno': self.saturacion_oxigeno,
+            'observaciones': self.observaciones,
+            'fecha': self.fecha.strftime('%Y-%m-%d %H:%M:%S') if self.fecha else None
+        }

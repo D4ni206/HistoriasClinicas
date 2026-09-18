@@ -3,7 +3,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
-from models import Paciente, Documento_Escaneado as Documento, Usuario
+from models import Paciente, Documento_Escaneado as Documento, Usuario, NotaMedica, SignosVitales
 import boto3
 import os
 import uuid
@@ -388,6 +388,100 @@ def eliminar_documento(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"mensaje": f"Error al eliminar documento: {str(e)}"}), 500
+
+# ==========================================
+# NOTAS MÉDICAS (ROL: MÉDICO / ADMIN)
+# ==========================================
+@app.route('/api/pacientes/<int:id>/notas', methods=['GET'])
+def listar_notas_paciente(id):
+    paciente = Paciente.query.get_or_404(id)
+    notas = NotaMedica.query.filter_by(paciente_id=id).order_by(NotaMedica.fecha.desc()).all()
+    return jsonify([n.to_dict() for n in notas]), 200
+
+@app.route('/api/pacientes/<int:id>/notas', methods=['POST'])
+def agregar_nota_paciente(id):
+    paciente = Paciente.query.get_or_404(id)
+    data = request.get_json() or {}
+    contenido = data.get('contenido', '').strip()
+    medico_nombre = data.get('medico_nombre', data.get('medico', 'Médico Tratante')).strip()
+
+    if not contenido:
+        return jsonify({"mensaje": "El contenido de la nota médica no puede estar vacío"}), 400
+
+    nueva_nota = NotaMedica(
+        paciente_id=id,
+        medico_nombre=medico_nombre,
+        contenido=contenido
+    )
+    db.session.add(nueva_nota)
+    db.session.commit()
+    return jsonify({
+        "mensaje": "Nota médica registrada exitosamente",
+        "nota": nueva_nota.to_dict()
+    }), 201
+
+@app.route('/api/notas/<int:id>', methods=['DELETE'])
+def eliminar_nota(id):
+    nota = NotaMedica.query.get_or_404(id)
+    db.session.delete(nota)
+    db.session.commit()
+    return jsonify({"mensaje": "Nota médica eliminada exitosamente"}), 200
+
+# ==========================================
+# SIGNOS VITALES / TRIAJE (ROL: ENFERMERA / ADMIN)
+# ==========================================
+@app.route('/api/pacientes/<int:id>/signos-vitales', methods=['GET'])
+def listar_signos_paciente(id):
+    paciente = Paciente.query.get_or_404(id)
+    signos = SignosVitales.query.filter_by(paciente_id=id).order_by(SignosVitales.fecha.desc()).all()
+    return jsonify([s.to_dict() for s in signos]), 200
+
+@app.route('/api/pacientes/<int:id>/signos-vitales', methods=['POST'])
+def agregar_signos_paciente(id):
+    paciente = Paciente.query.get_or_404(id)
+    data = request.get_json() or {}
+    
+    enfermera_nombre = data.get('enfermera_nombre', data.get('enfermera', 'Personal de Enfermería')).strip()
+    presion = data.get('presion_arterial', '').strip()
+    peso = data.get('peso', '').strip()
+    talla = data.get('talla', '').strip()
+    temperatura = data.get('temperatura', '').strip()
+    frecuencia = data.get('frecuencia_cardiaca', '').strip()
+    saturacion = data.get('saturacion_oxigeno', '').strip()
+    observaciones = data.get('observaciones', '').strip()
+
+    if not any([presion, peso, talla, temperatura, frecuencia, saturacion, observaciones]):
+        return jsonify({"mensaje": "Debe registrar al menos un dato de signo vital o triaje"}), 400
+
+    nuevos_signos = SignosVitales(
+        paciente_id=id,
+        enfermera_nombre=enfermera_nombre,
+        presion_arterial=presion if presion else None,
+        peso=peso if peso else None,
+        talla=talla if talla else None,
+        temperatura=temperatura if temperatura else None,
+        frecuencia_cardiaca=frecuencia if frecuencia else None,
+        saturacion_oxigeno=saturacion if saturacion else None,
+        observaciones=observaciones if observaciones else None
+    )
+    db.session.add(nuevos_signos)
+    db.session.commit()
+    return jsonify({
+        "mensaje": "Signos vitales registrados exitosamente",
+        "signos_vitales": nuevos_signos.to_dict()
+    }), 201
+
+@app.route('/api/signos-vitales', methods=['GET'])
+def listar_todos_signos():
+    signos = SignosVitales.query.order_by(SignosVitales.fecha.desc()).limit(50).all()
+    return jsonify([s.to_dict() for s in signos]), 200
+
+@app.route('/api/signos-vitales/<int:id>', methods=['DELETE'])
+def eliminar_signos(id):
+    registro = SignosVitales.query.get_or_404(id)
+    db.session.delete(registro)
+    db.session.commit()
+    return jsonify({"mensaje": "Registro de signos vitales eliminado exitosamente"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

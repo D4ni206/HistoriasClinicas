@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { obtenerIconoArchivo, esPdf, esDocx, esImagen, esTexto } from '../utils/fileHelpers'
 import { API_BASE } from '../api/config'
+import NotasMedicasModal from '../components/NotasMedicasModal'
 
 export default function DashboardView({
   pacientes,
@@ -34,9 +36,11 @@ export default function DashboardView({
   documentoEnVista,
   setDocumentoEnVista,
   loading,
-  cargarDatos
+  cargarDatos,
+  usuario
 }) {
   const navigate = useNavigate()
+  const [pacienteParaNotas, setPacienteParaNotas] = useState(null)
 
   return (
     <>
@@ -501,6 +505,32 @@ export default function DashboardView({
                           + Agregar archivo
                         </button>
 
+                        <button
+                          onClick={() => setPacienteParaNotas(pac)}
+                          style={{
+                            padding: '5px 10px',
+                            backgroundColor: '#FFF2B6',
+                            color: '#634706',
+                            border: '1px solid #F6E38F',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            boxShadow: '0 2px 4px rgba(246, 227, 143, 0.3)'
+                          }}
+                          title="Ver y agregar notas clínicas / evolución médica"
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                          </svg>
+                          Notas ({pac.total_notas || (pac.notas_medicas ? pac.notas_medicas.length : 0)})
+                        </button>
+
                         {editandoPaciente !== pac.id && (
                           <button
                             onClick={() => {
@@ -879,6 +909,22 @@ export default function DashboardView({
                         }}
                       >
                         + Archivo
+                      </button>
+                      <button
+                        onClick={() => setPacienteParaNotas(pac)}
+                        style={{
+                          padding: '6px 10px',
+                          backgroundColor: '#FFF2B6',
+                          color: '#634706',
+                          border: '1px solid #F6E38F',
+                          borderRadius: '5px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          cursor: 'pointer'
+                        }}
+                        title="Ver y redactar notas clínicas"
+                      >
+                        Notas ({pac.total_notas || (pac.notas_medicas ? pac.notas_medicas.length : 0)})
                       </button>
                       <button
                         onClick={() => {
@@ -1412,6 +1458,18 @@ export default function DashboardView({
             </div>
           </div>
         </div>
+      )}
+
+      {/* MODAL DE NOTAS MÉDICAS (MÉDICO / ADMIN) */}
+      {pacienteParaNotas && (
+        <NotasMedicasModal
+          paciente={pacienteParaNotas}
+          usuario={usuario}
+          onClose={() => setPacienteParaNotas(null)}
+          onNotaAgregada={() => {
+            cargarDatos(false)
+          }}
+        />
       )}
     </>
   )

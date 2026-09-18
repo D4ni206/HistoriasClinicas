@@ -9,6 +9,7 @@ import DashboardView from './views/DashboardView'
 import NuevaHistoriaView from './views/NuevaHistoriaView'
 import UsuariosView from './views/UsuariosView'
 import ConfiguracionView from './views/ConfiguracionView'
+import SignosVitalesView from './views/SignosVitalesView'
 
 function AppContent() {
   const navigate = useNavigate()
@@ -374,6 +375,11 @@ function AppContent() {
   const totalTextos = todosLosDocumentos.filter(d => esTexto(d.nombre_archivo)).length
   const totalArchivosSistema = pacientes.reduce((acc, p) => acc + (p.total_documentos || 0), 0)
 
+  const rolRaw = (usuario?.rol || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+  const esAdmin = rolRaw.includes('admin')
+  const esMedico = rolRaw.includes('medico')
+  const esEnfermera = rolRaw.includes('enfermer')
+
   // Si no hay sesión iniciada
   if (!usuario) {
     if (location.pathname !== '/login') {
@@ -383,15 +389,20 @@ function AppContent() {
       <LoginView
         onLoginSuccess={(u) => {
           setUsuario(u)
-          navigate('/dashboard')
+          const r = (u?.rol || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+          if (r.includes('enfermer')) {
+            navigate('/signosvitales')
+          } else {
+            navigate('/dashboard')
+          }
         }}
       />
     )
   }
 
-  // Si ya tiene sesión e intenta entrar a /login, redirigir al dashboard
+  // Si ya tiene sesión e intenta entrar a /login, redirigir según rol
   if (location.pathname === '/login') {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={esEnfermera ? "/signosvitales" : "/dashboard"} replace />
   }
 
   return (
@@ -454,100 +465,131 @@ function AppContent() {
         )}
 
         <Routes>
-          {/* Ruta Dashboard */}
+          {/* Ruta Dashboard (Médico y Administrador) */}
           <Route
             path="/dashboard"
             element={
-              <DashboardView
-                pacientes={pacientes}
-                pacientesFiltrados={pacientesFiltrados}
-                todosLosDocumentos={todosLosDocumentos}
-                documentosFiltradosTabla={documentosFiltradosTabla}
-                totalPdfs={totalPdfs}
-                totalDocx={totalDocx}
-                totalImagenes={totalImagenes}
-                totalTextos={totalTextos}
-                totalArchivosSistema={totalArchivosSistema}
-                busquedaDni={busquedaDni}
-                setBusquedaDni={setBusquedaDni}
-                vistaDashboard={vistaDashboard}
-                setVistaDashboard={setVistaDashboard}
-                filtroTipoDoc={filtroTipoDoc}
-                setFiltroTipoDoc={setFiltroTipoDoc}
-                carpetasAbiertas={carpetasAbiertas}
-                setCarpetasAbiertas={setCarpetasAbiertas}
-                toggleCarpeta={toggleCarpeta}
-                expandirTodas={expandirTodas}
-                colapsarTodas={colapsarTodas}
-                agregarArchivoACarpeta={agregarArchivoACarpeta}
-                editandoPaciente={editandoPaciente}
-                setEditandoPaciente={setEditandoPaciente}
-                nuevoDni={nuevoDni}
-                setNuevoDni={setNuevoDni}
-                handleGuardarDni={handleGuardarDni}
-                handleEliminarPaciente={handleEliminarPaciente}
-                handleEliminarDocumento={handleEliminarDocumento}
-                documentoEnVista={documentoEnVista}
-                setDocumentoEnVista={setDocumentoEnVista}
-                loading={loading}
-                cargarDatos={cargarDatos}
-              />
+              esEnfermera ? (
+                <Navigate to="/signosvitales" replace />
+              ) : (
+                <DashboardView
+                  pacientes={pacientes}
+                  pacientesFiltrados={pacientesFiltrados}
+                  todosLosDocumentos={todosLosDocumentos}
+                  documentosFiltradosTabla={documentosFiltradosTabla}
+                  totalPdfs={totalPdfs}
+                  totalDocx={totalDocx}
+                  totalImagenes={totalImagenes}
+                  totalTextos={totalTextos}
+                  totalArchivosSistema={totalArchivosSistema}
+                  busquedaDni={busquedaDni}
+                  setBusquedaDni={setBusquedaDni}
+                  vistaDashboard={vistaDashboard}
+                  setVistaDashboard={setVistaDashboard}
+                  filtroTipoDoc={filtroTipoDoc}
+                  setFiltroTipoDoc={setFiltroTipoDoc}
+                  carpetasAbiertas={carpetasAbiertas}
+                  setCarpetasAbiertas={setCarpetasAbiertas}
+                  toggleCarpeta={toggleCarpeta}
+                  expandirTodas={expandirTodas}
+                  colapsarTodas={colapsarTodas}
+                  agregarArchivoACarpeta={agregarArchivoACarpeta}
+                  editandoPaciente={editandoPaciente}
+                  setEditandoPaciente={setEditandoPaciente}
+                  nuevoDni={nuevoDni}
+                  setNuevoDni={setNuevoDni}
+                  handleGuardarDni={handleGuardarDni}
+                  handleEliminarPaciente={handleEliminarPaciente}
+                  handleEliminarDocumento={handleEliminarDocumento}
+                  documentoEnVista={documentoEnVista}
+                  setDocumentoEnVista={setDocumentoEnVista}
+                  loading={loading}
+                  cargarDatos={cargarDatos}
+                  usuario={usuario}
+                />
+              )
             }
           />
 
-          {/* Rutas para Agregar Historia */}
+          {/* Rutas para Agregar Historia (Médico y Administrador - Restringido para Enfermera) */}
           <Route
             path="/agregarhistoria"
             element={
-              <NuevaHistoriaView
-                dni={dni}
-                setDni={setDni}
-                file={file}
-                setFile={setFile}
-                fileInputRef={fileInputRef}
-                subiendo={subiendo}
-                pacientes={pacientes}
-                handleUpload={handleUpload}
-              />
+              esEnfermera ? (
+                <Navigate to="/signosvitales" replace />
+              ) : (
+                <NuevaHistoriaView
+                  dni={dni}
+                  setDni={setDni}
+                  file={file}
+                  setFile={setFile}
+                  fileInputRef={fileInputRef}
+                  subiendo={subiendo}
+                  pacientes={pacientes}
+                  handleUpload={handleUpload}
+                />
+              )
             }
           />
           <Route path="/nueva-historia" element={<Navigate to="/agregarhistoria" replace />} />
 
-          {/* Ruta Crear / Gestionar Usuarios */}
+          {/* Ruta Signos Vitales / Triaje (Enfermera y Administrador) */}
+          <Route
+            path="/signosvitales"
+            element={
+              <SignosVitalesView
+                pacientes={pacientes}
+                usuario={usuario}
+                notificar={notificar}
+                cargarDatos={cargarDatos}
+              />
+            }
+          />
+          <Route path="/triaje" element={<Navigate to="/signosvitales" replace />} />
+
+          {/* Ruta Crear / Gestionar Usuarios (Exclusivo Administrador) */}
           <Route
             path="/usuarios"
             element={
-              <UsuariosView
-                usuarios={usuarios}
-                cargandoUsuarios={cargandoUsuarios}
-                formUsuario={formUsuario}
-                setFormUsuario={setFormUsuario}
-                creandoUsuario={creandoUsuario}
-                handleCrearUsuario={handleCrearUsuario}
-                handleEliminarUsuario={handleEliminarUsuario}
-                cargarUsuarios={cargarUsuarios}
-              />
+              esAdmin ? (
+                <UsuariosView
+                  usuarios={usuarios}
+                  cargandoUsuarios={cargandoUsuarios}
+                  formUsuario={formUsuario}
+                  setFormUsuario={setFormUsuario}
+                  creandoUsuario={creandoUsuario}
+                  handleCrearUsuario={handleCrearUsuario}
+                  handleEliminarUsuario={handleEliminarUsuario}
+                  cargarUsuarios={cargarUsuarios}
+                />
+              ) : (
+                <Navigate to={esEnfermera ? "/signosvitales" : "/dashboard"} replace />
+              )
             }
           />
 
-          {/* Ruta Configuración */}
+          {/* Ruta Configuración (Exclusivo Administrador) */}
           <Route
             path="/configuracion"
             element={
-              <ConfiguracionView
-                diagnostico={diagnostico}
-                cargandoDiagnostico={cargandoDiagnostico}
-                cargarDiagnostico={cargarDiagnostico}
-                pacientes={pacientes}
-                totalArchivosSistema={totalArchivosSistema}
-                usuario={usuario}
-              />
+              esAdmin ? (
+                <ConfiguracionView
+                  diagnostico={diagnostico}
+                  cargandoDiagnostico={cargandoDiagnostico}
+                  cargarDiagnostico={cargarDiagnostico}
+                  pacientes={pacientes}
+                  totalArchivosSistema={totalArchivosSistema}
+                  usuario={usuario}
+                />
+              ) : (
+                <Navigate to={esEnfermera ? "/signosvitales" : "/dashboard"} replace />
+              )
             }
           />
 
-          {/* Redirección por defecto */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Redirección por defecto según rol */}
+          <Route path="/" element={<Navigate to={esEnfermera ? "/signosvitales" : "/dashboard"} replace />} />
+          <Route path="*" element={<Navigate to={esEnfermera ? "/signosvitales" : "/dashboard"} replace />} />
         </Routes>
       </main>
 

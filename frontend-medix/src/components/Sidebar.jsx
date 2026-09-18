@@ -5,10 +5,34 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
   const navigate = useNavigate()
   const currentPath = location.pathname
 
+  const rolRaw = (usuario?.rol || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+  const esAdmin = rolRaw.includes('admin')
+  const esMedico = rolRaw.includes('medico')
+  const esEnfermera = rolRaw.includes('enfermer')
+
   const esDashboard = currentPath === '/dashboard' || currentPath === '/'
   const esNuevaHistoria = currentPath === '/agregarhistoria' || currentPath === '/nueva-historia'
+  const esSignosVitales = currentPath === '/signosvitales' || currentPath === '/triaje'
   const esUsuarios = currentPath === '/usuarios'
   const esConfiguracion = currentPath === '/configuracion'
+
+  // Colores de la tarjeta de usuario según su rol
+  let userBadgeBg = '#FFF2B6'
+  let userBadgeColor = '#634706'
+  let userBadgeBorder = '#F6E38F'
+  if (esAdmin) {
+    userBadgeBg = '#F3C7B6'
+    userBadgeColor = '#70220e'
+    userBadgeBorder = '#e19d85'
+  } else if (esMedico) {
+    userBadgeBg = '#A7C7D9'
+    userBadgeColor = '#0c354e'
+    userBadgeBorder = '#84aabd'
+  } else if (esEnfermera) {
+    userBadgeBg = '#CFE7D6'
+    userBadgeColor = '#134e2b'
+    userBadgeBorder = '#9ec6ac'
+  }
 
   return (
     <aside style={{
@@ -56,8 +80,8 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
 
         {/* Tarjeta de Sesión de Usuario */}
         <div style={{
-          backgroundColor: '#FFF2B6',
-          border: '1px solid #F6E38F',
+          backgroundColor: userBadgeBg,
+          border: `1px solid ${userBadgeBorder}`,
           borderRadius: '10px',
           padding: '10px 12px',
           marginBottom: '16px',
@@ -67,20 +91,29 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
           gap: '8px'
         }}>
           <div>
-            <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', color: '#634706', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', color: userBadgeColor, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Usuario Conectado
             </span>
             <strong style={{ fontSize: '13px', color: '#0f2942' }}>
               {usuario?.username || 'admin'}
             </strong>
-            <span style={{ fontSize: '11px', color: '#634706', marginLeft: '4px' }}>
-              ({usuario?.rol || 'Personal'})
+            <span style={{
+              fontSize: '11px',
+              fontWeight: '700',
+              color: userBadgeColor,
+              marginLeft: '6px',
+              backgroundColor: '#ffffff',
+              padding: '1px 6px',
+              borderRadius: '4px',
+              border: `1px solid ${userBadgeBorder}`
+            }}>
+              {usuario?.rol || 'Personal'}
             </span>
           </div>
           <button
             onClick={onLogout}
             style={{
-              backgroundColor: '#F3C7B6',
+              backgroundColor: '#ffffff',
               color: '#70220e',
               border: '1px solid #e19d85',
               padding: '5px 9px',
@@ -96,137 +129,176 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
           </button>
         </div>
 
-        {/* MENÚ DE HERRAMIENTAS / RUTAS */}
+        {/* MENÚ DE HERRAMIENTAS / RUTAS POR ROL */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
           <span style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.8px', paddingLeft: '4px' }}>
-            Herramientas
+            Herramientas Habilitadas
           </span>
 
-          {/* 1. DASHBOARD (/dashboard) */}
-          <button
-            onClick={() => navigate('/dashboard')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '11px 14px',
-              borderRadius: '8px',
-              border: esDashboard ? '1.5px solid #84aabd' : '1px solid #e2e8f0',
-              backgroundColor: esDashboard ? '#A7C7D9' : '#ffffff',
-              color: esDashboard ? '#0c354e' : '#334155',
-              fontWeight: esDashboard ? '700' : '600',
-              fontSize: '13px',
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'all 0.15s ease',
-              boxShadow: esDashboard ? '0 2px 6px rgba(167, 199, 217, 0.45)' : 'none'
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span>Dashboard</span>
-              <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Expedientes y carpetas</span>
-            </div>
-          </button>
+          {/* 1. DASHBOARD (MÉDICO y ADMINISTRADOR) */}
+          {(esAdmin || esMedico || !esEnfermera) && (
+            <button
+              onClick={() => navigate('/dashboard')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '11px 14px',
+                borderRadius: '8px',
+                border: esDashboard ? '1.5px solid #84aabd' : '1px solid #e2e8f0',
+                backgroundColor: esDashboard ? '#A7C7D9' : '#ffffff',
+                color: esDashboard ? '#0c354e' : '#334155',
+                fontWeight: esDashboard ? '700' : '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+                boxShadow: esDashboard ? '0 2px 6px rgba(167, 199, 217, 0.45)' : 'none'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span>Dashboard</span>
+                <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Expedientes y notas</span>
+              </div>
+            </button>
+          )}
 
-          {/* 2. AGREGAR NUEVA HISTORIA (/agregarhistoria) */}
-          <button
-            onClick={() => navigate('/agregarhistoria')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '11px 14px',
-              borderRadius: '8px',
-              border: esNuevaHistoria ? '1.5px solid #9ec6ac' : '1px solid #e2e8f0',
-              backgroundColor: esNuevaHistoria ? '#CFE7D6' : '#ffffff',
-              color: esNuevaHistoria ? '#134e2b' : '#334155',
-              fontWeight: esNuevaHistoria ? '700' : '600',
-              fontSize: '13px',
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'all 0.15s ease',
-              boxShadow: esNuevaHistoria ? '0 2px 6px rgba(158, 198, 172, 0.45)' : 'none'
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="12" y1="18" x2="12" y2="12"></line>
-              <line x1="9" y1="15" x2="15" y2="15"></line>
-            </svg>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span>Agregar nueva historia</span>
-              <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Subir documentos clínicos</span>
-            </div>
-          </button>
+          {/* 2. AGREGAR NUEVA HISTORIA (MÉDICO y ADMINISTRADOR - NO ENFERMERA) */}
+          {(esAdmin || esMedico) && (
+            <button
+              onClick={() => navigate('/agregarhistoria')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '11px 14px',
+                borderRadius: '8px',
+                border: esNuevaHistoria ? '1.5px solid #F6E38F' : '1px solid #e2e8f0',
+                backgroundColor: esNuevaHistoria ? '#FFF2B6' : '#ffffff',
+                color: esNuevaHistoria ? '#634706' : '#334155',
+                fontWeight: esNuevaHistoria ? '700' : '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+                boxShadow: esNuevaHistoria ? '0 2px 6px rgba(246, 227, 143, 0.45)' : 'none'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+              </svg>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span>Agregar nueva historia</span>
+                <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Subir documentos clínicos</span>
+              </div>
+            </button>
+          )}
 
-          {/* 3. CREAR USUARIOS (/usuarios) */}
-          <button
-            onClick={() => navigate('/usuarios')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '11px 14px',
-              borderRadius: '8px',
-              border: esUsuarios ? '1.5px solid #F6E38F' : '1px solid #e2e8f0',
-              backgroundColor: esUsuarios ? '#FFF2B6' : '#ffffff',
-              color: esUsuarios ? '#634706' : '#334155',
-              fontWeight: esUsuarios ? '700' : '600',
-              fontSize: '13px',
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'all 0.15s ease',
-              boxShadow: esUsuarios ? '0 2px 6px rgba(246, 227, 143, 0.45)' : 'none'
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="8.5" cy="7" r="4"></circle>
-              <line x1="20" y1="8" x2="20" y2="14"></line>
-              <line x1="23" y1="11" x2="17" y2="11"></line>
-            </svg>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span>Crear usuarios</span>
-              <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Personal y roles</span>
-            </div>
-          </button>
+          {/* 3. SIGNOS VITALES / TRIAJE (ENFERMERA y ADMINISTRADOR) */}
+          {(esAdmin || esEnfermera) && (
+            <button
+              onClick={() => navigate('/signosvitales')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '11px 14px',
+                borderRadius: '8px',
+                border: esSignosVitales ? '1.5px solid #9ec6ac' : '1px solid #e2e8f0',
+                backgroundColor: esSignosVitales ? '#CFE7D6' : '#ffffff',
+                color: esSignosVitales ? '#134e2b' : '#334155',
+                fontWeight: esSignosVitales ? '700' : '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+                boxShadow: esSignosVitales ? '0 2px 6px rgba(158, 198, 172, 0.45)' : 'none'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+              </svg>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span>Signos Vitales</span>
+                <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Presión, peso y triaje</span>
+              </div>
+            </button>
+          )}
 
-          {/* 4. CONFIGURACIÓN (/configuracion) */}
-          <button
-            onClick={() => navigate('/configuracion')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              padding: '11px 14px',
-              borderRadius: '8px',
-              border: esConfiguracion ? '1.5px solid #e19d85' : '1px solid #e2e8f0',
-              backgroundColor: esConfiguracion ? '#F3C7B6' : '#ffffff',
-              color: esConfiguracion ? '#70220e' : '#334155',
-              fontWeight: esConfiguracion ? '700' : '600',
-              fontSize: '13px',
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'all 0.15s ease',
-              boxShadow: esConfiguracion ? '0 2px 6px rgba(243, 199, 182, 0.45)' : 'none'
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span>Configuración</span>
-              <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Diagnóstico y servicios</span>
-            </div>
-          </button>
+          {/* 4. CREAR USUARIOS (SOLO ADMINISTRADOR) */}
+          {esAdmin && (
+            <button
+              onClick={() => navigate('/usuarios')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '11px 14px',
+                borderRadius: '8px',
+                border: esUsuarios ? '1.5px solid #F6E38F' : '1px solid #e2e8f0',
+                backgroundColor: esUsuarios ? '#FFF2B6' : '#ffffff',
+                color: esUsuarios ? '#634706' : '#334155',
+                fontWeight: esUsuarios ? '700' : '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+                boxShadow: esUsuarios ? '0 2px 6px rgba(246, 227, 143, 0.45)' : 'none'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+              </svg>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span>Crear usuarios</span>
+                <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Personal y roles</span>
+              </div>
+            </button>
+          )}
+
+          {/* 5. CONFIGURACIÓN (SOLO ADMINISTRADOR) */}
+          {esAdmin && (
+            <button
+              onClick={() => navigate('/configuracion')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '11px 14px',
+                borderRadius: '8px',
+                border: esConfiguracion ? '1.5px solid #e19d85' : '1px solid #e2e8f0',
+                backgroundColor: esConfiguracion ? '#F3C7B6' : '#ffffff',
+                color: esConfiguracion ? '#70220e' : '#334155',
+                fontWeight: esConfiguracion ? '700' : '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+                boxShadow: esConfiguracion ? '0 2px 6px rgba(243, 199, 182, 0.45)' : 'none'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span>Configuración</span>
+                <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Diagnóstico y servicios</span>
+              </div>
+            </button>
+          )}
         </div>
 
         {/* Métricas Rápidas */}
