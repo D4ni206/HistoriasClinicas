@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { obtenerIconoArchivo, esPdf, esDocx, esImagen, esTexto } from '../utils/fileHelpers'
 import { API_BASE } from '../api/config'
 import NotasMedicasModal from '../components/NotasMedicasModal'
+import PacienteCard from '../components/PacienteCard'
 
 export default function DashboardView({
   pacientes,
@@ -51,8 +52,8 @@ export default function DashboardView({
             Expedientes Clínicos Digitales
           </h2>
           <p style={{ margin: '3px 0 0 0', fontSize: '13px', color: '#64748b' }}>
+            {(vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') && (busquedaDni ? `Resultados para el DNI "${busquedaDni}": ${pacientesFiltrados.length} expedientes en tarjetas` : `Total: ${pacientesFiltrados.length} expedientes clínicos en tarjetas`)}
             {vistaDashboard === 'carpetas' && (busquedaDni ? `Resultados para el DNI "${busquedaDni}": ${pacientesFiltrados.length} carpetas` : `Total: ${pacientes.length} carpetas registradas`)}
-            {vistaDashboard === 'cuadricula' && `Vista en archivador digital · ${pacientesFiltrados.length} carpetas clínicas`}
             {vistaDashboard === 'tabla-documentos' && `Listado consolidado · ${documentosFiltradosTabla.length} de ${todosLosDocumentos.length} documentos clínicos`}
             {vistaDashboard === 'analitica' && `Estadísticas globales, distribución documental y actividad reciente`}
           </p>
@@ -118,7 +119,35 @@ export default function DashboardView({
       }}>
         {/* Botonera de Vistas */}
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          {/* 1. Vista Carpetas (Acordeón) */}
+          {/* 1. Vista Tarjetas / Cards */}
+          <button
+            onClick={() => setVistaDashboard('cards')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '7px',
+              padding: '7px 14px',
+              borderRadius: '6px',
+              border: (vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') ? '1.5px solid #4cc799' : '1px solid transparent',
+              backgroundColor: (vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') ? '#6FE3B4' : '#f8fafc',
+              color: (vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') ? '#0a5438' : '#64748b',
+              fontWeight: (vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') ? '700' : '600',
+              fontSize: '12px',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              boxShadow: (vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') ? '0 2px 5px rgba(111, 227, 180, 0.4)' : 'none'
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Tarjetas (Cards)</span>
+          </button>
+
+          {/* 2. Vista Carpetas (Acordeón) */}
           <button
             onClick={() => setVistaDashboard('carpetas')}
             style={{
@@ -141,34 +170,6 @@ export default function DashboardView({
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
             </svg>
             <span>Carpetas (Acordeón)</span>
-          </button>
-
-          {/* 2. Vista Cuadrícula (Archivador) */}
-          <button
-            onClick={() => setVistaDashboard('cuadricula')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '7px',
-              padding: '7px 14px',
-              borderRadius: '6px',
-              border: vistaDashboard === 'cuadricula' ? '1.5px solid #4cc799' : '1px solid transparent',
-              backgroundColor: vistaDashboard === 'cuadricula' ? '#6FE3B4' : '#f8fafc',
-              color: vistaDashboard === 'cuadricula' ? '#0a5438' : '#64748b',
-              fontWeight: vistaDashboard === 'cuadricula' ? '700' : '600',
-              fontSize: '12px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              boxShadow: vistaDashboard === 'cuadricula' ? '0 2px 5px rgba(111, 227, 180, 0.4)' : 'none'
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-            <span>Cuadrícula (Archivador)</span>
           </button>
 
           {/* 3. Vista Tabla General de Documentos */}
@@ -722,9 +723,9 @@ export default function DashboardView({
       )}
 
       {/* =================================================================== */}
-      {/* 2. VISTA CUADRÍCULA (ARCHIVADOR DIGITAL POR TARJETAS) */}
+      {/* 1 / 2. VISTA TARJETAS (CARDS DE REGISTROS CLÍNICOS) */}
       {/* =================================================================== */}
-      {vistaDashboard === 'cuadricula' && (
+      {(vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') && (
         <>
           {/* Barra de Filtro Rápido */}
           <div style={{
@@ -743,7 +744,7 @@ export default function DashboardView({
             <div style={{ flex: '1 1 280px', position: 'relative' }}>
               <input
                 type="text"
-                placeholder="Filtrar archivador por DNI..."
+                placeholder="Filtrar registros por DNI..."
                 value={busquedaDni}
                 onChange={(e) => setBusquedaDni(e.target.value)}
                 style={{
@@ -762,209 +763,36 @@ export default function DashboardView({
               </svg>
             </div>
             <span style={{ fontSize: '12px', fontWeight: '700', color: '#0a5438' }}>
-              {pacientesFiltrados.length} carpetas visibles en el archivador
+              {pacientesFiltrados.length} expedientes en vista de tarjetas
             </span>
           </div>
 
-          {/* Grid de Carpetas Estilo Archivador */}
+          {/* Grid de Registros con Componente PacienteCard */}
           {pacientesFiltrados.length === 0 ? (
             <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: '12px', border: '2px dashed #cbd5e1', color: '#64748b' }}>
-              No se encontraron carpetas coincidentes en la vista de cuadrícula.
+              No se encontraron registros coincidentes en la vista de tarjetas.
             </div>
           ) : (
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
-              gap: '16px',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
+              gap: '20px',
               paddingBottom: '30px'
             }}>
-              {pacientesFiltrados.map((pac) => {
-                const docs = pac.documentos || []
-                const countPdfs = docs.filter(d => esPdf(d.nombre_archivo)).length
-                const countDocx = docs.filter(d => esDocx(d.nombre_archivo)).length
-                const countImg = docs.filter(d => esImagen(d.nombre_archivo)).length
-                const countTxt = docs.filter(d => esTexto(d.nombre_archivo)).length
-
-                return (
-                  <div
-                    key={pac.id}
-                    style={{
-                      backgroundColor: '#ffffff',
-                      border: '1.5px solid #7FD6FF',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      boxShadow: '0 3px 10px rgba(127, 214, 255, 0.2)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      transition: 'transform 0.15s ease, box-shadow 0.15s ease'
-                    }}
-                  >
-                    <div>
-                      {/* Cabecera de la tarjeta */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '8px',
-                            backgroundColor: '#7FD6FF',
-                            color: '#104060',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                            </svg>
-                          </div>
-                          <div>
-                            <strong style={{ fontSize: '15px', color: '#2B4A66', display: 'block' }}>
-                              DNI: {pac.dni}
-                            </strong>
-                            <span style={{ fontSize: '11px', color: '#64748b' }}>
-                              Expediente #{pac.id}
-                            </span>
-                          </div>
-                        </div>
-                        <span style={{
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          padding: '3px 8px',
-                          borderRadius: '12px',
-                          backgroundColor: docs.length > 0 ? '#6FE3B4' : '#FFD6E8',
-                          color: docs.length > 0 ? '#0a5438' : '#802048',
-                          border: docs.length > 0 ? '1px solid #4cc799' : '1px solid #f4a7c7'
-                        }}>
-                          {docs.length} doc{docs.length !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-
-                      {/* Desglose de tipos */}
-                      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                        {countPdfs > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#FFD6E8', color: '#802048', padding: '1px 6px', borderRadius: '4px' }}>{countPdfs} PDF</span>}
-                        {countDocx > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#7FD6FF', color: '#104060', padding: '1px 6px', borderRadius: '4px' }}>{countDocx} DOCX</span>}
-                        {countImg > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#6FE3B4', color: '#0a5438', padding: '1px 6px', borderRadius: '4px' }}>{countImg} IMG</span>}
-                        {countTxt > 0 && <span style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#FFF6FB', color: '#2B4A66', padding: '1px 6px', borderRadius: '4px' }}>{countTxt} TXT</span>}
-                        {docs.length === 0 && <span style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>Sin archivos adjuntos</span>}
-                      </div>
-
-                      {/* Vista previa de los primeros 3 documentos */}
-                      {docs.length > 0 && (
-                        <div style={{ backgroundColor: '#f8fafc', borderRadius: '6px', padding: '8px', marginBottom: '14px', fontSize: '12px' }}>
-                          <span style={{ fontSize: '10px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
-                            Contenido reciente:
-                          </span>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                            {docs.slice(0, 3).map((d) => (
-                              <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                                  {obtenerIconoArchivo(d.nombre_archivo)}
-                                  <span style={{ fontSize: '11px', color: '#334155', textOverflow: 'ellipsis', overflow: 'hidden' }}>
-                                    {d.nombre_archivo}
-                                  </span>
-                                </div>
-                                <button
-                                  onClick={() => setDocumentoEnVista(d)}
-                                  style={{
-                                    padding: '2px 7px',
-                                    backgroundColor: '#6FE3B4',
-                                    color: '#0a5438',
-                                    border: '1px solid #4cc799',
-                                    borderRadius: '4px',
-                                    fontSize: '10px',
-                                    fontWeight: '700',
-                                    cursor: 'pointer'
-                                  }}
-                                  title="Ver en visor lateral"
-                                >
-                                  Ver
-                                </button>
-                              </div>
-                            ))}
-                            {docs.length > 3 && (
-                              <span style={{ fontSize: '10px', color: '#64748b', textAlign: 'center', marginTop: '2px' }}>
-                                +{docs.length - 3} archivo(s) más
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Botones inferiores de la tarjeta */}
-                    <div style={{ display: 'flex', gap: '6px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
-                      <button
-                        onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
-                        style={{
-                          flex: 1,
-                          padding: '6px',
-                          backgroundColor: '#7FD6FF',
-                          color: '#104060',
-                          border: '1px solid #54bde8',
-                          borderRadius: '5px',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        + Archivo
-                      </button>
-                      <button
-                        onClick={() => setPacienteParaNotas(pac)}
-                        style={{
-                          padding: '6px 10px',
-                          backgroundColor: '#FFF6FB',
-                          color: '#2B4A66',
-                          border: '1px solid #e2c5d5',
-                          borderRadius: '5px',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          cursor: 'pointer'
-                        }}
-                        title="Ver y redactar notas clínicas"
-                      >
-                        Notas ({pac.total_notas || (pac.notas_medicas ? pac.notas_medicas.length : 0)})
-                      </button>
-                      <button
-                        onClick={() => {
-                          setVistaDashboard('carpetas')
-                          setCarpetasAbiertas(prev => new Set([...prev, pac.id]))
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: '6px',
-                          backgroundColor: '#ffffff',
-                          color: '#334155',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '5px',
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Ver Carpeta
-                      </button>
-                      <button
-                        onClick={() => handleEliminarPaciente(pac.id, pac.dni)}
-                        style={{
-                          padding: '6px 8px',
-                          backgroundColor: '#FFD6E8',
-                          color: '#802048',
-                          border: '1px solid #f4a7c7',
-                          borderRadius: '5px',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          cursor: 'pointer'
-                        }}
-                        title="Eliminar expediente"
-                      >
-                        Borrar
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
+              {pacientesFiltrados.map((pac) => (
+                <PacienteCard
+                  key={pac.id}
+                  paciente={pac}
+                  onVerDocumento={setDocumentoEnVista}
+                  onAgregarArchivo={agregarArchivoACarpeta}
+                  onAbrirNotas={setPacienteParaNotas}
+                  onVerCarpeta={(p) => {
+                    setVistaDashboard('carpetas')
+                    setCarpetasAbiertas(prev => new Set([...prev, p.id]))
+                  }}
+                  onEliminar={handleEliminarPaciente}
+                />
+              ))}
             </div>
           )}
         </>

@@ -59,8 +59,8 @@ function AppContent() {
   const [diagnostico, setDiagnostico] = useState(null)
   const [cargandoDiagnostico, setCargandoDiagnostico] = useState(false)
 
-  // Modalidad activa dentro del Dashboard ('carpetas' | 'cuadricula' | 'tabla-documentos' | 'analitica')
-  const [vistaDashboard, setVistaDashboard] = useState('carpetas')
+  // Modalidad activa dentro del Dashboard ('cards' | 'carpetas' | 'tabla-documentos' | 'analitica')
+  const [vistaDashboard, setVistaDashboard] = useState('cards')
   // Filtro por tipo de documento en la vista de tabla general ('todos' | 'pdf' | 'docx' | 'imagen' | 'texto')
   const [filtroTipoDoc, setFiltroTipoDoc] = useState('todos')
 
