@@ -749,778 +749,905 @@ export default function App() {
   }
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '30px 20px', fontFamily: 'system-ui, -apple-system, sans-serif', color: '#1f2937' }}>
-      {/* Encabezado Principal */}
-      <header style={{ marginBottom: '24px', borderBottom: '2px solid #A7C7D9', paddingBottom: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+    <div style={{
+      display: 'flex',
+      width: '100vw',
+      height: '100vh',
+      overflow: 'hidden',
+      backgroundColor: '#f8fafc',
+      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      color: '#1e293b'
+    }}>
+      {/* ========================================================================= */}
+      {/* 1. PANEL IZQUIERDO: HERRAMIENTAS Y NAVEGACIÓN */}
+      {/* ========================================================================= */}
+      <aside style={{
+        width: '330px',
+        flex: '0 0 330px',
+        height: '100vh',
+        backgroundColor: '#ffffff',
+        borderRight: '1.5px solid #A7C7D9',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        boxSizing: 'border-box',
+        zIndex: 20
+      }}>
+        {/* Contenido con scroll independiente */}
+        <div style={{ padding: '20px 18px', overflowY: 'auto', flex: 1 }}>
+          {/* Cabecera Institucional */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px', paddingBottom: '14px', borderBottom: '1.5px solid #A7C7D9' }}>
             <img
               src="/logo_hospital.png"
               alt="Hospital San Juan de Dios de Pisco"
               style={{
-                height: '56px',
+                height: '46px',
                 width: 'auto',
                 objectFit: 'contain',
                 backgroundColor: '#ffffff',
-                borderRadius: '8px',
-                padding: '4px 8px',
+                borderRadius: '6px',
+                padding: '2px 4px',
                 border: '1.5px solid #A7C7D9',
-                boxShadow: '0 2px 6px rgba(167, 199, 217, 0.3)'
+                boxShadow: '0 2px 5px rgba(167, 199, 217, 0.3)'
               }}
             />
             <div>
-              <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f2942', margin: '0 0 3px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>Medix</span>
-                <span style={{ fontSize: '16px', fontWeight: '500', color: '#4b5563' }}>| Expedientes Clínicos Digitales</span>
+              <h1 style={{ fontSize: '18px', fontWeight: '800', color: '#0f2942', margin: 0, lineHeight: '1.2' }}>
+                Medix
               </h1>
-              <p style={{ margin: 0, color: '#6b7280', fontSize: '13px' }}>
-                Hospital San Juan de Dios de Pisco · UE-404
+              <p style={{ margin: '2px 0 0 0', color: '#64748b', fontSize: '11px', fontWeight: '600' }}>
+                HOSPITAL SAN JUAN DE DIOS · PISCO
               </p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ backgroundColor: '#A7C7D9', color: '#0c354e', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '700', border: '1px solid #84aabd' }}>
-              Carpetas: {pacientes.length}
-            </span>
-            <span style={{ backgroundColor: '#CFE7D6', color: '#134e2b', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '700', border: '1px solid #9ec6ac' }}>
-              Documentos: {totalArchivosSistema}
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px', paddingLeft: '8px', borderLeft: '2px solid #A7C7D9' }}>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: '#634706', backgroundColor: '#FFF2B6', padding: '6px 12px', borderRadius: '8px', border: '1px solid #F6E38F' }}>
-                Usuario: {usuario.username} ({usuario.rol || 'Personal'})
+              <span style={{ fontSize: '10px', color: '#0c354e', backgroundColor: '#CFE7D6', padding: '1px 6px', borderRadius: '4px', fontWeight: '700', border: '1px solid #9ec6ac' }}>
+                UE-404
               </span>
-              <button
-                onClick={() => {
-                  localStorage.removeItem('medix_usuario')
-                  setUsuario(null)
-                }}
-                style={{
-                  backgroundColor: '#F3C7B6',
-                  color: '#70220e',
-                  border: '1px solid #e19d85',
-                  padding: '6px 12px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: '700',
-                  cursor: 'pointer'
-                }}
-                title="Cerrar sesión y volver a la pantalla de Login"
-              >
-                Cerrar Sesión
-              </button>
             </div>
           </div>
-        </div>
-      </header>
 
-      {/* Alerta de Estado */}
-      {mensaje.texto && (
-        <div style={{
-          padding: '12px 18px',
-          borderRadius: '8px',
-          marginBottom: '20px',
-          backgroundColor: mensaje.tipo === 'exito' ? '#CFE7D6' : '#F3C7B6',
-          color: mensaje.tipo === 'exito' ? '#134e2b' : '#70220e',
-          border: `1px solid ${mensaje.tipo === 'exito' ? '#9ec6ac' : '#e19d85'}`,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
-        }}>
-          <span style={{ fontWeight: '600' }}>{mensaje.texto}</span>
-          <button onClick={() => setMensaje({ tipo: '', texto: '' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: 'inherit' }}>X</button>
-        </div>
-      )}
-
-      {/* Panel de Subida con Detección Automática de Carpeta */}
-      <div style={{
-        background: '#ffffff',
-        border: '1.5px solid #A7C7D9',
-        borderRadius: '12px',
-        padding: '22px',
-        marginBottom: '28px',
-        boxShadow: '0 4px 12px rgba(167, 199, 217, 0.2)'
-      }}>
-        <h2 style={{ fontSize: '17px', fontWeight: '700', margin: '0 0 14px 0', color: '#0f2942', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>Subir Documento a una Carpeta</span>
-        </h2>
-
-        <form onSubmit={handleUpload}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
-            <div style={{ flex: '1 1 220px' }}>
-              <input
-                type="text"
-                placeholder="DNI del Paciente (Ej: 12345678)"
-                value={dni}
-                onChange={(e) => setDni(e.target.value)}
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  border: '1.5px solid #d1d5db',
-                  fontSize: '14px',
-                  outline: 'none'
-                }}
-                onFocus={(e) => e.target.style.borderColor = '#A7C7D9'}
-                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-                required
-              />
+          {/* Tarjeta de Sesión de Usuario */}
+          <div style={{
+            backgroundColor: '#FFF2B6',
+            border: '1px solid #F6E38F',
+            borderRadius: '10px',
+            padding: '10px 12px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px'
+          }}>
+            <div>
+              <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', color: '#634706', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Usuario Conectado
+              </span>
+              <strong style={{ fontSize: '13px', color: '#0f2942' }}>
+                {usuario.username}
+              </strong>
+              <span style={{ fontSize: '11px', color: '#634706', marginLeft: '4px' }}>
+                ({usuario.rol || 'Personal'})
+              </span>
             </div>
-
-            <div style={{ flex: '2 1 320px' }}>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/msword, image/*, text/plain"
-                onChange={(e) => setFile(e.target.files[0])}
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  padding: '8px',
-                  borderRadius: '8px',
-                  border: '1.5px solid #d1d5db',
-                  fontSize: '14px',
-                  backgroundColor: '#f9fafb'
-                }}
-                required
-              />
-            </div>
-
             <button
-              type="submit"
-              disabled={subiendo}
+              onClick={() => {
+                localStorage.removeItem('medix_usuario')
+                setUsuario(null)
+              }}
               style={{
-                padding: '10px 22px',
-                backgroundColor: subiendo ? '#d5e4ec' : '#A7C7D9',
-                color: '#0c354e',
-                border: '1px solid #84aabd',
-                borderRadius: '8px',
+                backgroundColor: '#F3C7B6',
+                color: '#70220e',
+                border: '1px solid #e19d85',
+                padding: '5px 10px',
+                borderRadius: '6px',
+                fontSize: '11px',
                 fontWeight: '700',
-                cursor: subiendo ? 'not-allowed' : 'pointer',
-                fontSize: '14px',
-                boxShadow: '0 2px 6px rgba(167, 199, 217, 0.35)'
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
+              title="Cerrar sesión y volver al login"
             >
-              {subiendo ? 'Subiendo a MinIO...' : 'Guardar en Carpeta'}
+              Cerrar Sesión
             </button>
           </div>
 
-          {/* Detección en tiempo real del DNI */}
-          {dni.trim().length > 0 && (
-            <div style={{ marginTop: '12px' }}>
-              {pacienteDetectado ? (
-                <div style={{
-                  padding: '8px 14px',
-                  borderRadius: '6px',
-                  backgroundColor: '#CFE7D6',
-                  border: '1px solid #9ec6ac',
-                  color: '#134e2b',
-                  fontSize: '13px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  <span>
-                    <strong>Carpeta existente detectada:</strong> El archivo se agregará al expediente del <strong>DNI {pacienteDetectado.dni}</strong> (que contiene actualmente {pacienteDetectado.total_documentos} {pacienteDetectado.total_documentos === 1 ? 'documento' : 'documentos'}).
-                  </span>
-                </div>
-              ) : (
-                <div style={{
-                  padding: '8px 14px',
-                  borderRadius: '6px',
-                  backgroundColor: '#FFF2B6',
-                  border: '1px solid #F6E38F',
-                  color: '#634706',
-                  fontSize: '13px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}>
-                  <span>
-                    <strong>Nueva carpeta:</strong> Se creará un nuevo expediente clínico para el DNI <strong>{dni.trim()}</strong>.
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-        </form>
-      </div>
-
-      {/* Barra de Búsqueda y Herramientas */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '12px',
-        marginBottom: '18px'
-      }}>
-        {/* Buscador de DNI */}
-        <div style={{ position: 'relative', minWidth: '280px', flex: '1 1 300px' }}>
-          <input
-            type="text"
-            placeholder="Buscar carpeta por DNI..."
-            value={busquedaDni}
-            onChange={(e) => setBusquedaDni(e.target.value)}
-            style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              padding: '9px 14px 9px 36px',
-              borderRadius: '8px',
-              border: '1.5px solid #A7C7D9',
-              fontSize: '14px',
-              backgroundColor: '#ffffff',
-              outline: 'none'
-            }}
-          />
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '12px', top: '11px' }}>
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          {busquedaDni && (
-            <button
-              onClick={() => setBusquedaDni('')}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '8px',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#9ca3af',
-                fontSize: '13px',
-                fontWeight: 'bold'
-              }}
-            >
-              X
-            </button>
-          )}
-        </div>
-
-        {/* Acciones de control */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={expandirTodas}
-            style={{
-              padding: '7px 14px',
+          {/* Métricas Rápidas */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '18px' }}>
+            <div style={{
+              flex: 1,
               backgroundColor: '#A7C7D9',
               border: '1px solid #84aabd',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              color: '#0c354e'
-            }}
-          >
-            Expandir todas
-          </button>
-          <button
-            onClick={colapsarTodas}
-            style={{
-              padding: '7px 14px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              color: '#374151'
-            }}
-          >
-            Colapsar todas
-          </button>
-          <button
-            onClick={() => cargarDatos(false)}
-            style={{
-              padding: '7px 14px',
+              borderRadius: '8px',
+              padding: '8px 10px',
+              textAlign: 'center'
+            }}>
+              <span style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: '#0c354e' }}>Carpetas</span>
+              <strong style={{ fontSize: '18px', color: '#0c354e' }}>{pacientes.length}</strong>
+            </div>
+            <div style={{
+              flex: 1,
               backgroundColor: '#CFE7D6',
               border: '1px solid #9ec6ac',
-              borderRadius: '6px',
-              fontSize: '12px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              color: '#134e2b'
-            }}
-          >
-            Actualizar
-          </button>
-        </div>
-      </div>
+              borderRadius: '8px',
+              padding: '8px 10px',
+              textAlign: 'center'
+            }}>
+              <span style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: '#134e2b' }}>Documentos</span>
+              <strong style={{ fontSize: '18px', color: '#134e2b' }}>{totalArchivosSistema}</strong>
+            </div>
+          </div>
 
-      {/* LISTADO DE CARPETAS / EXPEDIENTES CLÍNICOS */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '50px 20px', color: '#6b7280' }}>
-          Cargando expedientes clínicos...
-        </div>
-      ) : pacientesFiltrados.length === 0 ? (
-        <div style={{
-          padding: '40px 20px',
-          textAlign: 'center',
-          backgroundColor: '#f9fafb',
-          border: '2px dashed #d1d5db',
-          borderRadius: '12px',
-          color: '#6b7280'
-        }}>
-          <p style={{ fontSize: '16px', margin: '0 0 6px 0', fontWeight: '600' }}>
-            {busquedaDni ? `No se encontró ninguna carpeta con el DNI "${busquedaDni}"` : 'No hay expedientes clínicos registrados todavía.'}
-          </p>
-          <p style={{ fontSize: '13px', margin: 0 }}>
-            Utiliza el formulario superior para ingresar un DNI y subir el primer documento.
-          </p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {pacientesFiltrados.map((pac) => {
-            const estaAbierta = carpetasAbiertas.has(pac.id)
-            const docs = pac.documentos || []
+          {/* SECCIÓN HERRAMIENTA: SUBIR DOCUMENTO */}
+          <div style={{
+            backgroundColor: '#f8fafc',
+            border: '1.5px solid #A7C7D9',
+            borderRadius: '10px',
+            padding: '14px',
+            marginBottom: '18px'
+          }}>
+            <h2 style={{ fontSize: '13px', fontWeight: '700', color: '#0f2942', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>Subir Documento</span>
+            </h2>
 
-            return (
-              <div
-                key={pac.id}
+            <form onSubmit={handleUpload}>
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                  DNI DEL PACIENTE
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: 12345678"
+                  value={dni}
+                  onChange={(e) => setDni(e.target.value)}
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    border: '1.5px solid #d1d5db',
+                    fontSize: '13px',
+                    outline: 'none',
+                    backgroundColor: '#ffffff'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#A7C7D9'}
+                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                  required
+                />
+              </div>
+
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                  ARCHIVO A ADJUNTAR
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/msword, image/*, text/plain"
+                  onChange={(e) => setFile(e.target.files[0])}
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '6px',
+                    borderRadius: '6px',
+                    border: '1.5px solid #d1d5db',
+                    fontSize: '12px',
+                    backgroundColor: '#ffffff'
+                  }}
+                  required
+                />
+              </div>
+
+              {/* Detección en tiempo real de DNI */}
+              {dni.trim().length > 0 && (
+                <div style={{ marginBottom: '10px' }}>
+                  {pacienteDetectado ? (
+                    <div style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      backgroundColor: '#CFE7D6',
+                      border: '1px solid #9ec6ac',
+                      color: '#134e2b',
+                      fontSize: '11px',
+                      lineHeight: '1.3'
+                    }}>
+                      <strong>Carpeta detectada:</strong> Se agregará al DNI {pacienteDetectado.dni} ({pacienteDetectado.total_documentos} {pacienteDetectado.total_documentos === 1 ? 'doc' : 'docs'}).
+                    </div>
+                  ) : (
+                    <div style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      backgroundColor: '#FFF2B6',
+                      border: '1px solid #F6E38F',
+                      color: '#634706',
+                      fontSize: '11px',
+                      lineHeight: '1.3'
+                    }}>
+                      <strong>Nueva carpeta:</strong> Se creará expediente para el DNI {dni.trim()}.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={subiendo}
                 style={{
-                  backgroundColor: '#ffffff',
-                  border: estaAbierta ? '2px solid #A7C7D9' : '1px solid #e5e7eb',
-                  borderRadius: '10px',
-                  boxShadow: estaAbierta ? '0 4px 14px rgba(167, 199, 217, 0.25)' : '0 1px 3px rgba(0,0,0,0.03)',
-                  overflow: 'hidden',
-                  transition: 'all 0.15s ease'
+                  width: '100%',
+                  padding: '9px',
+                  backgroundColor: subiendo ? '#d5e4ec' : '#A7C7D9',
+                  color: '#0c354e',
+                  border: '1px solid #84aabd',
+                  borderRadius: '6px',
+                  fontWeight: '700',
+                  cursor: subiendo ? 'not-allowed' : 'pointer',
+                  fontSize: '13px',
+                  boxShadow: '0 2px 4px rgba(167, 199, 217, 0.3)'
                 }}
               >
-                {/* Cabecera de la Carpeta */}
-                <div
+                {subiendo ? 'Guardando en MinIO...' : 'Guardar en Carpeta'}
+              </button>
+            </form>
+          </div>
+
+          {/* SECCIÓN HERRAMIENTA: BÚSQUEDA POR DNI */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '5px' }}>
+              BUSCAR CARPETA
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="Buscar por DNI..."
+                value={busquedaDni}
+                onChange={(e) => setBusquedaDni(e.target.value)}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '8px 10px 8px 32px',
+                  borderRadius: '6px',
+                  border: '1.5px solid #A7C7D9',
+                  fontSize: '13px',
+                  backgroundColor: '#ffffff',
+                  outline: 'none'
+                }}
+              />
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '10px', top: '10px' }}>
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              {busquedaDni && (
+                <button
+                  onClick={() => setBusquedaDni('')}
                   style={{
-                    padding: '14px 18px',
-                    backgroundColor: estaAbierta ? '#f2f7fa' : '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '12px',
-                    borderBottom: estaAbierta ? '1.5px solid #A7C7D9' : 'none',
-                    cursor: 'pointer'
+                    position: 'absolute',
+                    right: '8px',
+                    top: '7px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#9ca3af',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
                   }}
-                  onClick={() => toggleCarpeta(pac.id)}
                 >
-                  {/* Info del DNI */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span style={{
-                      fontSize: '11px',
-                      fontWeight: '700',
-                      padding: '3px 8px',
-                      borderRadius: '4px',
-                      backgroundColor: estaAbierta ? '#A7C7D9' : '#e5e7eb',
-                      color: estaAbierta ? '#0c354e' : '#4b5563',
-                      border: estaAbierta ? '1px solid #84aabd' : '1px solid #d1d5db',
-                      letterSpacing: '0.5px'
-                    }}>
-                      {estaAbierta ? 'ABIERTA' : 'CARPETA'}
-                    </span>
-                    <div>
-                      {editandoPaciente === pac.id ? (
-                        <div
-                          style={{ display: 'flex', gap: '6px', alignItems: 'center' }}
-                          onClick={(e) => e.stopPropagation()}
+                  X
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* SECCIÓN HERRAMIENTA: CONTROLES DE VISTA */}
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
+              VISTA DE CARPETAS
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '6px' }}>
+              <button
+                onClick={expandirTodas}
+                style={{
+                  padding: '6px 8px',
+                  backgroundColor: '#A7C7D9',
+                  border: '1px solid #84aabd',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  color: '#0c354e'
+                }}
+              >
+                Expandir todas
+              </button>
+              <button
+                onClick={colapsarTodas}
+                style={{
+                  padding: '6px 8px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  color: '#374151'
+                }}
+              >
+                Colapsar todas
+              </button>
+            </div>
+            <button
+              onClick={() => cargarDatos(false)}
+              style={{
+                width: '100%',
+                padding: '6px',
+                backgroundColor: '#CFE7D6',
+                border: '1px solid #9ec6ac',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                color: '#134e2b'
+              }}
+            >
+              Actualizar Datos
+            </button>
+          </div>
+        </div>
+
+        {/* Pie del Panel Izquierdo */}
+        <div style={{ padding: '12px 18px', borderTop: '1px solid #e2e8f0', fontSize: '11px', color: '#94a3b8', textAlign: 'center' }}>
+          Hospital San Juan de Dios - Pisco · UE-404
+        </div>
+      </aside>
+
+      {/* ========================================================================= */}
+      {/* 2. PANEL CENTRAL: LISTA DE CARPETAS Y EXPEDIENTES CLÍNICOS */}
+      {/* ========================================================================= */}
+      <main style={{
+        flex: 1,
+        height: '100vh',
+        overflowY: 'auto',
+        padding: '24px 28px',
+        boxSizing: 'border-box',
+        backgroundColor: '#f8fafc',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {/* Cabecera del Panel Central */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#0f2942', margin: 0 }}>
+              Expedientes Clínicos Digitales
+            </h2>
+            <p style={{ margin: '3px 0 0 0', fontSize: '13px', color: '#64748b' }}>
+              {busquedaDni ? `Resultados para el DNI "${busquedaDni}": ${pacientesFiltrados.length} carpetas` : `Total: ${pacientes.length} carpetas registradas`}
+            </p>
+          </div>
+
+          {documentoEnVista && (
+            <div style={{
+              backgroundColor: '#A7C7D9',
+              color: '#0c354e',
+              border: '1px solid #84aabd',
+              borderRadius: '20px',
+              padding: '4px 12px',
+              fontSize: '12px',
+              fontWeight: '700',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <span>Visualizando archivo a la derecha</span>
+            </div>
+          )}
+        </div>
+
+        {/* Alerta de Estado */}
+        {mensaje.texto && (
+          <div style={{
+            padding: '10px 16px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            backgroundColor: mensaje.tipo === 'exito' ? '#CFE7D6' : '#F3C7B6',
+            color: mensaje.tipo === 'exito' ? '#134e2b' : '#70220e',
+            border: `1px solid ${mensaje.tipo === 'exito' ? '#9ec6ac' : '#e19d85'}`,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            fontSize: '13px'
+          }}>
+            <span style={{ fontWeight: '600' }}>{mensaje.texto}</span>
+            <button onClick={() => setMensaje({ tipo: '', texto: '' })} style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: 'inherit' }}>X</button>
+          </div>
+        )}
+
+        {/* Listado de Carpetas */}
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
+            Cargando expedientes clínicos...
+          </div>
+        ) : pacientesFiltrados.length === 0 ? (
+          <div style={{
+            padding: '40px 20px',
+            textAlign: 'center',
+            backgroundColor: '#ffffff',
+            border: '2px dashed #cbd5e1',
+            borderRadius: '12px',
+            color: '#64748b'
+          }}>
+            <p style={{ fontSize: '16px', margin: '0 0 6px 0', fontWeight: '700', color: '#334155' }}>
+              {busquedaDni ? `No se encontró ninguna carpeta con el DNI "${busquedaDni}"` : 'No hay expedientes clínicos registrados todavía.'}
+            </p>
+            <p style={{ fontSize: '13px', margin: 0 }}>
+              Utiliza la herramienta del panel izquierdo para ingresar un DNI y subir el primer documento.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', paddingBottom: '30px' }}>
+            {pacientesFiltrados.map((pac) => {
+              const estaAbierta = carpetasAbiertas.has(pac.id)
+              const docs = pac.documentos || []
+
+              return (
+                <div
+                  key={pac.id}
+                  style={{
+                    backgroundColor: '#ffffff',
+                    border: estaAbierta ? '2px solid #A7C7D9' : '1px solid #e2e8f0',
+                    borderRadius: '10px',
+                    boxShadow: estaAbierta ? '0 4px 14px rgba(167, 199, 217, 0.25)' : '0 1px 3px rgba(0,0,0,0.03)',
+                    overflow: 'hidden',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {/* Cabecera de Carpeta */}
+                  <div
+                    style={{
+                      padding: '12px 16px',
+                      backgroundColor: estaAbierta ? '#f2f7fa' : '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '10px',
+                      borderBottom: estaAbierta ? '1.5px solid #A7C7D9' : 'none',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => toggleCarpeta(pac.id)}
+                  >
+                    {/* Info DNI */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        padding: '2px 7px',
+                        borderRadius: '4px',
+                        backgroundColor: estaAbierta ? '#A7C7D9' : '#e2e8f0',
+                        color: estaAbierta ? '#0c354e' : '#475569',
+                        border: estaAbierta ? '1px solid #84aabd' : '1px solid #cbd5e1',
+                        letterSpacing: '0.5px'
+                      }}>
+                        {estaAbierta ? 'ABIERTA' : 'CARPETA'}
+                      </span>
+
+                      <div>
+                        {editandoPaciente === pac.id ? (
+                          <div
+                            style={{ display: 'flex', gap: '6px', alignItems: 'center' }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type="text"
+                              value={nuevoDni}
+                              onChange={(e) => setNuevoDni(e.target.value)}
+                              style={{ padding: '4px 8px', borderRadius: '6px', border: '1.5px solid #A7C7D9', fontSize: '14px', fontWeight: 'bold', outline: 'none' }}
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => handleGuardarDni(pac.id)}
+                              style={{ padding: '4px 10px', backgroundColor: '#CFE7D6', color: '#134e2b', border: '1px solid #9ec6ac', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
+                            >
+                              Guardar
+                            </button>
+                            <button
+                              onClick={() => setEditandoPaciente(null)}
+                              style={{ padding: '4px 10px', backgroundColor: '#F3C7B6', color: '#70220e', border: '1px solid #e19d85', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '16px', fontWeight: '800', color: '#0f2942' }}>
+                              DNI: {pac.dni}
+                            </span>
+                            <span style={{
+                              backgroundColor: docs.length > 0 ? '#CFE7D6' : '#F3C7B6',
+                              color: docs.length > 0 ? '#134e2b' : '#70220e',
+                              border: docs.length > 0 ? '1px solid #9ec6ac' : '1px solid #e19d85',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: '700'
+                            }}>
+                              {docs.length} {docs.length === 1 ? 'archivo' : 'archivos'}
+                            </span>
+                          </div>
+                        )}
+                        <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#64748b' }}>
+                          Expediente clínico #{pac.id}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Botones de Cabecera */}
+                    <div
+                      style={{ display: 'flex', gap: '6px', alignItems: 'center' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
+                        style={{
+                          padding: '5px 12px',
+                          backgroundColor: '#A7C7D9',
+                          color: '#0c354e',
+                          border: '1px solid #84aabd',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          boxShadow: '0 2px 4px rgba(167, 199, 217, 0.3)'
+                        }}
+                        title="Agregar un nuevo documento a este DNI"
+                      >
+                        + Agregar archivo
+                      </button>
+
+                      {editandoPaciente !== pac.id && (
+                        <button
+                          onClick={() => {
+                            setEditandoPaciente(pac.id)
+                            setNuevoDni(pac.dni)
+                          }}
+                          style={{
+                            padding: '5px 8px',
+                            backgroundColor: '#FFF2B6',
+                            border: '1px solid #F6E38F',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            color: '#634706',
+                            cursor: 'pointer'
+                          }}
+                          title="Modificar DNI"
                         >
-                          <input
-                            type="text"
-                            value={nuevoDni}
-                            onChange={(e) => setNuevoDni(e.target.value)}
-                            style={{ padding: '4px 8px', borderRadius: '6px', border: '1.5px solid #A7C7D9', fontSize: '14px', fontWeight: 'bold', outline: 'none' }}
-                            autoFocus
-                          />
-                          <button
-                            onClick={() => handleGuardarDni(pac.id)}
-                            style={{ padding: '4px 10px', backgroundColor: '#CFE7D6', color: '#134e2b', border: '1px solid #9ec6ac', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
-                          >
-                            Guardar
-                          </button>
-                          <button
-                            onClick={() => setEditandoPaciente(null)}
-                            style={{ padding: '4px 10px', backgroundColor: '#F3C7B6', color: '#70220e', border: '1px solid #e19d85', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontSize: '17px', fontWeight: '800', color: '#0f2942' }}>
-                            DNI: {pac.dni}
-                          </span>
-                          <span style={{
-                            backgroundColor: docs.length > 0 ? '#CFE7D6' : '#F3C7B6',
-                            color: docs.length > 0 ? '#134e2b' : '#70220e',
-                            border: docs.length > 0 ? '1px solid #9ec6ac' : '1px solid #e19d85',
-                            padding: '3px 9px',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            fontWeight: '700'
-                          }}>
-                            {docs.length} {docs.length === 1 ? 'archivo' : 'archivos'}
-                          </span>
-                        </div>
+                          Editar DNI
+                        </button>
                       )}
-                      <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#6b7280' }}>
-                        Expediente clínico #{pac.id}
-                      </p>
+
+                      <button
+                        onClick={() => handleEliminarPaciente(pac.id, pac.dni)}
+                        style={{
+                          padding: '5px 8px',
+                          backgroundColor: '#F3C7B6',
+                          border: '1px solid #e19d85',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          color: '#70220e',
+                          cursor: 'pointer'
+                        }}
+                        title="Eliminar carpeta y todos sus archivos"
+                      >
+                        Borrar
+                      </button>
+
+                      <button
+                        onClick={() => toggleCarpeta(pac.id)}
+                        style={{
+                          padding: '4px 8px',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          color: '#64748b'
+                        }}
+                        title={estaAbierta ? 'Colapsar carpeta' : 'Abrir carpeta'}
+                      >
+                        {estaAbierta ? '▲' : '▼'}
+                      </button>
                     </div>
                   </div>
 
-                  {/* Botones de acción en la cabecera */}
-                  <div
-                    style={{ display: 'flex', gap: '8px', alignItems: 'center' }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
-                      style={{
-                        padding: '6px 14px',
-                        backgroundColor: '#A7C7D9',
-                        color: '#0c354e',
-                        border: '1px solid #84aabd',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        boxShadow: '0 2px 4px rgba(167, 199, 217, 0.3)'
-                      }}
-                      title="Agregar un nuevo documento a este DNI"
-                    >
-                      + Agregar archivo
-                    </button>
-
-                    {editandoPaciente !== pac.id && (
-                      <button
-                        onClick={() => {
-                          setEditandoPaciente(pac.id)
-                          setNuevoDni(pac.dni)
-                        }}
-                        style={{
-                          padding: '6px 10px',
+                  {/* Contenido Interno de la Carpeta */}
+                  {estaAbierta && (
+                    <div style={{ padding: '14px', backgroundColor: '#ffffff' }}>
+                      {docs.length === 0 ? (
+                        <div style={{
+                          padding: '20px',
+                          textAlign: 'center',
                           backgroundColor: '#FFF2B6',
-                          border: '1px solid #F6E38F',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          color: '#634706',
-                          cursor: 'pointer'
-                        }}
-                        title="Modificar DNI"
-                      >
-                        Editar DNI
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => handleEliminarPaciente(pac.id, pac.dni)}
-                      style={{
-                        padding: '6px 10px',
-                        backgroundColor: '#F3C7B6',
-                        border: '1px solid #e19d85',
-                        borderRadius: '6px',
-                        fontSize: '12px',
-                        fontWeight: '700',
-                        color: '#70220e',
-                        cursor: 'pointer'
-                      }}
-                      title="Eliminar carpeta y todos sus archivos"
-                    >
-                      Borrar
-                    </button>
-
-                    <button
-                      onClick={() => toggleCarpeta(pac.id)}
-                      style={{
-                        padding: '6px 10px',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        color: '#6b7280'
-                      }}
-                      title={estaAbierta ? 'Colapsar carpeta' : 'Abrir carpeta'}
-                    >
-                      {estaAbierta ? '▲' : '▼'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* CONTENIDO INTERNO DE LA CARPETA (LISTA DE DOCUMENTOS) */}
-                {estaAbierta && (
-                  <div style={{ padding: '16px', backgroundColor: '#ffffff' }}>
-                    {docs.length === 0 ? (
-                      <div style={{
-                        padding: '24px',
-                        textAlign: 'center',
-                        backgroundColor: '#FFF2B6',
-                        borderRadius: '8px',
-                        border: '1px dashed #F6E38F',
-                        color: '#634706'
-                      }}>
-                        <p style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: '600' }}>
-                          Esta carpeta no contiene documentos actualmente.
-                        </p>
-                        <button
-                          onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
-                          style={{
-                            padding: '7px 16px',
-                            backgroundColor: '#A7C7D9',
-                            color: '#0c354e',
-                            border: '1px solid #84aabd',
-                            borderRadius: '6px',
-                            fontSize: '13px',
-                            cursor: 'pointer',
-                            fontWeight: '700'
-                          }}
-                        >
-                          + Subir primer documento a este DNI
-                        </button>
-                      </div>
-                    ) : (
-                      <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                          <thead>
-                            <tr style={{ backgroundColor: '#f2f7fa', borderBottom: '2px solid #A7C7D9', color: '#0f2942' }}>
-                              <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '700' }}>Tipo</th>
-                              <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '700' }}>Nombre del Archivo</th>
-                              <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '700' }}>Fecha de Subida</th>
-                              <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: '700' }}>Acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {docs.map((doc) => (
-                              <tr key={doc.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                                <td style={{ padding: '10px 14px' }}>
-                                  {obtenerIconoArchivo(doc.nombre_archivo)}
-                                </td>
-                                <td style={{ padding: '10px 14px', fontWeight: '600', color: '#0f2942' }}>
-                                  {doc.nombre_archivo}
-                                </td>
-                                <td style={{ padding: '10px 14px', color: '#475569' }}>
-                                  {doc.fecha_subida || '—'}
-                                </td>
-                                <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                                <div style={{ display: 'inline-flex', gap: '8px' }}>
-                                  <button
-                                    onClick={() => setDocumentoEnVista(doc)}
-                                    style={{
-                                      padding: '5px 12px',
-                                      backgroundColor: '#CFE7D6',
-                                      color: '#134e2b',
-                                      border: '1px solid #9ec6ac',
-                                      borderRadius: '6px',
-                                      fontSize: '12px',
-                                      fontWeight: '700',
-                                      cursor: 'pointer'
-                                    }}
-                                    title="Vista previa en panel"
-                                  >
-                                    Ver
-                                  </button>
-
-                                  <a
-                                    href={`${API_BASE}/documentos/${doc.id}/archivo`}
-                                    style={{
-                                      padding: '5px 12px',
-                                      backgroundColor: '#A7C7D9',
-                                      color: '#0c354e',
-                                      border: '1px solid #84aabd',
-                                      borderRadius: '6px',
-                                      textDecoration: 'none',
-                                      fontSize: '12px',
-                                      fontWeight: '700'
-                                    }}
-                                    title="Descargar copia física"
-                                  >
-                                    Descargar
-                                  </a>
-
-                                  <button
-                                    onClick={() => handleEliminarDocumento(doc.id, doc.nombre_archivo, pac.id)}
-                                    style={{
-                                      padding: '5px 12px',
-                                      backgroundColor: '#F3C7B6',
-                                      color: '#70220e',
-                                      border: '1px solid #e19d85',
-                                      borderRadius: '6px',
-                                      fontSize: '12px',
-                                      fontWeight: '700',
-                                      cursor: 'pointer'
-                                    }}
-                                    title="Eliminar este archivo"
-                                  >
-                                    Eliminar
-                                  </button>
-                                </div>
-                                </td>
+                          borderRadius: '8px',
+                          border: '1px dashed #F6E38F',
+                          color: '#634706'
+                        }}>
+                          <p style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '600' }}>
+                            Esta carpeta no contiene documentos actualmente.
+                          </p>
+                          <button
+                            onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
+                            style={{
+                              padding: '6px 14px',
+                              backgroundColor: '#A7C7D9',
+                              color: '#0c354e',
+                              border: '1px solid #84aabd',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              fontWeight: '700'
+                            }}
+                          >
+                            + Subir primer documento a este DNI
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                            <thead>
+                              <tr style={{ backgroundColor: '#f2f7fa', borderBottom: '2px solid #A7C7D9', color: '#0f2942' }}>
+                                <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: '700' }}>Tipo</th>
+                                <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: '700' }}>Nombre del Archivo</th>
+                                <th style={{ padding: '9px 12px', textAlign: 'left', fontWeight: '700' }}>Fecha de Subida</th>
+                                <th style={{ padding: '9px 12px', textAlign: 'center', fontWeight: '700' }}>Acciones</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
+                            </thead>
+                            <tbody>
+                              {docs.map((doc) => {
+                                const esActivo = documentoEnVista && documentoEnVista.id === doc.id
+                                return (
+                                  <tr
+                                    key={doc.id}
+                                    style={{
+                                      borderBottom: '1px solid #e2e8f0',
+                                      backgroundColor: esActivo ? '#e0f2fe' : 'transparent',
+                                      transition: 'background-color 0.15s'
+                                    }}
+                                  >
+                                    <td style={{ padding: '8px 12px' }}>
+                                      {obtenerIconoArchivo(doc.nombre_archivo)}
+                                    </td>
+                                    <td style={{ padding: '8px 12px', fontWeight: '600', color: '#0f2942' }}>
+                                      {doc.nombre_archivo}
+                                    </td>
+                                    <td style={{ padding: '8px 12px', color: '#475569', fontSize: '12px' }}>
+                                      {doc.fecha_subida || '—'}
+                                    </td>
+                                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                                      <div style={{ display: 'inline-flex', gap: '6px' }}>
+                                        <button
+                                          onClick={() => setDocumentoEnVista(doc)}
+                                          style={{
+                                            padding: '4px 10px',
+                                            backgroundColor: esActivo ? '#059669' : '#CFE7D6',
+                                            color: esActivo ? '#ffffff' : '#134e2b',
+                                            border: '1px solid #9ec6ac',
+                                            borderRadius: '5px',
+                                            fontSize: '11px',
+                                            fontWeight: '700',
+                                            cursor: 'pointer'
+                                          }}
+                                          title="Ver en el panel lateral derecho"
+                                        >
+                                          {esActivo ? 'Viendo' : 'Ver'}
+                                        </button>
 
-      {/* MODAL / PANEL DE VISTA PREVIA INTERACTIVO */}
+                                        <a
+                                          href={`${API_BASE}/documentos/${doc.id}/archivo`}
+                                          style={{
+                                            padding: '4px 10px',
+                                            backgroundColor: '#A7C7D9',
+                                            color: '#0c354e',
+                                            border: '1px solid #84aabd',
+                                            borderRadius: '5px',
+                                            textDecoration: 'none',
+                                            fontSize: '11px',
+                                            fontWeight: '700'
+                                          }}
+                                          title="Descargar archivo físico"
+                                        >
+                                          Descargar
+                                        </a>
+
+                                        <button
+                                          onClick={() => handleEliminarDocumento(doc.id, doc.nombre_archivo, pac.id)}
+                                          style={{
+                                            padding: '4px 10px',
+                                            backgroundColor: '#F3C7B6',
+                                            color: '#70220e',
+                                            border: '1px solid #e19d85',
+                                            borderRadius: '5px',
+                                            fontSize: '11px',
+                                            fontWeight: '700',
+                                            cursor: 'pointer'
+                                          }}
+                                          title="Eliminar este archivo"
+                                        >
+                                          Eliminar
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </main>
+
+      {/* ========================================================================= */}
+      {/* 3. PANEL DERECHO DESPLEGABLE: VISOR DE HISTORIA CLÍNICA / DOCUMENTO */}
+      {/* ========================================================================= */}
       {documentoEnVista && (
-        <div
-          onClick={() => setDocumentoEnVista(null)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.72)',
+        <aside style={{
+          width: '50%',
+          minWidth: '460px',
+          maxWidth: '780px',
+          height: '100vh',
+          backgroundColor: '#ffffff',
+          borderLeft: '2px solid #A7C7D9',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '-6px 0 25px rgba(0, 0, 0, 0.12)',
+          zIndex: 30,
+          boxSizing: 'border-box'
+        }}>
+          {/* Cabecera del Panel Derecho */}
+          <div style={{
+            padding: '14px 18px',
+            borderBottom: '2px solid #A7C7D9',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: '#f2f7fa',
+            flexWrap: 'wrap',
+            gap: '10px'
+          }}>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {obtenerIconoArchivo(documentoEnVista.nombre_archivo)}
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '15px',
+                  color: '#0f2942',
+                  fontWeight: '700',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '320px'
+                }} title={documentoEnVista.nombre_archivo}>
+                  {documentoEnVista.nombre_archivo}
+                </h3>
+              </div>
+              <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#475569' }}>
+                Carpeta DNI: <strong style={{ color: '#0c354e', backgroundColor: '#CFE7D6', padding: '1px 7px', borderRadius: '4px', border: '1px solid #9ec6ac' }}>{documentoEnVista.paciente_dni || 'Sin DNI'}</strong> | {documentoEnVista.fecha_subida || '—'}
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <a
+                href={`${API_BASE}/documentos/${documentoEnVista.id}/archivo`}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: '#A7C7D9',
+                  color: '#0c354e',
+                  border: '1px solid #84aabd',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  fontSize: '12px',
+                  fontWeight: '700'
+                }}
+                title="Descargar archivo físico"
+              >
+                Descargar
+              </a>
+              <button
+                onClick={() => setDocumentoEnVista(null)}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: '#F3C7B6',
+                  color: '#70220e',
+                  border: '1px solid #e19d85',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+                title="Cerrar panel visor"
+              >
+                Cerrar ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Contenedor del Visor */}
+          <div style={{
+            flex: 1,
+            backgroundColor: '#1e293b',
+            padding: '12px',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            zIndex: 9999,
-            padding: '20px',
-            backdropFilter: 'blur(3px)'
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '12px',
-              width: '100%',
-              maxWidth: '980px',
-              maxHeight: '92vh',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
-              border: '2px solid #A7C7D9',
-              overflow: 'hidden'
-            }}
-          >
-            {/* Cabecera del Panel */}
-            <div style={{
-              padding: '16px 20px',
-              borderBottom: '2px solid #A7C7D9',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              backgroundColor: '#f2f7fa'
-            }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '17px', color: '#0f2942', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>{obtenerIconoArchivo(documentoEnVista.nombre_archivo)}</span>
-                  <span>{documentoEnVista.nombre_archivo}</span>
-                </h3>
-                <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#475569' }}>
-                  Carpeta DNI: <strong style={{ color: '#0c354e', backgroundColor: '#CFE7D6', padding: '2px 8px', borderRadius: '4px', border: '1px solid #9ec6ac' }}>{documentoEnVista.paciente_dni || 'Sin DNI'}</strong> | Subido el: {documentoEnVista.fecha_subida || '—'}
-                </p>
+            overflow: 'hidden'
+          }}>
+            {esPdf(documentoEnVista.nombre_archivo) ? (
+              <iframe
+                src={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`}
+                title={`Visor PDF - ${documentoEnVista.nombre_archivo}`}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                  borderRadius: '6px',
+                  backgroundColor: '#ffffff'
+                }}
+              />
+            ) : esDocx(documentoEnVista.nombre_archivo) ? (
+              <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>
+                <DocxViewer url={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`} />
               </div>
-
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            ) : esImagen(documentoEnVista.nombre_archivo) ? (
+              <div style={{ textAlign: 'center', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto' }}>
+                <img
+                  src={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`}
+                  alt="Vista previa de documento"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    borderRadius: '6px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                  }}
+                />
+              </div>
+            ) : esTexto(documentoEnVista.nombre_archivo) ? (
+              <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>
+                <TextViewer url={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`} />
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', color: '#f3f4f6', padding: '30px' }}>
+                <p style={{ fontSize: '15px', marginBottom: '12px' }}>
+                  Este tipo de archivo no admite previsualización directa en el navegador.
+                </p>
                 <a
                   href={`${API_BASE}/documentos/${documentoEnVista.id}/archivo`}
                   style={{
-                    padding: '8px 14px',
+                    display: 'inline-block',
+                    padding: '8px 16px',
                     backgroundColor: '#A7C7D9',
                     color: '#0c354e',
                     border: '1px solid #84aabd',
                     borderRadius: '6px',
                     textDecoration: 'none',
-                    fontSize: '13px',
-                    fontWeight: '700'
+                    fontWeight: '700',
+                    fontSize: '13px'
                   }}
-                  title="Descargar archivo físico"
                 >
-                  Descargar
+                  Descargar archivo
                 </a>
-                <button
-                  onClick={() => setDocumentoEnVista(null)}
-                  style={{
-                    padding: '8px 14px',
-                    backgroundColor: '#F3C7B6',
-                    color: '#70220e',
-                    border: '1px solid #e19d85',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: '700'
-                  }}
-                >
-                  Cerrar
-                </button>
               </div>
-            </div>
-
-            {/* Contenedor del Visor */}
-            <div style={{
-              flex: 1,
-              backgroundColor: '#1f2937',
-              padding: '16px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: '450px',
-              maxHeight: 'calc(92vh - 80px)',
-              overflow: 'auto'
-            }}>
-              {esPdf(documentoEnVista.nombre_archivo) ? (
-                <iframe
-                  src={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`}
-                  title={`Visor PDF - ${documentoEnVista.nombre_archivo}`}
-                  style={{
-                    width: '100%',
-                    height: '75vh',
-                    border: 'none',
-                    borderRadius: '8px',
-                    backgroundColor: '#ffffff'
-                  }}
-                />
-              ) : esDocx(documentoEnVista.nombre_archivo) ? (
-                <DocxViewer url={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`} />
-              ) : esImagen(documentoEnVista.nombre_archivo) ? (
-                <div style={{ textAlign: 'center', width: '100%', maxHeight: '75vh', overflow: 'auto' }}>
-                  <img
-                    src={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`}
-                    alt="Vista previa de documento"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '75vh',
-                      objectFit: 'contain',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                    }}
-                  />
-                </div>
-              ) : esTexto(documentoEnVista.nombre_archivo) ? (
-                <TextViewer url={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`} />
-              ) : (
-                <div style={{ textAlign: 'center', color: '#f3f4f6', padding: '40px' }}>
-                  <p style={{ fontSize: '16px', marginBottom: '12px' }}>
-                    Este tipo de archivo no admite previsualización directa en el navegador.
-                  </p>
-                  <a
-                    href={`${API_BASE}/documentos/${documentoEnVista.id}/archivo`}
-                    style={{
-                      display: 'inline-block',
-                      padding: '10px 18px',
-                      backgroundColor: '#A7C7D9',
-                      color: '#0c354e',
-                      border: '1px solid #84aabd',
-                      borderRadius: '6px',
-                      textDecoration: 'none',
-                      fontWeight: '700'
-                    }}
-                  >
-                    Descargar archivo
-                  </a>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-        </div>
+        </aside>
       )}
     </div>
   )
