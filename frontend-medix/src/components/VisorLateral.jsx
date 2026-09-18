@@ -1,9 +1,16 @@
+import { useState, useEffect } from 'react'
 import DocxViewer from './DocxViewer'
 import TextViewer from './TextViewer'
 import { esPdf, esDocx, esImagen, esTexto, obtenerIconoArchivo } from '../utils/fileHelpers'
 import { API_BASE } from '../api/config'
 
 export default function VisorLateral({ documentoEnVista, onCerrar }) {
+  const [imgError, setImgError] = useState(false)
+
+  useEffect(() => {
+    setImgError(false)
+  }, [documentoEnVista?.id])
+
   if (!documentoEnVista) return null
 
   return (
@@ -118,18 +125,30 @@ export default function VisorLateral({ documentoEnVista, onCerrar }) {
             <DocxViewer url={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`} />
           </div>
         ) : esImagen(documentoEnVista.nombre_archivo) ? (
-          <div style={{ textAlign: 'center', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto' }}>
-            <img
-              src={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`}
-              alt="Vista previa de documento"
-              style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-                borderRadius: '6px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-              }}
-            />
+          <div style={{ textAlign: 'center', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '16px', boxSizing: 'border-box' }}>
+            {imgError ? (
+              <div style={{ textAlign: 'center', color: '#64748b', padding: '24px', backgroundColor: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <p style={{ fontSize: '15px', color: '#e53e3e', fontWeight: 'bold', margin: '0 0 8px 0' }}>
+                  No se pudo cargar la vista previa de la imagen.
+                </p>
+                <p style={{ fontSize: '13px', margin: 0 }}>
+                  El archivo puede no estar disponible o tener un formato incompatible. Puedes usar el botón "Descargar" arriba.
+                </p>
+              </div>
+            ) : (
+              <img
+                src={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`}
+                alt="Vista previa de documento"
+                onError={() => setImgError(true)}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                }}
+              />
+            )}
           </div>
         ) : esTexto(documentoEnVista.nombre_archivo) ? (
           <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>

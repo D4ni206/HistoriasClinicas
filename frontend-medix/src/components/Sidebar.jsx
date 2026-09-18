@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
+import logoHospital from '../assets/logo-login.png'
 
 export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocumentos }) {
   const location = useLocation()
@@ -52,8 +53,13 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
         {/* Cabecera Institucional */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', paddingBottom: '14px', borderBottom: '1.5px solid #7FD6FF' }}>
           <img
-            src="/logo_hospital.png"
+            src={logoHospital}
             alt="Hospital San Juan de Dios de Pisco"
+            onError={(e) => {
+              if (e.currentTarget.src !== '/logo_hospital.png') {
+                e.currentTarget.src = '/logo_hospital.png'
+              }
+            }}
             style={{
               height: '46px',
               width: 'auto',

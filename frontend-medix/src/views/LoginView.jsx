@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { API_BASE } from '../api/config'
+import logoHospital from '../assets/logo-login.png'
 
 export default function LoginView({ onLoginSuccess }) {
   const [username, setUsername] = useState('admin')
@@ -82,8 +83,13 @@ export default function LoginView({ onLoginSuccess }) {
             gap: '18px'
           }}>
             <img
-              src="/assets/logo_hospital.png"
+              src={logoHospital}
               alt="Hospital San Juan de Dios de Pisco"
+              onError={(e) => {
+                if (e.currentTarget.src !== '/logo_hospital.png') {
+                  e.currentTarget.src = '/logo_hospital.png'
+                }
+              }}
               style={{
                 height: '68px',
                 width: 'auto',
