@@ -36,6 +36,7 @@ export default function DashboardView({
   handleEliminarDocumento,
   documentoEnVista,
   setDocumentoEnVista,
+  onVerSilueta,
   loading,
   cargarDatos,
   usuario
@@ -285,11 +286,40 @@ export default function DashboardView({
                 <PacienteCard
                   key={pac.id}
                   paciente={pac}
-                  onVerDocumento={setDocumentoEnVista}
+                  onVerDocumento={(docConPaciente) => {
+                    const pacFinal = docConPaciente.paciente || pac
+                    setDocumentoEnVista({
+                      ...docConPaciente,
+                      paciente: pacFinal
+                    })
+                  }}
+                  onVerSilueta={(p) => {
+                    if (onVerSilueta) {
+                      onVerSilueta(p)
+                    } else {
+                      const docPrincipal = (p.documentos && p.documentos.length > 0) ? p.documentos[0] : null
+                      setDocumentoEnVista({
+                        id: docPrincipal ? docPrincipal.id : null,
+                        nombre_archivo: docPrincipal ? docPrincipal.nombre_archivo : `Historia Clínica Digital - DNI ${p.dni}`,
+                        paciente_id: p.id,
+                        paciente_dni: p.dni,
+                        paciente: p,
+                        fecha_subida: docPrincipal ? docPrincipal.fecha_subida : 'Expediente Activo'
+                      })
+                    }
+                  }}
                   onAgregarArchivo={agregarArchivoACarpeta}
                   onAbrirNotas={setPacienteParaNotas}
                   onVerCarpeta={(p) => {
-                    setPacienteParaNotas(p)
+                    const docPrincipal = (p.documentos && p.documentos.length > 0) ? p.documentos[0] : null
+                    setDocumentoEnVista({
+                      id: docPrincipal ? docPrincipal.id : null,
+                      nombre_archivo: docPrincipal ? docPrincipal.nombre_archivo : `Historia Clínica Digital - DNI ${p.dni}`,
+                      paciente_id: p.id,
+                      paciente_dni: p.dni,
+                      paciente: p,
+                      fecha_subida: docPrincipal ? docPrincipal.fecha_subida : 'Expediente Activo'
+                    })
                   }}
                   onEliminar={handleEliminarPaciente}
                 />
@@ -493,7 +523,10 @@ export default function DashboardView({
                           <td style={{ padding: '9px 14px', textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '6px' }}>
                               <button
-                                onClick={() => setDocumentoEnVista(doc)}
+                                onClick={() => {
+                                  const pac = pacientes.find(p => p.id === doc.paciente_id || String(p.dni) === String(doc.paciente_dni))
+                                  setDocumentoEnVista({ ...doc, paciente: pac })
+                                }}
                                 style={{
                                   padding: '4px 10px',
                                   backgroundColor: esActivo ? '#6FE3B4' : '#FFF6FB',
@@ -679,7 +712,10 @@ export default function DashboardView({
                         </div>
                       </div>
                       <button
-                        onClick={() => setDocumentoEnVista(d)}
+                        onClick={() => {
+                          const pac = pacientes.find(p => p.id === d.paciente_id || String(p.dni) === String(d.paciente_dni)) || null
+                          setDocumentoEnVista({ ...d, paciente: pac })
+                        }}
                         style={{
                           padding: '4px 10px',
                           backgroundColor: '#6FE3B4',

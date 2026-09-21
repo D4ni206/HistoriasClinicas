@@ -341,6 +341,19 @@ function AppContent() {
     navigate('/login')
   }
 
+  // Visualizar silueta anatómica y expediente clínico
+  const handleVerSilueta = (paciente) => {
+    const primerDoc = (paciente.documentos && paciente.documentos.length > 0) ? paciente.documentos[0] : null
+    setDocumentoEnVista({
+      id: primerDoc ? primerDoc.id : null,
+      nombre_archivo: primerDoc ? primerDoc.nombre_archivo : `Historia Clínica Digital - DNI ${paciente.dni}`,
+      paciente_id: paciente.id,
+      paciente_dni: paciente.dni,
+      paciente: paciente,
+      fecha_subida: primerDoc ? primerDoc.fecha_subida : 'Expediente Activo'
+    })
+  }
+
   // Colecciones calculadas
   const pacientesFiltrados = pacientes.filter(p =>
     p.dni.toLowerCase().includes(busquedaDni.trim().toLowerCase())
@@ -503,6 +516,7 @@ function AppContent() {
                   handleEliminarDocumento={handleEliminarDocumento}
                   documentoEnVista={documentoEnVista}
                   setDocumentoEnVista={setDocumentoEnVista}
+                  onVerSilueta={handleVerSilueta}
                   loading={loading}
                   cargarDatos={cargarDatos}
                   usuario={usuario}
@@ -596,6 +610,11 @@ function AppContent() {
       {/* 3. PANEL DERECHO DESPLEGABLE: VISOR DE HISTORIA CLÍNICA */}
       <VisorLateral
         documentoEnVista={documentoEnVista}
+        paciente={
+          documentoEnVista?.paciente ||
+          pacientes.find(p => p.id === documentoEnVista?.paciente_id || String(p.dni) === String(documentoEnVista?.paciente_dni)) ||
+          null
+        }
         onCerrar={() => setDocumentoEnVista(null)}
       />
     </div>

@@ -5,6 +5,7 @@ import { esPdf, esDocx, esImagen, esTexto, obtenerIconoArchivo } from '../utils/
 export default function PacienteCard({
   paciente,
   onVerDocumento,
+  onVerSilueta,
   onAgregarArchivo,
   onAbrirNotas,
   onVerCarpeta,
@@ -24,6 +25,22 @@ export default function PacienteCard({
 
   // Documentos a mostrar: si está expandido muestra todos, de lo contrario los primeros 3
   const docsAMostrar = expandido ? docs : docs.slice(0, 3)
+
+  // Acción para abrir la historia clínica dividida con la silueta anatómica
+  const abrirHistoriaClinica = () => {
+    if (onVerSilueta) {
+      onVerSilueta(paciente)
+    } else if (onVerDocumento) {
+      onVerDocumento({
+        id: docs[0]?.id || null,
+        nombre_archivo: docs[0]?.nombre_archivo || `Historia Clínica Digital - DNI ${paciente.dni}`,
+        paciente_id: paciente.id,
+        paciente_dni: paciente.dni,
+        paciente: paciente,
+        fecha_subida: docs[0]?.fecha_subida || 'Expediente Activo'
+      })
+    }
+  }
 
   return (
     <Card
@@ -53,19 +70,25 @@ export default function PacienteCard({
       }}
     >
       <Card.Header style={{ padding: 0, display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {/* Fila Superior: Icono Circular HeroUI (como el $ de Acme Creator) y Total de Documentos */}
+        {/* Fila Superior: Icono Circular Interactivo y Total de Documentos */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            backgroundColor: '#27272a',
-            border: '1.5px solid rgba(255, 255, 255, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
-          }}>
+          <div
+            onClick={abrirHistoriaClinica}
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: '#27272a',
+              border: '1.5px solid rgba(127, 214, 255, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            title="Ver historia clínica y silueta anatómica de este paciente"
+          >
             <svg
               width="18"
               height="18"
@@ -94,7 +117,7 @@ export default function PacienteCard({
           </span>
         </div>
 
-        {/* Título y Subtítulo estilo HeroUI ("Become an Acme Creator!") */}
+        {/* Título y Subtítulo estilo HeroUI */}
         <div>
           <Card.Title style={{
             fontSize: '17px',
@@ -242,7 +265,14 @@ export default function PacienteCard({
                   </span>
 
                   <button
-                    onClick={() => onVerDocumento && onVerDocumento(d)}
+                    onClick={() => {
+                      if (onVerDocumento) {
+                        onVerDocumento({
+                          ...d,
+                          paciente: paciente
+                        })
+                      }
+                    }}
                     style={{
                       backgroundColor: '#6FE3B4',
                       color: '#0a5438',
@@ -255,7 +285,7 @@ export default function PacienteCard({
                       flexShrink: 0,
                       transition: 'opacity 0.15s ease'
                     }}
-                    title="Ver archivo en el panel derecho"
+                    title="Ver historia clínica y silueta anatómica al costado"
                   >
                     Ver
                   </button>
@@ -337,16 +367,13 @@ export default function PacienteCard({
           Notas ({totalNotas})
         </button>
 
-        {/* 3. Ver Carpeta */}
+        {/* 3. Ver Historia Clínica con Silueta Anatómica en Sector Dividido */}
         <button
-          onClick={() => {
-            setExpandido(!expandido)
-            if (onVerCarpeta) onVerCarpeta(paciente)
-          }}
+          onClick={abrirHistoriaClinica}
           style={{
             backgroundColor: '#27272a',
-            color: '#f8fafc',
-            border: '1px solid #3f3f46',
+            color: '#6FE3B4',
+            border: '1.5px solid #4cc799',
             borderRadius: '8px',
             padding: '7px 4px',
             cursor: 'pointer',
@@ -360,10 +387,10 @@ export default function PacienteCard({
             minHeight: '38px',
             transition: 'background-color 0.15s ease'
           }}
-          title={expandido ? "Ocultar documentos adicionales" : "Ver todos los documentos del expediente"}
+          title="Ver historia clínica y silueta anatómica en sector dividido"
         >
-          <span>{expandido ? 'Cerrar' : 'Ver'}</span>
-          <span>Carpeta</span>
+          <span>Ver</span>
+          <span>Historia</span>
         </button>
 
         {/* 4. Borrar */}
