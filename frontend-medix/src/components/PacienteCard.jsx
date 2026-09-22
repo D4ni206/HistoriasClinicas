@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Card } from '@heroui/react'
 import { esPdf, esDocx, esImagen, esTexto, obtenerIconoArchivo } from '../utils/fileHelpers'
+import { API_BASE } from '../api/config'
 
 export default function PacienteCard({
   paciente,
@@ -264,31 +265,71 @@ export default function PacienteCard({
                     {d.nombre_archivo}
                   </span>
 
-                  <button
-                    onClick={() => {
-                      if (onVerDocumento) {
-                        onVerDocumento({
-                          ...d,
-                          paciente: paciente
-                        })
-                      }
-                    }}
-                    style={{
-                      backgroundColor: '#6FE3B4',
-                      color: '#0a5438',
-                      border: 'none',
-                      borderRadius: '5px',
-                      padding: '3px 10px',
-                      fontSize: '11px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                      transition: 'opacity 0.15s ease'
-                    }}
-                    title="Ver historia clínica y silueta anatómica al costado"
-                  >
-                    Ver
-                  </button>
+                  {/* Botones de Acción por Documento: Ver (Ojo) y Descargar (Flecha) */}
+                  <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                    {/* Botón Ver con icono de ojo */}
+                    <button
+                      onClick={() => {
+                        if (onVerDocumento) {
+                          onVerDocumento({
+                            ...d,
+                            paciente: paciente
+                          })
+                        }
+                      }}
+                      style={{
+                        backgroundColor: '#6FE3B4',
+                        color: '#0a5438',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '4px 8px',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'opacity 0.15s ease'
+                      }}
+                      title="Ver historia clínica y silueta anatómica"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      <span>Ver</span>
+                    </button>
+
+                    {/* Botón Descargar con icono de flecha hacia abajo a bandeja */}
+                    {d.id && (
+                      <a
+                        href={`${API_BASE}/documentos/${d.id}/archivo`}
+                        download
+                        style={{
+                          backgroundColor: '#7FD6FF',
+                          color: '#104060',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          transition: 'opacity 0.15s ease'
+                        }}
+                        title="Descargar archivo físico"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        <span>Bajar</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
 
@@ -313,6 +354,7 @@ export default function PacienteCard({
         </div>
       </Card.Content>
 
+      {/* Footer con 4 Botones y Figuras Intuitivas (Subir, Notas, Historia, Tacho de Basura) */}
       <Card.Footer style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',
@@ -320,7 +362,7 @@ export default function PacienteCard({
         width: '100%',
         padding: '6px 0 0 0'
       }}>
-        {/* 1. + Archivo */}
+        {/* 1. Botón Subir Archivo (Icono de documento con +) */}
         <button
           onClick={() => onAgregarArchivo && onAgregarArchivo(paciente.dni, paciente.id)}
           style={{
@@ -328,23 +370,28 @@ export default function PacienteCard({
             color: '#104060',
             border: 'none',
             borderRadius: '8px',
-            padding: '7px 4px',
+            padding: '6px 4px',
             cursor: 'pointer',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             fontWeight: '700',
-            minHeight: '38px',
+            minHeight: '44px',
             transition: 'opacity 0.15s ease'
           }}
           title="Subir nuevo documento a este expediente"
         >
-          <span style={{ fontSize: '12px', lineHeight: '1' }}>+</span>
-          <span style={{ fontSize: '10.5px' }}>Archivo</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="12" y1="18" x2="12" y2="12" />
+            <line x1="9" y1="15" x2="15" y2="15" />
+          </svg>
+          <span style={{ fontSize: '10px', marginTop: '3px' }}>+ Archivo</span>
         </button>
 
-        {/* 2. Notas */}
+        {/* 2. Botón Notas Médicas (Icono de libreta médica con lápiz) */}
         <button
           onClick={() => onAbrirNotas && onAbrirNotas(paciente)}
           style={{
@@ -352,22 +399,27 @@ export default function PacienteCard({
             color: '#f8fafc',
             border: '1px solid #3f3f46',
             borderRadius: '8px',
-            padding: '7px 4px',
+            padding: '6px 4px',
             cursor: 'pointer',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '11px',
+            fontSize: '10px',
             fontWeight: '700',
-            minHeight: '38px',
+            minHeight: '44px',
             transition: 'background-color 0.15s ease'
           }}
           title="Ver y redactar notas médicas"
         >
-          Notas ({totalNotas})
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+          <span style={{ fontSize: '10px', marginTop: '3px' }}>Notas ({totalNotas})</span>
         </button>
 
-        {/* 3. Ver Historia Clínica con Silueta Anatómica en Sector Dividido */}
+        {/* 3. Botón Ver Historia con Silueta Anatómica (Icono de Ojo / Pulso Clínico) */}
         <button
           onClick={abrirHistoriaClinica}
           style={{
@@ -375,25 +427,27 @@ export default function PacienteCard({
             color: '#6FE3B4',
             border: '1.5px solid #4cc799',
             borderRadius: '8px',
-            padding: '7px 4px',
+            padding: '6px 4px',
             cursor: 'pointer',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '11px',
+            fontSize: '10px',
             fontWeight: '700',
-            lineHeight: '1.2',
-            minHeight: '38px',
+            minHeight: '44px',
             transition: 'background-color 0.15s ease'
           }}
           title="Ver historia clínica y silueta anatómica en sector dividido"
         >
-          <span>Ver</span>
-          <span>Historia</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <span style={{ fontSize: '10px', marginTop: '3px' }}>Historia</span>
         </button>
 
-        {/* 4. Borrar */}
+        {/* 4. Botón Eliminar con Tacho de Basura */}
         <button
           onClick={() => onEliminar && onEliminar(paciente.id, paciente.dni)}
           style={{
@@ -401,19 +455,26 @@ export default function PacienteCard({
             color: '#802048',
             border: 'none',
             borderRadius: '8px',
-            padding: '7px 4px',
+            padding: '6px 4px',
             cursor: 'pointer',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '11px',
+            fontSize: '10px',
             fontWeight: '700',
-            minHeight: '38px',
+            minHeight: '44px',
             transition: 'opacity 0.15s ease'
           }}
           title="Eliminar expediente clínico"
         >
-          Borrar
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <line x1="10" y1="11" x2="10" y2="17" />
+            <line x1="14" y1="11" x2="14" y2="17" />
+          </svg>
+          <span style={{ fontSize: '10px', marginTop: '3px' }}>Eliminar</span>
         </button>
       </Card.Footer>
     </Card>
