@@ -10,6 +10,8 @@ import NuevaHistoriaView from './views/NuevaHistoriaView'
 import UsuariosView from './views/UsuariosView'
 import ConfiguracionView from './views/ConfiguracionView'
 import SignosVitalesView from './views/SignosVitalesView'
+import SolicitudesView from './views/SolicitudesView'
+import SolicitudEliminacionModal from './components/SolicitudEliminacionModal'
 
 function AppContent() {
   const navigate = useNavigate()
@@ -63,6 +65,10 @@ function AppContent() {
   const [vistaDashboard, setVistaDashboard] = useState('cards')
   // Filtro por tipo de documento en la vista de tabla general ('todos' | 'pdf' | 'docx' | 'imagen' | 'texto')
   const [filtroTipoDoc, setFiltroTipoDoc] = useState('todos')
+
+  // Solicitudes de Eliminación (para Administrador y Médicos)
+  const [solicitudesPendientesCount, setSolicitudesPendientesCount] = useState(0)
+  const [pacienteParaSolicitud, setPacienteParaSolicitud] = useState(null)
 
   const notificar = (tipo, texto) => {
     setMensaje({ tipo, texto })
@@ -165,11 +171,24 @@ function AppContent() {
     }
   }
 
+  const cargarSolicitudesPendientes = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/solicitudes-eliminacion?estado=Pendiente`)
+      if (res.ok) {
+        const data = await res.json()
+        setSolicitudesPendientesCount(data.length)
+      }
+    } catch (err) {
+      console.error('Error cargando conteo de solicitudes:', err)
+    }
+  }
+
   useEffect(() => {
     if (usuario) {
       cargarDatos(true)
       cargarUsuarios()
       cargarDiagnostico()
+      cargarSolicitudesPendientes()
     }
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') setDocumentoEnVista(null)
@@ -315,6 +334,18 @@ function AppContent() {
 
   // D: Eliminar Carpeta completa del paciente
   const handleEliminarPaciente = async (id, dniPac) => {
+    const rolActual = (usuario?.rol || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    const usuarioEsAdmin = rolActual.includes('admin')
+
+    // Si el usuario NO es Administrador (Médico, Enfermera, etc.):
+    // No puede borrar directamente. Debe remitir una solicitud de eliminación con su motivo
+    if (!usuarioEsAdmin) {
+      const pac = pacientes.find(p => p.id === id || String(p.dni) === String(dniPac)) || { id, dni: dniPac }
+      setPacienteParaSolicitud(pac)
+      return
+    }
+
+    // Si es Administrador: Confirmación y eliminación directa
     if (!window.confirm(`¿Eliminar la carpeta completa del DNI ${dniPac} (#${id})? Se borrarán todos los documentos contenidos.`)) {
       return
     }
@@ -326,6 +357,7 @@ function AppContent() {
         notificar('exito', data.mensaje || 'Carpeta eliminada.')
         cargarDatos()
         cargarDiagnostico()
+        cargarSolicitudesPendientes()
       } else {
         notificar('error', data.mensaje || 'Error al eliminar carpeta.')
       }
@@ -439,6 +471,7 @@ function AppContent() {
         onLogout={handleLogout}
         totalPacientes={pacientes.length}
         totalDocumentos={totalArchivosSistema}
+        totalSolicitudesPendientes={solicitudesPendientesCount}
       />
 
       {/* 2. PANEL CENTRAL: RUTAS Y VISTAS */}
@@ -601,6 +634,25 @@ function AppContent() {
             }
           />
 
+          {/* Ruta Solicitudes de Eliminación (Exclusivo Administrador) */}
+          <Route
+            path="/solicitudes"
+            element={
+              esAdmin ? (
+                <SolicitudesView
+                  usuario={usuario}
+                  notificar={notificar}
+                  onActualizacion={() => {
+                    cargarDatos()
+                    cargarSolicitudesPendientes()
+                  }}
+                />
+              ) : (
+                <Navigate to={esEnfermera ? "/signosvitales" : "/dashboard"} replace />
+              )
+            }
+          />
+
           {/* Redirección por defecto según rol */}
           <Route path="/" element={<Navigate to={esEnfermera ? "/signosvitales" : "/dashboard"} replace />} />
           <Route path="*" element={<Navigate to={esEnfermera ? "/signosvitales" : "/dashboard"} replace />} />
@@ -617,6 +669,19 @@ function AppContent() {
         }
         onCerrar={() => setDocumentoEnVista(null)}
       />
+
+      {/* 4. MODAL DE SOLICITUD DE ELIMINACIÓN PARA MÉDICOS Y NO-ADMINISTRADORES */}
+      {pacienteParaSolicitud && (
+        <SolicitudEliminacionModal
+          paciente={pacienteParaSolicitud}
+          usuario={usuario}
+          onCerrar={() => setPacienteParaSolicitud(null)}
+          onSolicitudEnviada={(msg) => {
+            notificar('exito', msg)
+            cargarSolicitudesPendientes()
+          }}
+        />
+      )}
     </div>
   )
 }

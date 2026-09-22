@@ -141,3 +141,34 @@ class SignosVitales(db.Model):
             'observaciones': self.observaciones,
             'fecha': self.fecha.strftime('%Y-%m-%d %H:%M:%S') if self.fecha else None
         }
+
+class SolicitudEliminacion(db.Model):
+    __tablename__ = 'solicitud_eliminacion'
+    id = db.Column(db.Integer, primary_key=True)
+    paciente_id = db.Column(db.Integer, nullable=True) # ID original del paciente
+    paciente_dni = db.Column(db.String(20), nullable=False) # DNI del paciente
+    usuario_nombre = db.Column(db.String(100), nullable=False) # Nombre de quien lo envía
+    usuario_rol = db.Column(db.String(50), nullable=True) # Rol del remitente
+    motivo_categoria = db.Column(db.String(120), nullable=False) # Alternativa seleccionada
+    motivo_detalle = db.Column(db.Text, nullable=True) # Detalle o motivo escrito
+    fecha_solicitud = db.Column(db.DateTime, default=datetime.utcnow) # Hora y fecha de envío
+    estado = db.Column(db.String(20), default='Pendiente') # 'Pendiente', 'Aprobada', 'Rechazada'
+    respuesta_admin = db.Column(db.Text, nullable=True)
+    fecha_resolucion = db.Column(db.DateTime, nullable=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'paciente_id': self.paciente_id,
+            'paciente_dni': self.paciente_dni,
+            'usuario_nombre': self.usuario_nombre,
+            'usuario_rol': self.usuario_rol or 'Médico',
+            'motivo_categoria': self.motivo_categoria,
+            'motivo_detalle': self.motivo_detalle or '',
+            'motivo_completo': f"{self.motivo_categoria}: {self.motivo_detalle}" if self.motivo_detalle else self.motivo_categoria,
+            'fecha_solicitud': self.fecha_solicitud.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_solicitud else None,
+            'hora_solicitud': self.fecha_solicitud.strftime('%H:%M:%S') if self.fecha_solicitud else None,
+            'estado': self.estado,
+            'respuesta_admin': self.respuesta_admin,
+            'fecha_resolucion': self.fecha_resolucion.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_resolucion else None
+        }

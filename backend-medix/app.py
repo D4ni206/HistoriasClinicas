@@ -3,7 +3,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
-from models import Paciente, Documento_Escaneado as Documento, Usuario, NotaMedica, SignosVitales
+from models import Paciente, Documento_Escaneado as Documento, Usuario, NotaMedica, SignosVitales, SolicitudEliminacion
 import boto3
 import os
 import uuid
@@ -22,6 +22,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
+
+with app.app_context():
+    try:
+        db.create_all()
+    except Exception as e:
+        print(f"Aviso al inicializar tablas: {e}")
 
 # Configuración de MinIO
 s3_client = boto3.client('s3',
@@ -482,6 +488,103 @@ def eliminar_signos(id):
     db.session.delete(registro)
     db.session.commit()
     return jsonify({"mensaje": "Registro de signos vitales eliminado exitosamente"}), 200
+
+# ==========================================
+# GESTIÓN DE SOLICITUDES DE ELIMINACIÓN
+# ==========================================
+@app.route('/api/solicitudes-eliminacion', methods=['GET'])
+def listar_solicitudes_eliminacion():
+    estado_filtro = request.args.get('estado')
+    query = SolicitudEliminacion.query
+    if estado_filtro:
+        query = query.filter_by(estado=estado_filtro)
+    solicitudes = query.order_by(SolicitudEliminacion.fecha_solicitud.desc()).all()
+    return jsonify([s.to_dict() for s in solicitudes]), 200
+
+@app.route('/api/solicitudes-eliminacion', methods=['POST'])
+def crear_solicitud_eliminacion():
+    data = request.get_json() or {}
+    paciente_dni = data.get('paciente_dni', '').strip()
+    usuario_nombre = data.get('usuario_nombre', '').strip()
+    motivo_categoria = data.get('motivo_categoria', '').strip()
+    motivo_detalle = data.get('motivo_detalle', '').strip()
+    paciente_id = data.get('paciente_id')
+    usuario_rol = data.get('usuario_rol', 'Médico').strip()
+
+    if not paciente_dni or not usuario_nombre or not motivo_categoria:
+        return jsonify({"mensaje": "Faltan datos obligatorios (DNI, solicitante o motivo)"}), 400
+
+    nueva_solicitud = SolicitudEliminacion(
+        paciente_id=paciente_id,
+        paciente_dni=paciente_dni,
+        usuario_nombre=usuario_nombre,
+        usuario_rol=usuario_rol,
+        motivo_categoria=motivo_categoria,
+        motivo_detalle=motivo_detalle if motivo_detalle else None,
+        estado='Pendiente'
+    )
+    db.session.add(nueva_solicitud)
+    db.session.commit()
+
+    return jsonify({
+        "mensaje": "Solicitud de eliminación enviada exitosamente al Administrador",
+        "solicitud": nueva_solicitud.to_dict()
+    }), 201
+
+@app.route('/api/solicitudes-eliminacion/<int:id>/aprobar', methods=['PUT'])
+def aprobar_solicitud_eliminacion(id):
+    solicitud = SolicitudEliminacion.query.get_or_404(id)
+    if solicitud.estado == 'Aprobada':
+        return jsonify({"mensaje": "Esta solicitud ya fue aprobada anteriormente"}), 400
+
+    data = request.get_json() or {}
+    respuesta_admin = data.get('respuesta_admin', 'Eliminación aprobada por el Administrador').strip()
+
+    # Si el paciente aún existe en el sistema, proceder a su eliminación física y de MinIO
+    if solicitud.paciente_id:
+        paciente = Paciente.query.get(solicitud.paciente_id)
+        if paciente:
+            try:
+                for doc in paciente.documentos:
+                    try:
+                        s3_client.delete_object(Bucket=BUCKET_NAME, Key=doc.ruta_minio)
+                    except Exception as e:
+                        print(f"Aviso MinIO al borrar ({doc.ruta_minio}): {e}")
+                db.session.delete(paciente)
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"mensaje": f"Error al eliminar datos del paciente: {str(e)}"}), 500
+
+    from datetime import datetime
+    solicitud.estado = 'Aprobada'
+    solicitud.respuesta_admin = respuesta_admin
+    solicitud.fecha_resolucion = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({
+        "mensaje": f"Solicitud #{id} aprobada. El expediente DNI {solicitud.paciente_dni} ha sido eliminado.",
+        "solicitud": solicitud.to_dict()
+    }), 200
+
+@app.route('/api/solicitudes-eliminacion/<int:id>/rechazar', methods=['PUT'])
+def rechazar_solicitud_eliminacion(id):
+    solicitud = SolicitudEliminacion.query.get_or_404(id)
+    if solicitud.estado != 'Pendiente':
+        return jsonify({"mensaje": f"La solicitud ya se encuentra con estado {solicitud.estado}"}), 400
+
+    data = request.get_json() or {}
+    respuesta_admin = data.get('respuesta_admin', 'Solicitud desestimada por el Administrador').strip()
+
+    from datetime import datetime
+    solicitud.estado = 'Rechazada'
+    solicitud.respuesta_admin = respuesta_admin
+    solicitud.fecha_resolucion = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({
+        "mensaje": f"Solicitud #{id} rechazada.",
+        "solicitud": solicitud.to_dict()
+    }), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

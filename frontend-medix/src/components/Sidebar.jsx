@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import logoHospital from '../assets/logo-login.png'
 
-export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocumentos }) {
+export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocumentos, totalSolicitudesPendientes = 0 }) {
   const location = useLocation()
   const navigate = useNavigate()
   const currentPath = location.pathname
@@ -15,6 +15,7 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
   const esNuevaHistoria = currentPath === '/agregarhistoria' || currentPath === '/nueva-historia'
   const esSignosVitales = currentPath === '/signosvitales' || currentPath === '/triaje'
   const esUsuarios = currentPath === '/usuarios'
+  const esSolicitudes = currentPath === '/solicitudes'
   const esConfiguracion = currentPath === '/configuracion'
 
   // Colores de la tarjeta de usuario según su rol
@@ -274,7 +275,57 @@ export default function Sidebar({ usuario, onLogout, totalPacientes, totalDocume
             </button>
           )}
 
-          {/* 5. CONFIGURACIÓN (SOLO ADMINISTRADOR) */}
+          {/* 5. SOLICITUDES DE ELIMINACIÓN (SOLO ADMINISTRADOR) */}
+          {esAdmin && (
+            <button
+              onClick={() => navigate('/solicitudes')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '11px 14px',
+                borderRadius: '8px',
+                border: esSolicitudes ? '1.5px solid #f4a7c7' : '1px solid #e2e8f0',
+                backgroundColor: esSolicitudes ? '#FFF6FB' : '#ffffff',
+                color: esSolicitudes ? '#802048' : '#2B4A66',
+                fontWeight: esSolicitudes ? '700' : '600',
+                fontSize: '13px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+                boxShadow: esSolicitudes ? '0 2px 6px rgba(255, 214, 232, 0.45)' : 'none'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span>Solicitudes</span>
+                  <span style={{ fontSize: '10px', opacity: 0.8, fontWeight: '500' }}>Bandeja de eliminación</span>
+                </div>
+              </div>
+
+              {totalSolicitudesPendientes > 0 && (
+                <span style={{
+                  backgroundColor: '#FFD6E8',
+                  color: '#802048',
+                  border: '1px solid #f4a7c7',
+                  borderRadius: '10px',
+                  padding: '1px 8px',
+                  fontSize: '11px',
+                  fontWeight: '800'
+                }}>
+                  {totalSolicitudesPendientes}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* 6. CONFIGURACIÓN (SOLO ADMINISTRADOR) */}
           {esAdmin && (
             <button
               onClick={() => navigate('/configuracion')}
