@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card } from '@heroui/react'
-import { esPdf, esDocx, esImagen, esTexto, obtenerIconoArchivo } from '../utils/fileHelpers'
-import { API_BASE } from '../api/config'
+import { analizarPaciente } from '../utils/symptomAnalyzer'
 
 export default function PacienteCard({
   paciente,
@@ -12,22 +11,51 @@ export default function PacienteCard({
   onVerCarpeta,
   onEliminar
 }) {
-  const [expandido, setExpandido] = useState(false)
+  const [hovered, setHovered] = useState(false)
 
   if (!paciente) return null
 
   const docs = paciente.documentos || []
-  const countPdfs = docs.filter(d => esPdf(d.nombre_archivo)).length
-  const countDocx = docs.filter(d => esDocx(d.nombre_archivo)).length
-  const countImg = docs.filter(d => esImagen(d.nombre_archivo)).length
-  const countTxt = docs.filter(d => esTexto(d.nombre_archivo)).length
-
   const totalNotas = paciente.total_notas ?? (paciente.notas_medicas ? paciente.notas_medicas.length : 0)
 
-  // Documentos a mostrar: si está expandido muestra todos, de lo contrario los primeros 3
-  const docsAMostrar = expandido ? docs : docs.slice(0, 3)
+  // Análisis clínico para extraer síntomas y estado
+  const analisis = useMemo(() => {
+    try {
+      return analizarPaciente(paciente)
+    } catch {
+      return null
+    }
+  }, [paciente])
 
-  // Acción para abrir la historia clínica dividida con la silueta anatómica
+  // 3: Descripción de lo que tiene el paciente
+  const descripcionClinica = useMemo(() => {
+    const notas = paciente.notas_medicas || []
+    if (notas.length > 0) {
+      const n = notas[0]
+      if (n.diagnostico && n.contenido) {
+        return `${n.diagnostico} — ${n.contenido}`
+      }
+      if (n.diagnostico) return n.diagnostico
+      if (n.contenido) return n.contenido
+    }
+
+    const signos = paciente.signos_vitales || []
+    if (signos.length > 0 && signos[0].observaciones) {
+      return signos[0].observaciones
+    }
+
+    if (analisis && analisis.totalAfecciones > 0) {
+      const hallazgos = analisis.zonasActivas
+        .filter(z => z.activo)
+        .map(z => `${z.organo}: ${z.hallazgo}`)
+        .join(' · ')
+      if (hallazgos) return hallazgos
+    }
+
+    return 'Evaluación clínica preventiva. Parámetros fisiológicos estables sin sintomatología aguda reportada.'
+  }, [paciente, analisis])
+
+  // 4: Acción de ver historia clínica (abre el visor dividido con la silueta anatómica y el documento)
   const abrirHistoriaClinica = () => {
     if (onVerSilueta) {
       onVerSilueta(paciente)
@@ -43,440 +71,316 @@ export default function PacienteCard({
     }
   }
 
+  const tieneAlerta = analisis && analisis.totalAfecciones > 0
+
   return (
     <Card
       className="w-full"
       style={{
-        backgroundColor: '#18181b',
-        color: '#ffffff',
-        border: '1px solid #27272a',
+        backgroundColor: '#ffffff',
+        color: '#1e293b',
+        border: '1.5px solid #e2e8f0',
         borderRadius: '24px',
-        padding: '22px 20px',
-        boxShadow: '0 10px 30px -5px rgba(0, 0, 0, 0.38)',
+        padding: '18px',
+        boxShadow: hovered
+          ? '0 20px 35px -8px rgba(43, 74, 102, 0.16), 0 8px 16px -4px rgba(43, 74, 102, 0.08)'
+          : '0 8px 24px -4px rgba(43, 74, 102, 0.07), 0 2px 6px -2px rgba(43, 74, 102, 0.04)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
-        boxSizing: 'border-box'
+        transition: 'transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease',
+        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+        boxSizing: 'border-box',
+        overflow: 'hidden'
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-3px)'
-        e.currentTarget.style.borderColor = '#3f3f46'
-        e.currentTarget.style.boxShadow = '0 16px 36px -4px rgba(0, 0, 0, 0.55)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.borderColor = '#27272a'
-        e.currentTarget.style.boxShadow = '0 10px 30px -5px rgba(0, 0, 0, 0.38)'
-      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <Card.Header style={{ padding: 0, display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {/* Fila Superior: Icono Circular Interactivo y Total de Documentos */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        
+        {/* ================================================================= */}
+        {/* 1. FOTO DEL PACIENTE (BANNER MINT GREEN CON SILUETA / PLACEHOLDER) */}
+        {/* ================================================================= */}
+        <div
+          onClick={abrirHistoriaClinica}
+          style={{
+            width: '100%',
+            height: '170px',
+            backgroundColor: '#a7f3d0',
+            background: 'linear-gradient(145deg, #bbf7d0 0%, #a7f3d0 100%)',
+            borderRadius: '18px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
+            cursor: 'pointer',
+            overflow: 'hidden',
+            boxShadow: 'inset 0 1px 3px rgba(255, 255, 255, 0.6)'
+          }}
+          title="Ver historia clínica del paciente"
+        >
+          {/* Insignia superior izquierda: Expediente # y Total de Documentos */}
+          <div style={{
+            position: 'absolute',
+            top: '12px',
+            left: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            zIndex: 2
+          }}>
+            <span style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.92)',
+              backdropFilter: 'blur(4px)',
+              color: '#065f46',
+              fontSize: '11px',
+              fontWeight: '800',
+              padding: '3px 8px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 5px rgba(0, 0, 0, 0.06)'
+            }}>
+              Expediente #{paciente.id}
+            </span>
+            <span style={{
+              backgroundColor: 'rgba(255, 255, 255, 0.92)',
+              backdropFilter: 'blur(4px)',
+              color: '#047857',
+              fontSize: '11px',
+              fontWeight: '700',
+              padding: '3px 8px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 5px rgba(0, 0, 0, 0.06)'
+            }}>
+              {docs.length} doc{docs.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+
+          {/* Botones de acción rápida en la esquina superior derecha */}
           <div
-            onClick={abrirHistoriaClinica}
+            onClick={(e) => e.stopPropagation()}
             style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              backgroundColor: '#27272a',
-              border: '1.5px solid rgba(127, 214, 255, 0.4)',
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
+              gap: '5px',
+              zIndex: 3
             }}
-            title="Ver historia clínica y silueta anatómica de este paciente"
           >
+            {/* + Archivo */}
+            <button
+              onClick={() => onAgregarArchivo && onAgregarArchivo(paciente.dni, paciente.id)}
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255, 255, 255, 0.94)',
+                border: 'none',
+                color: '#104060',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
+                transition: 'transform 0.15s ease'
+              }}
+              title="Subir nuevo documento al expediente"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+
+            {/* Notas Médicas */}
+            <button
+              onClick={() => onAbrirNotas && onAbrirNotas(paciente)}
+              style={{
+                height: '30px',
+                padding: '0 8px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255, 255, 255, 0.94)',
+                border: 'none',
+                color: '#2B4A66',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '11px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
+                transition: 'transform 0.15s ease'
+              }}
+              title="Ver y redactar notas médicas"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              <span>{totalNotas}</span>
+            </button>
+
+            {/* Eliminar (Tacho de basura) */}
+            <button
+              onClick={() => onEliminar && onEliminar(paciente.id, paciente.dni)}
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '8px',
+                backgroundColor: 'rgba(255, 255, 255, 0.94)',
+                border: 'none',
+                color: '#e11d48',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
+                transition: 'transform 0.15s ease'
+              }}
+              title="Eliminar expediente clínico"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Figura Central: Placeholder exacto de imagen de foto del paciente */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#047857',
+            opacity: 0.9
+          }}>
             <svg
-              width="18"
-              height="18"
+              width="58"
+              height="58"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#7FD6FF"
-              strokeWidth="2.2"
+              stroke="#047857"
+              strokeWidth="1.9"
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ filter: 'drop-shadow(0 2px 4px rgba(4, 120, 87, 0.15))' }}
             >
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              <rect x="3" y="3" width="18" height="18" rx="4" ry="4" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
             </svg>
           </div>
-
-          <span style={{
-            fontSize: '11.5px',
-            fontWeight: '700',
-            padding: '3px 10px',
-            borderRadius: '12px',
-            backgroundColor: docs.length > 0 ? '#6FE3B4' : '#FFD6E8',
-            color: docs.length > 0 ? '#0a5438' : '#802048',
-            border: docs.length > 0 ? '1px solid #4cc799' : '1px solid #f4a7c7',
-            whiteSpace: 'nowrap'
-          }}>
-            {docs.length} doc{docs.length !== 1 ? 's' : ''}
-          </span>
         </div>
 
-        {/* Título y Subtítulo estilo HeroUI */}
-        <div>
-          <Card.Title style={{
-            fontSize: '17px',
-            fontWeight: '800',
-            color: '#ffffff',
-            letterSpacing: '-0.01em',
-            margin: 0,
-            lineHeight: '1.25'
-          }}>
-            DNI: {paciente.dni}
-          </Card.Title>
-          <Card.Description style={{
-            fontSize: '13px',
-            color: '#94a3b8',
-            fontWeight: '500',
-            marginTop: '4px',
-            margin: 0,
-            lineHeight: '1.4'
-          }}>
-            Expediente #{paciente.id}
-          </Card.Description>
-        </div>
+        {/* ================================================================= */}
+        {/* 2. DNI DEL PACIENTE (HEADING) */}
+        {/* ================================================================= */}
+        <div style={{ marginTop: '2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h3 style={{
+              margin: 0,
+              fontSize: '19px',
+              fontWeight: '800',
+              color: '#0f172a',
+              letterSpacing: '-0.02em',
+              lineHeight: '1.25'
+            }}>
+              DNI: {paciente.dni}
+            </h3>
 
-        {/* Badges de desglose de formatos */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          {countDocx > 0 && (
+            {/* Badge de estado clínico */}
             <span style={{
-              backgroundColor: '#7FD6FF',
-              color: '#104060',
-              border: '1px solid #54bde8',
-              borderRadius: '6px',
-              padding: '2px 8px',
               fontSize: '11px',
-              fontWeight: '800'
-            }}>
-              {countDocx} DOCX
-            </span>
-          )}
-          {countPdfs > 0 && (
-            <span style={{
-              backgroundColor: '#FFD6E8',
-              color: '#802048',
-              border: '1px solid #f4a7c7',
-              borderRadius: '6px',
+              fontWeight: '700',
               padding: '2px 8px',
-              fontSize: '11px',
-              fontWeight: '800'
-            }}>
-              {countPdfs} PDF
-            </span>
-          )}
-          {countImg > 0 && (
-            <span style={{
-              backgroundColor: '#6FE3B4',
-              color: '#0a5438',
-              border: '1px solid #4cc799',
               borderRadius: '6px',
-              padding: '2px 8px',
-              fontSize: '11px',
-              fontWeight: '800'
+              backgroundColor: tieneAlerta ? '#FFD6E8' : '#e0f2fe',
+              color: tieneAlerta ? '#802048' : '#0369a1',
+              border: tieneAlerta ? '1px solid #f4a7c7' : '1px solid #bae6fd',
+              whiteSpace: 'nowrap'
             }}>
-              {countImg} IMG
+              {tieneAlerta ? 'Sintomático' : 'Estable'}
             </span>
-          )}
-          {countTxt > 0 && (
-            <span style={{
-              backgroundColor: '#27272a',
-              color: '#f1f5f9',
-              border: '1px solid #3f3f46',
-              borderRadius: '6px',
-              padding: '2px 8px',
-              fontSize: '11px',
-              fontWeight: '800'
-            }}>
-              {countTxt} TXT
-            </span>
-          )}
-          {docs.length === 0 && (
-            <span style={{ fontSize: '11px', color: '#71717a', fontStyle: 'italic' }}>
-              Sin archivos adjuntos
-            </span>
-          )}
-        </div>
-      </Card.Header>
-
-      <Card.Content style={{ padding: '14px 0', flex: 1 }}>
-        {/* Caja Central: CONTENIDO RECIENTE */}
-        <div style={{
-          backgroundColor: '#202024',
-          border: '1px solid #2e2e36',
-          borderRadius: '14px',
-          padding: '12px 14px'
-        }}>
-          <div style={{
-            textAlign: 'center',
-            fontSize: '11px',
-            fontWeight: '800',
-            color: '#94a3b8',
-            letterSpacing: '0.6px',
-            textTransform: 'uppercase',
-            marginBottom: '10px'
-          }}>
-            CONTENIDO RECIENTE:
           </div>
-
-          {docs.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              color: '#71717a',
-              fontSize: '12px',
-              padding: '8px 0',
-              fontStyle: 'italic'
-            }}>
-              No hay documentos cargados
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {docsAMostrar.map((d) => (
-                <div
-                  key={d.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '8px'
-                  }}
-                >
-                  <div style={{ flexShrink: 0 }}>
-                    {obtenerIconoArchivo(d.nombre_archivo)}
-                  </div>
-
-                  <span
-                    style={{
-                      fontSize: '12px',
-                      color: '#e2e8f0',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      flex: 1,
-                      fontWeight: '500'
-                    }}
-                    title={d.nombre_archivo}
-                  >
-                    {d.nombre_archivo}
-                  </span>
-
-                  {/* Botones de Acción por Documento: Ver (Ojo) y Descargar (Flecha) */}
-                  <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
-                    {/* Botón Ver con icono de ojo */}
-                    <button
-                      onClick={() => {
-                        if (onVerDocumento) {
-                          onVerDocumento({
-                            ...d,
-                            paciente: paciente
-                          })
-                        }
-                      }}
-                      style={{
-                        backgroundColor: '#6FE3B4',
-                        color: '#0a5438',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '4px 8px',
-                        fontSize: '11px',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        transition: 'opacity 0.15s ease'
-                      }}
-                      title="Ver historia clínica y silueta anatómica"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                      <span>Ver</span>
-                    </button>
-
-                    {/* Botón Descargar con icono de flecha hacia abajo a bandeja */}
-                    {d.id && (
-                      <a
-                        href={`${API_BASE}/documentos/${d.id}/archivo`}
-                        download
-                        style={{
-                          backgroundColor: '#7FD6FF',
-                          color: '#104060',
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '4px 8px',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          textDecoration: 'none',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          transition: 'opacity 0.15s ease'
-                        }}
-                        title="Descargar archivo físico"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="7 10 12 15 17 10" />
-                          <line x1="12" y1="15" x2="12" y2="3" />
-                        </svg>
-                        <span>Bajar</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {docs.length > 3 && (
-                <div
-                  onClick={() => setExpandido(!expandido)}
-                  style={{
-                    textAlign: 'center',
-                    fontSize: '11px',
-                    fontWeight: '700',
-                    color: '#7FD6FF',
-                    cursor: 'pointer',
-                    marginTop: '4px',
-                    padding: '2px 0'
-                  }}
-                >
-                  {expandido ? 'Ver menos' : `+${docs.length - 3} archivo(s) más`}
-                </div>
-              )}
-            </div>
-          )}
         </div>
-      </Card.Content>
 
-      {/* Footer con 4 Botones y Figuras Intuitivas (Subir, Notas, Historia, Tacho de Basura) */}
-      <Card.Footer style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '6px',
-        width: '100%',
-        padding: '6px 0 0 0'
-      }}>
-        {/* 1. Botón Subir Archivo (Icono de documento con +) */}
-        <button
-          onClick={() => onAgregarArchivo && onAgregarArchivo(paciente.dni, paciente.id)}
-          style={{
-            backgroundColor: '#7FD6FF',
-            color: '#104060',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '6px 4px',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: '700',
-            minHeight: '44px',
-            transition: 'opacity 0.15s ease'
-          }}
-          title="Subir nuevo documento a este expediente"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="12" y1="18" x2="12" y2="12" />
-            <line x1="9" y1="15" x2="15" y2="15" />
-          </svg>
-          <span style={{ fontSize: '10px', marginTop: '3px' }}>+ Archivo</span>
-        </button>
+        {/* ================================================================= */}
+        {/* 3. DESCRIPCIÓN DE LO QUE TIENE (SÍNTOMAS / DIAGNÓSTICO) */}
+        {/* ================================================================= */}
+        <div>
+          <p style={{
+            margin: 0,
+            fontSize: '13px',
+            color: '#64748b',
+            lineHeight: '1.45',
+            fontWeight: '500',
+            display: '-webkit-box',
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            minHeight: '38px'
+          }} title={descripcionClinica}>
+            {descripcionClinica}
+          </p>
+        </div>
 
-        {/* 2. Botón Notas Médicas (Icono de libreta médica con lápiz) */}
-        <button
-          onClick={() => onAbrirNotas && onAbrirNotas(paciente)}
-          style={{
-            backgroundColor: '#27272a',
-            color: '#f8fafc',
-            border: '1px solid #3f3f46',
-            borderRadius: '8px',
-            padding: '6px 4px',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '10px',
-            fontWeight: '700',
-            minHeight: '44px',
-            transition: 'background-color 0.15s ease'
-          }}
-          title="Ver y redactar notas médicas"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-          </svg>
-          <span style={{ fontSize: '10px', marginTop: '3px' }}>Notas ({totalNotas})</span>
-        </button>
+      </div>
 
-        {/* 3. Botón Ver Historia con Silueta Anatómica (Icono de Ojo / Pulso Clínico) */}
+      {/* ================================================================= */}
+      {/* 4. ACCIÓN DE VER HISTORIA CLÍNICA (BOTÓN GRANDE ACTION DE LA IMAGEN) */}
+      {/* ================================================================= */}
+      <div style={{ marginTop: '16px' }}>
         <button
           onClick={abrirHistoriaClinica}
           style={{
-            backgroundColor: '#27272a',
-            color: '#6FE3B4',
-            border: '1.5px solid #4cc799',
-            borderRadius: '8px',
-            padding: '6px 4px',
-            cursor: 'pointer',
+            width: '100%',
+            height: '46px',
+            backgroundColor: '#4f6df5',
+            background: 'linear-gradient(180deg, #5b79fa 0%, #4461eb 100%)',
+            color: '#ffffff',
+            border: 'none',
+            borderRadius: '14px',
+            fontSize: '13.5px',
+            fontWeight: '700',
+            letterSpacing: '0.2px',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '10px',
-            fontWeight: '700',
-            minHeight: '44px',
-            transition: 'background-color 0.15s ease'
+            gap: '8px',
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(79, 109, 245, 0.35)',
+            transition: 'all 0.18s ease'
           }}
-          title="Ver historia clínica y silueta anatómica en sector dividido"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#3c5ceb'
+            e.currentTarget.style.boxShadow = '0 6px 18px rgba(79, 109, 245, 0.48)'
+            e.currentTarget.style.transform = 'scale(1.01)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#4f6df5'
+            e.currentTarget.style.boxShadow = '0 4px 14px rgba(79, 109, 245, 0.35)'
+            e.currentTarget.style.transform = 'scale(1)'
+          }}
+          title="Ver historia clínica y silueta anatómica"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
             <circle cx="12" cy="12" r="3" />
           </svg>
-          <span style={{ fontSize: '10px', marginTop: '3px' }}>Historia</span>
+          <span>Ver Historia Clínica</span>
         </button>
-
-        {/* 4. Botón Eliminar con Tacho de Basura */}
-        <button
-          onClick={() => onEliminar && onEliminar(paciente.id, paciente.dni)}
-          style={{
-            backgroundColor: '#FFD6E8',
-            color: '#802048',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '6px 4px',
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '10px',
-            fontWeight: '700',
-            minHeight: '44px',
-            transition: 'opacity 0.15s ease'
-          }}
-          title="Eliminar expediente clínico"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            <line x1="10" y1="11" x2="10" y2="17" />
-            <line x1="14" y1="11" x2="14" y2="17" />
-          </svg>
-          <span style={{ fontSize: '10px', marginTop: '3px' }}>Eliminar</span>
-        </button>
-      </Card.Footer>
+      </div>
     </Card>
   )
 }
