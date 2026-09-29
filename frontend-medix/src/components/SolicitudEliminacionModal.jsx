@@ -29,8 +29,8 @@ export default function SolicitudEliminacionModal({
     e.preventDefault()
     setErrorMsg('')
 
-    if (esOtro && !motivoDetalle.trim()) {
-      setErrorMsg('Por favor redacte el motivo específico en el campo de texto.')
+    if (!motivoDetalle.trim()) {
+      setErrorMsg('Es obligatorio especificar el motivo por el cual desea eliminar la historia clínica.')
       return
     }
 
@@ -214,16 +214,17 @@ export default function SolicitudEliminacionModal({
             </div>
           </div>
 
-          {/* 2. Redacción Adicional o Motivo Personalizado */}
+          {/* 2. Redacción Obligatoria del Motivo */}
           <div>
-            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '800', color: '#2B4A66', marginBottom: '6px' }}>
-              {esOtro ? 'Especifique el Motivo Detallado (Obligatorio):' : 'Detalles o Justificación Adicional (Opcional):'}
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '800', color: '#2B4A66', marginBottom: '6px' }}>
+              Motivo o Justificación de la Eliminación (Obligatorio) <span style={{ color: '#dc2626' }}>*</span>
             </label>
             <textarea
               rows={3}
               value={motivoDetalle}
               onChange={(e) => setMotivoDetalle(e.target.value)}
-              placeholder={esOtro ? 'Describa detalladamente la justificación médica o administrativa...' : 'Agregue cualquier observación o contexto relevante para el Administrador...'}
+              placeholder="Explique obligatoriamente la razón por la cual desea eliminar esta historia clínica. Este mensaje llegará directamente a la bandeja de solicitudes del Administrador..."
+              required
               style={{
                 width: '100%',
                 padding: '10px 12px',
@@ -292,7 +293,7 @@ export default function SolicitudEliminacionModal({
                 boxShadow: '0 2px 6px rgba(255, 214, 232, 0.6)'
               }}
             >
-              {enviando ? 'Enviando...' : 'Enviar Solicitud al Administrador'}
+              {enviando ? 'Enviando...' : 'Enviar Solicitud a la Bandeja del Admin'}
             </button>
           </div>
         </form>

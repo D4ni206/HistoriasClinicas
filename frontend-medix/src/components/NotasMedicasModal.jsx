@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { API_BASE } from '../api/config'
+import ConfirmDeleteModal from './ConfirmDeleteModal'
 
-export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAgregada }) {
+export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAgregada, notificar }) {
   const [notas, setNotas] = useState(paciente?.notas_medicas || [])
   const [cargandoNotas, setCargandoNotas] = useState(false)
   const [nuevaNota, setNuevaNota] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [errorLocal, setErrorLocal] = useState('')
+  const [notaParaEliminar, setNotaParaEliminar] = useState(null)
 
   useEffect(() => {
     if (paciente?.id) {
@@ -39,12 +41,13 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
     setGuardando(true)
 
     try {
+      const textoGuardado = nuevaNota.trim()
       const nombreMedico = usuario ? `Dr. ${usuario.username}` : 'Médico Tratante'
       const res = await fetch(`${API_BASE}/pacientes/${paciente.id}/notas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contenido: nuevaNota.trim(),
+          contenido: textoGuardado,
           medico_nombre: nombreMedico
         })
       })
@@ -53,6 +56,28 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
         setNuevaNota('')
         await cargarNotas()
         if (onNotaAgregada) onNotaAgregada()
+
+        // Notificar con alerta según corresponda
+        if (notificar) {
+          const esAlergia = /alerg|penicilina|latex|intoleran|sensib|reacci[oó]n|asma|anafilax|cuidado especial/.test(textoGuardado.toLowerCase())
+          if (esAlergia) {
+            notificar({
+              tipo: 'alergia',
+              titulo: 'Alergias / Advertencia',
+              texto: `Nota registrada con alerta de alergias / advertencia para el paciente DNI ${paciente.dni}.`,
+              contador: '2',
+              actionLabel: 'Got it'
+            })
+          } else {
+            notificar({
+              tipo: 'exito',
+              titulo: '¡Nota Guardada!',
+              texto: `Evolución clínica registrada para el paciente DNI ${paciente.dni}.`,
+              contador: '1',
+              actionLabel: 'Okay'
+            })
+          }
+        }
       } else {
         setErrorLocal(data.mensaje || 'Error al guardar la nota.')
       }
@@ -63,10 +88,16 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
     }
   }
 
-  const handleEliminarNota = async (notaId) => {
-    if (!window.confirm('¿Desea eliminar esta nota médica?')) return
+  const handleEliminarNota = (notaId) => {
+    setNotaParaEliminar(notaId)
+  }
+
+  const ejecutarEliminarNota = async () => {
+    if (!notaParaEliminar) return
+    const id = notaParaEliminar
+    setNotaParaEliminar(null)
     try {
-      const res = await fetch(`${API_BASE}/notas/${notaId}`, { method: 'DELETE' })
+      const res = await fetch(`${API_BASE}/notas/${id}`, { method: 'DELETE' })
       if (res.ok) {
         await cargarNotas()
         if (onNotaAgregada) onNotaAgregada()
@@ -296,6 +327,16 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
           </div>
         </div>
       </div>
+
+      {notaParaEliminar && (
+        <ConfirmDeleteModal
+          paciente={{ dni: `Nota Clínica #${notaParaEliminar}` }}
+          titulo="Advertencia"
+          pregunta="¿Desea eliminar esta nota médica del historial del paciente?"
+          onConfirmar={ejecutarEliminarNota}
+          onCancelar={() => setNotaParaEliminar(null)}
+        />
+      )}
     </div>
   )
 }

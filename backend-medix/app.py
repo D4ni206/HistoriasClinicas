@@ -8,6 +8,9 @@ import boto3
 import os
 import uuid
 import mimetypes
+import random
+import re
+from datetime import datetime, timedelta
 
 load_dotenv()
 
@@ -131,6 +134,143 @@ def usuario_actual():
         "estado": "autenticado"
     }), 200
 
+# Almacenamiento temporal para códigos SMS de recuperación (user_id -> info)
+recuperacion_codigos = {}
+
+@app.route('/api/auth/registro', methods=['POST'])
+def registrar_usuario():
+    data = request.get_json() or {}
+    nombres = data.get('nombres_completos', '').strip()
+    correo = data.get('correo', '').strip()
+    telefono = data.get('telefono', '').strip()
+    rol = data.get('rol', 'Médico General').strip()
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
+
+    if not nombres or not correo or not telefono:
+        return jsonify({"mensaje": "Nombres completos, correo y teléfono son obligatorios"}), 400
+
+    # Si no se envió username, se genera a partir del correo o nombres
+    if not username:
+        base_user = correo.split('@')[0].lower() if '@' in correo else nombres.split(' ')[0].lower()
+        base_user = re.sub(r'[^a-zA-Z0-9_]', '', base_user)
+        if not base_user:
+            base_user = 'user'
+        username = base_user
+        idx = 1
+        while Usuario.query.filter_by(username=username).first():
+            username = f"{base_user}{idx}"
+            idx += 1
+
+    # Si no se envió contraseña, se genera una segura
+    if not password:
+        password = f"Medix{random.randint(100, 999)}*"
+
+    if Usuario.query.filter_by(username=username).first():
+        return jsonify({"mensaje": f"El nombre de usuario '{username}' ya está registrado. Por favor elija otro."}), 409
+
+    nuevo_usuario = Usuario(
+        username=username,
+        password_hash=generate_password_hash(password),
+        rol=rol,
+        telefono=telefono,
+        correo=correo,
+        nombres_completos=nombres
+    )
+    db.session.add(nuevo_usuario)
+    db.session.commit()
+
+    return jsonify({
+        "mensaje": f"Cuenta creada exitosamente para {nombres}",
+        "usuario": nuevo_usuario.to_dict(),
+        "credenciales": {
+            "username": username,
+            "password": password
+        }
+    }), 201
+
+@app.route('/api/auth/recuperar-sms/solicitar', methods=['POST'])
+def solicitar_recuperar_sms():
+    data = request.get_json() or {}
+    identificador = data.get('identificador', '').strip()
+    if not identificador:
+        return jsonify({"mensaje": "Por favor ingrese su usuario, teléfono o correo"}), 400
+
+    usuario = Usuario.query.filter(
+        db.or_(
+            Usuario.username == identificador,
+            Usuario.telefono == identificador,
+            Usuario.correo == identificador
+        )
+    ).first()
+
+    if not usuario:
+        return jsonify({"mensaje": "No se encontró ningún usuario registrado con esos datos"}), 404
+
+    if not usuario.telefono:
+        return jsonify({
+            "mensaje": f"El usuario '{usuario.username}' no tiene un número telefónico asociado. Comuníquese con Soporte TI para actualizar sus datos."
+        }), 400
+
+    # Generar código SMS de 6 dígitos
+    codigo = f"{random.randint(100000, 999999)}"
+    recuperacion_codigos[usuario.id] = {
+        "codigo": codigo,
+        "exp": datetime.now() + timedelta(minutes=15)
+    }
+
+    # Ofuscar el teléfono para privacidad (ej. +51 987***321)
+    tel = usuario.telefono.strip()
+    tel_ofuscado = (tel[:3] + "****" + tel[-3:]) if len(tel) >= 7 else "****"
+
+    return jsonify({
+        "mensaje": f"Código de verificación SMS enviado exitosamente al número {tel_ofuscado}",
+        "usuario_id": usuario.id,
+        "username": usuario.username,
+        "telefono_ofuscado": tel_ofuscado,
+        "codigo_simulado": codigo
+    }), 200
+
+@app.route('/api/auth/recuperar-sms/confirmar', methods=['POST'])
+def confirmar_recuperar_sms():
+    data = request.get_json() or {}
+    usuario_id = data.get('usuario_id')
+    username = data.get('username', '').strip()
+    codigo = data.get('codigo', '').strip()
+    nueva_password = data.get('nueva_password', '').strip()
+
+    if not codigo or not nueva_password:
+        return jsonify({"mensaje": "El código SMS y la nueva contraseña son obligatorios"}), 400
+
+    usuario = None
+    if usuario_id:
+        usuario = Usuario.query.get(usuario_id)
+    elif username:
+        usuario = Usuario.query.filter_by(username=username).first()
+
+    if not usuario:
+        return jsonify({"mensaje": "Usuario no encontrado"}), 404
+
+    info_codigo = recuperacion_codigos.get(usuario.id)
+    if not info_codigo:
+        return jsonify({"mensaje": "No hay una solicitud de código SMS activa o ha expirado"}), 400
+
+    if datetime.now() > info_codigo['exp']:
+        recuperacion_codigos.pop(usuario.id, None)
+        return jsonify({"mensaje": "El código SMS ha expirado. Por favor solicite uno nuevo."}), 400
+
+    if info_codigo['codigo'] != codigo:
+        return jsonify({"mensaje": "El código SMS ingresado no es válido"}), 400
+
+    # Actualizar la clave
+    usuario.password_hash = generate_password_hash(nueva_password)
+    db.session.commit()
+    recuperacion_codigos.pop(usuario.id, None)
+
+    return jsonify({
+        "mensaje": f"¡Contraseña actualizada exitosamente para '{usuario.username}'! Ya puede iniciar sesión con su nueva clave."
+    }), 200
+
 # ==========================================
 # GESTIÓN DE USUARIOS
 # ==========================================
@@ -144,7 +284,10 @@ def crear_usuario():
     data = request.get_json() or {}
     username = data.get('username', '').strip()
     password = data.get('password', '').strip()
-    rol = data.get('rol', 'Personal').strip()
+    rol = data.get('rol', 'Médico').strip()
+    telefono = data.get('telefono', '').strip()
+    correo = data.get('correo', '').strip()
+    nombres_completos = data.get('nombres_completos', '').strip()
 
     if not username or not password:
         return jsonify({"mensaje": "El nombre de usuario y la contraseña son obligatorios"}), 400
@@ -155,7 +298,10 @@ def crear_usuario():
     nuevo_usuario = Usuario(
         username=username,
         password_hash=generate_password_hash(password),
-        rol=rol
+        rol=rol,
+        telefono=telefono if telefono else None,
+        correo=correo if correo else None,
+        nombres_completos=nombres_completos if nombres_completos else None
     )
     db.session.add(nuevo_usuario)
     db.session.commit()

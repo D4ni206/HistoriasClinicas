@@ -9,7 +9,8 @@ export default function PacienteCard({
   onAgregarArchivo,
   onAbrirNotas,
   onVerCarpeta,
-  onEliminar
+  onEliminar,
+  notificar
 }) {
   const [hovered, setHovered] = useState(false)
 
@@ -72,6 +73,17 @@ export default function PacienteCard({
   }
 
   const tieneAlerta = analisis && analisis.totalAfecciones > 0
+
+  // Detección de Alergias o Contenido Sensible en el paciente
+  const tieneAlergia = useMemo(() => {
+    const notas = paciente.notas_medicas || []
+    const signos = paciente.signos_vitales || []
+    const texto = [
+      ...notas.map(n => `${n.diagnostico || ''} ${n.contenido || ''}`),
+      ...signos.map(s => s.observaciones || '')
+    ].join(' ').toLowerCase()
+    return /alerg|penicilina|latex|intoleran|sensib|reacci[oó]n|asma|anafilax|cuidado especial/.test(texto)
+  }, [paciente])
 
   return (
     <Card
@@ -290,19 +302,56 @@ export default function PacienteCard({
               DNI: {paciente.dni}
             </h3>
 
-            {/* Badge de estado clínico */}
-            <span style={{
-              fontSize: '11px',
-              fontWeight: '700',
-              padding: '2px 8px',
-              borderRadius: '6px',
-              backgroundColor: tieneAlerta ? '#FFD6E8' : '#e0f2fe',
-              color: tieneAlerta ? '#802048' : '#0369a1',
-              border: tieneAlerta ? '1px solid #f4a7c7' : '1px solid #bae6fd',
-              whiteSpace: 'nowrap'
-            }}>
-              {tieneAlerta ? 'Sintomático' : 'Estable'}
-            </span>
+            {/* Badges de estado clínico y advertencias */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {tieneAlergia && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (notificar) {
+                      notificar({
+                        tipo: 'alergia',
+                        titulo: 'Alergias / Advertencia',
+                        texto: `Atención: El expediente del paciente DNI ${paciente.dni} registra alertas de alergias o condición médica de cuidado sensible.`,
+                        contador: '2',
+                        actionLabel: 'Got it'
+                      })
+                    }
+                  }}
+                  title="Paciente con alertas de alergias activas"
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: '800',
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    backgroundColor: '#fef3c7',
+                    color: '#b45309',
+                    border: '1px solid #fde68a',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: '0 1px 2px rgba(180, 83, 9, 0.1)'
+                  }}
+                >
+                  <span style={{ fontSize: '10px' }}>⚠️</span>
+                  <span>Alergias</span>
+                </button>
+              )}
+              <span style={{
+                fontSize: '11px',
+                fontWeight: '700',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                backgroundColor: tieneAlerta ? '#FFD6E8' : '#e0f2fe',
+                color: tieneAlerta ? '#802048' : '#0369a1',
+                border: tieneAlerta ? '1px solid #f4a7c7' : '1px solid #bae6fd',
+                whiteSpace: 'nowrap'
+              }}>
+                {tieneAlerta ? 'Sintomático' : 'Estable'}
+              </span>
+            </div>
           </div>
         </div>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { API_BASE } from '../api/config'
+import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
 
 export default function SolicitudesView({ usuario, notificar, onActualizacion }) {
   const [solicitudes, setSolicitudes] = useState([])
@@ -7,6 +8,7 @@ export default function SolicitudesView({ usuario, notificar, onActualizacion })
   const [filtroEstado, setFiltroEstado] = useState('todas') // 'todas', 'Pendiente', 'Aprobada', 'Rechazada'
   const [busqueda, setBusqueda] = useState('')
   const [procesandoId, setProcesandoId] = useState(null)
+  const [solicitudParaAprobar, setSolicitudParaAprobar] = useState(null)
 
   const cargarSolicitudes = async () => {
     setCargando(true)
@@ -29,10 +31,12 @@ export default function SolicitudesView({ usuario, notificar, onActualizacion })
     cargarSolicitudes()
   }, [])
 
-  const handleAprobar = async (solicitud) => {
-    const confirmMsg = `¿Confirma la aprobación de la solicitud #${solicitud.id}?\n\nEsta acción ELIMINARÁ DEFINITIVAMENTE el expediente clínico DNI ${solicitud.paciente_dni} (#${solicitud.paciente_id}) y todos sus archivos asociados en MinIO.`
-    if (!window.confirm(confirmMsg)) return
+  const handleAprobar = (solicitud) => {
+    setSolicitudParaAprobar(solicitud)
+  }
 
+  const ejecutarAprobar = async (solicitud) => {
+    setSolicitudParaAprobar(null)
     setProcesandoId(solicitud.id)
     try {
       const res = await fetch(`${API_BASE}/solicitudes-eliminacion/${solicitud.id}/aprobar`, {
@@ -42,7 +46,14 @@ export default function SolicitudesView({ usuario, notificar, onActualizacion })
       })
       const data = await res.json()
       if (res.ok) {
-        notificar('exito', data.mensaje || 'Solicitud aprobada y expediente eliminado.')
+        notificar({
+          tipo: 'eliminacion',
+          titulo: 'Historia Eliminada',
+          texto: data.mensaje || 'Solicitud aprobada y expediente clínico eliminado permanentemente.',
+          contador: '1',
+          actionLabel: 'Delete',
+          secondaryLabel: 'Cancel'
+        })
         cargarSolicitudes()
         if (onActualizacion) onActualizacion()
       } else {
@@ -55,23 +66,30 @@ export default function SolicitudesView({ usuario, notificar, onActualizacion })
     }
   }
 
-  const handleRechazar = async (solicitud) => {
-    const motivoRechazo = window.prompt(
-      `¿Desea rechazar la solicitud #${solicitud.id} del DNI ${solicitud.paciente_dni}?\nPuede ingresar un motivo de rechazo (opcional):`,
-      'Solicitud no fundamentada conforme a los protocolos institucionales'
-    )
-    if (motivoRechazo === null) return
+  const [solicitudParaRechazar, setSolicitudParaRechazar] = useState(null)
 
+  const handleRechazar = (solicitud) => {
+    setSolicitudParaRechazar(solicitud)
+  }
+
+  const ejecutarRechazar = async (solicitud) => {
+    setSolicitudParaRechazar(null)
     setProcesandoId(solicitud.id)
     try {
       const res = await fetch(`${API_BASE}/solicitudes-eliminacion/${solicitud.id}/rechazar`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ respuesta_admin: motivoRechazo.trim() || 'Desestimada por el Administrador' })
+        body: JSON.stringify({ respuesta_admin: 'Desestimada formalmente por el Administrador conforme a protocolos' })
       })
       const data = await res.json()
       if (res.ok) {
-        notificar('exito', data.mensaje || 'Solicitud rechazada.')
+        notificar({
+          tipo: 'exito',
+          titulo: 'Solicitud Rechazada',
+          texto: data.mensaje || 'La solicitud ha sido rechazada y archivada.',
+          contador: '1',
+          actionLabel: 'Okay'
+        })
         cargarSolicitudes()
       } else {
         notificar('error', data.mensaje || 'No se pudo rechazar la solicitud.')
@@ -494,6 +512,26 @@ export default function SolicitudesView({ usuario, notificar, onActualizacion })
           </table>
         </div>
       </div>
+
+      {solicitudParaAprobar && (
+        <ConfirmDeleteModal
+          paciente={{ dni: solicitudParaAprobar.paciente_dni }}
+          titulo="Advertencia"
+          pregunta={`¿Desea aprobar la eliminación de la historia clínica DNI ${solicitudParaAprobar.paciente_dni}? Se borrará permanentemente de la base de datos y de MinIO.`}
+          onConfirmar={() => ejecutarAprobar(solicitudParaAprobar)}
+          onCancelar={() => setSolicitudParaAprobar(null)}
+        />
+      )}
+
+      {solicitudParaRechazar && (
+        <ConfirmDeleteModal
+          paciente={{ dni: solicitudParaRechazar.paciente_dni }}
+          titulo="Advertencia"
+          pregunta={`¿Desea rechazar la solicitud de eliminación del expediente DNI ${solicitudParaRechazar.paciente_dni}?`}
+          onConfirmar={() => ejecutarRechazar(solicitudParaRechazar)}
+          onCancelar={() => setSolicitudParaRechazar(null)}
+        />
+      )}
     </div>
   )
 }

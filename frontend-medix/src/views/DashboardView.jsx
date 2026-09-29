@@ -37,6 +37,7 @@ export default function DashboardView({
   documentoEnVista,
   setDocumentoEnVista,
   onVerSilueta,
+  notificar,
   loading,
   cargarDatos,
   usuario
@@ -322,6 +323,7 @@ export default function DashboardView({
                     })
                   }}
                   onEliminar={handleEliminarPaciente}
+                  notificar={notificar}
                 />
               ))}
             </div>
@@ -831,6 +833,7 @@ export default function DashboardView({
           paciente={pacienteParaNotas}
           usuario={usuario}
           onClose={() => setPacienteParaNotas(null)}
+          notificar={notificar}
           onNotaAgregada={() => {
             cargarDatos(false)
           }}

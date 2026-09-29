@@ -50,13 +50,19 @@ class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    rol = db.Column(db.String(50), nullable=False) # Ej: 'Administrador', 'Recepcion'
+    rol = db.Column(db.String(50), nullable=False) # Ej: 'Administrador', 'Médico', 'Pediatra'
+    telefono = db.Column(db.String(30), nullable=True)
+    correo = db.Column(db.String(120), nullable=True)
+    nombres_completos = db.Column(db.String(150), nullable=True)
 
     def to_dict(self):
         return {
             'id': self.id,
             'username': self.username,
-            'rol': self.rol
+            'rol': self.rol,
+            'telefono': self.telefono or '',
+            'correo': self.correo or '',
+            'nombres_completos': self.nombres_completos or ''
         }
 
 class Documento_Escaneado(db.Model):

@@ -34,6 +34,16 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
       if (res.ok) {
         const data = await res.json()
         setHistorialSignos(data)
+        const tieneAlergiaHistorial = data.some(s => /alerg|penicilina|latex|intoleran|sensib|reacci[oó]n|asma|anafilax/.test((s.observaciones || '').toLowerCase()))
+        if (tieneAlergiaHistorial) {
+          notificar({
+            tipo: 'alergia',
+            titulo: 'Alergias / Advertencia',
+            texto: `Precaución: El paciente DNI ${p.dni} tiene antecedentes alérgicos reportados en triaje.`,
+            contador: '2',
+            actionLabel: 'Got it'
+          })
+        }
       }
     } catch (err) {
       console.error('Error al cargar signos vitales:', err)
@@ -70,7 +80,26 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
 
       const data = await res.json()
       if (res.ok) {
-        notificar('exito', `Signos vitales registrados para el paciente DNI ${pacienteSeleccionado.dni}.`)
+        const obs = (formData.observaciones || '').toLowerCase()
+        const esAlergia = /alerg|penicilina|latex|intoleran|sensib|reacci[oó]n|asma|anafilax/.test(obs)
+
+        if (esAlergia) {
+          notificar({
+            tipo: 'alergia',
+            titulo: 'Alergias / Advertencia',
+            texto: `Signos vitales guardados con alerta: el paciente DNI ${pacienteSeleccionado.dni} presenta alergias o condición sensible.`,
+            contador: '2',
+            actionLabel: 'Got it'
+          })
+        } else {
+          notificar({
+            tipo: 'exito',
+            titulo: '¡Signos Registrados!',
+            texto: `Signos vitales registrados para el paciente DNI ${pacienteSeleccionado.dni}.`,
+            contador: '1',
+            actionLabel: 'Okay'
+          })
+        }
         setFormData({
           presion_arterial: '',
           peso: '',

@@ -12,6 +12,8 @@ import ConfiguracionView from './views/ConfiguracionView'
 import SignosVitalesView from './views/SignosVitalesView'
 import SolicitudesView from './views/SolicitudesView'
 import SolicitudEliminacionModal from './components/SolicitudEliminacionModal'
+import AlertToast from './components/AlertToast'
+import ConfirmDeleteModal from './components/ConfirmDeleteModal'
 
 function AppContent() {
   const navigate = useNavigate()
@@ -54,7 +56,14 @@ function AppContent() {
   // Gestión de Usuarios
   const [usuarios, setUsuarios] = useState([])
   const [cargandoUsuarios, setCargandoUsuarios] = useState(false)
-  const [formUsuario, setFormUsuario] = useState({ username: '', password: '', rol: 'Médico' })
+  const [formUsuario, setFormUsuario] = useState({
+    username: '',
+    password: '',
+    rol: 'Médico',
+    telefono: '',
+    correo: '',
+    nombres_completos: ''
+  })
   const [creandoUsuario, setCreandoUsuario] = useState(false)
 
   // Diagnóstico / Configuración del sistema
@@ -69,11 +78,42 @@ function AppContent() {
   // Solicitudes de Eliminación (para Administrador y Médicos)
   const [solicitudesPendientesCount, setSolicitudesPendientesCount] = useState(0)
   const [pacienteParaSolicitud, setPacienteParaSolicitud] = useState(null)
+  const [confirmacionEliminar, setConfirmacionEliminar] = useState(null)
 
-  const notificar = (tipo, texto) => {
-    setMensaje({ tipo, texto })
-    setTimeout(() => setMensaje({ tipo: '', texto: '' }), 5000)
+  const notificar = (tipo, texto = '', titulo = '', opciones = {}) => {
+    let payload = {}
+    if (typeof tipo === 'object' && tipo !== null) {
+      payload = {
+        id: Date.now(),
+        tipo: tipo.tipo || 'info',
+        titulo: tipo.titulo || '',
+        texto: tipo.texto || '',
+        contador: tipo.contador,
+        actionLabel: tipo.actionLabel,
+        secondaryLabel: tipo.secondaryLabel,
+        onAction: tipo.onAction
+      }
+    } else {
+      payload = {
+        id: Date.now(),
+        tipo: tipo || 'info',
+        texto: texto || '',
+        titulo: titulo || '',
+        ...opciones
+      }
+    }
+    setMensaje(payload)
   }
+
+  // Temporizador para auto-cerrar la notificación después de 6.5 segundos
+  useEffect(() => {
+    if (mensaje && mensaje.texto) {
+      const timer = setTimeout(() => {
+        setMensaje({ tipo: '', texto: '', titulo: '' })
+      }, 6500)
+      return () => clearTimeout(timer)
+    }
+  }, [mensaje])
 
   const cargarDatos = async (abrirTodos = false) => {
     setLoading(true)
@@ -125,8 +165,21 @@ function AppContent() {
       })
       const data = await res.json()
       if (res.ok) {
-        notificar('exito', data.mensaje || `Usuario "${formUsuario.username}" registrado exitosamente.`)
-        setFormUsuario({ username: '', password: '', rol: 'Médico' })
+        notificar({
+          tipo: 'exito',
+          titulo: '¡Usuario Creado!',
+          texto: data.mensaje || `Usuario "${formUsuario.username}" registrado exitosamente.`,
+          contador: '1',
+          actionLabel: 'Okay'
+        })
+        setFormUsuario({
+          username: '',
+          password: '',
+          rol: 'Médico',
+          telefono: '',
+          correo: '',
+          nombres_completos: ''
+        })
         cargarUsuarios()
       } else {
         notificar('error', data.mensaje || 'Error al registrar el usuario.')
@@ -138,15 +191,28 @@ function AppContent() {
     }
   }
 
-  const handleEliminarUsuario = async (id, nombre) => {
-    if (!window.confirm(`¿Seguro que desea eliminar al usuario "${nombre}"? Esta acción no se puede deshacer.`)) {
-      return
-    }
+  const handleEliminarUsuario = (id, nombre) => {
+    setConfirmacionEliminar({
+      tipo: 'usuario',
+      usuarioParaBorrar: { id, nombre },
+      paciente: { dni: nombre },
+      pregunta: `¿Desea eliminar al usuario "${nombre}"? Esta acción no se puede deshacer.`
+    })
+  }
+
+  const ejecutarEliminarUsuario = async (id, nombre) => {
     try {
       const res = await fetch(`${API_BASE}/usuarios/${id}`, { method: 'DELETE' })
       const data = await res.json()
       if (res.ok) {
-        notificar('exito', data.mensaje || 'Usuario eliminado correctamente.')
+        notificar({
+          tipo: 'eliminacion',
+          titulo: 'Usuario Eliminado',
+          texto: data.mensaje || `El usuario "${nombre}" ha sido eliminado del sistema.`,
+          contador: '1',
+          actionLabel: 'Delete',
+          secondaryLabel: 'Cancel'
+        })
         cargarUsuarios()
       } else {
         notificar('error', data.mensaje || 'No se pudo eliminar el usuario.')
@@ -254,7 +320,16 @@ function AppContent() {
 
       if (response.ok) {
         const pacId = data.documento ? data.documento.paciente_id : null
-        notificar('exito', data.mensaje || `Documento guardado en la carpeta del DNI ${dniLimpio}.`)
+        const esNuevo = !pacientes.some(p => p.dni.trim() === dniLimpio)
+        notificar({
+          tipo: 'exito',
+          titulo: esNuevo ? '¡Paciente Creado!' : '¡Expediente Actualizado!',
+          texto: data.mensaje || (esNuevo
+            ? `El expediente clínico del paciente DNI ${dniLimpio} fue creado y registrado con éxito.`
+            : `El archivo clínico fue anexado con éxito a la carpeta del DNI ${dniLimpio}.`),
+          contador: '1',
+          actionLabel: 'Okay'
+        })
         setDni('')
         setFile(null)
         if (fileInputRef.current) fileInputRef.current.value = ''
@@ -308,16 +383,28 @@ function AppContent() {
   }
 
   // D: Eliminar Documento individual
-  const handleEliminarDocumento = async (id, nombre, pacId) => {
-    if (!window.confirm(`¿Eliminar el archivo "${nombre}" (#${id})? Se borrará de SQL Server y MinIO.`)) {
-      return
-    }
+  const handleEliminarDocumento = (id, nombre, pacId) => {
+    setConfirmacionEliminar({
+      tipo: 'documento',
+      documento: { id, nombre, pacId },
+      paciente: { dni: nombre },
+      pregunta: `¿Desea eliminar el archivo clínico "${nombre}"?`
+    })
+  }
 
+  const ejecutarEliminarDocumento = async (id, nombre, pacId) => {
     try {
       const response = await fetch(`${API_BASE}/documentos/${id}`, { method: 'DELETE' })
       const data = await response.json()
       if (response.ok) {
-        notificar('exito', data.mensaje || 'Documento eliminado de la carpeta.')
+        notificar({
+          tipo: 'eliminacion',
+          titulo: 'Historia Eliminada',
+          texto: data.mensaje || `El archivo clínico "${nombre}" ha sido eliminado del expediente.`,
+          contador: '1',
+          actionLabel: 'Delete',
+          secondaryLabel: 'Cancel'
+        })
         if (documentoEnVista && documentoEnVista.id === id) {
           setDocumentoEnVista(null)
         }
@@ -332,37 +419,32 @@ function AppContent() {
     }
   }
 
-  // D: Eliminar Carpeta completa del paciente
-  const handleEliminarPaciente = async (id, dniPac) => {
-    const rolActual = (usuario?.rol || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-    const usuarioEsAdmin = rolActual.includes('admin')
+  // D: Iniciar eliminación de la historia clínica del paciente
+  // Abre la tarjeta de Advertencia ("¿Desea eliminar?: Eliminar y Cancelar")
+  // Si presiona "Eliminar", se abre la ventana obligatoria donde explica el motivo que va a la bandeja del Admin
+  const handleEliminarPaciente = (id, dniPac) => {
+    const pac = pacientes.find(p => p.id === id || String(p.dni) === String(dniPac)) || { id, dni: dniPac }
+    setConfirmacionEliminar({
+      tipo: 'paciente',
+      paciente: pac,
+      pregunta: `¿Desea eliminar la historia clínica del paciente DNI ${dniPac}?`
+    })
+  }
 
-    // Si el usuario NO es Administrador (Médico, Enfermera, etc.):
-    // No puede borrar directamente. Debe remitir una solicitud de eliminación con su motivo
-    if (!usuarioEsAdmin) {
-      const pac = pacientes.find(p => p.id === id || String(p.dni) === String(dniPac)) || { id, dni: dniPac }
+  // Manejo de la acción "Eliminar" en la tarjeta Advertencia
+  const handleConfirmarEliminar = () => {
+    if (!confirmacionEliminar) return
+    const { tipo, paciente: pac, documento, usuarioParaBorrar } = confirmacionEliminar
+    setConfirmacionEliminar(null)
+
+    if (tipo === 'paciente') {
+      // Abre la ventana donde es obligatorio decir por qué desea eliminar la historia,
+      // la cual llegará a la bandeja de solicitudes del admin
       setPacienteParaSolicitud(pac)
-      return
-    }
-
-    // Si es Administrador: Confirmación y eliminación directa
-    if (!window.confirm(`¿Eliminar la carpeta completa del DNI ${dniPac} (#${id})? Se borrarán todos los documentos contenidos.`)) {
-      return
-    }
-
-    try {
-      const response = await fetch(`${API_BASE}/pacientes/${id}`, { method: 'DELETE' })
-      const data = await response.json()
-      if (response.ok) {
-        notificar('exito', data.mensaje || 'Carpeta eliminada.')
-        cargarDatos()
-        cargarDiagnostico()
-        cargarSolicitudesPendientes()
-      } else {
-        notificar('error', data.mensaje || 'Error al eliminar carpeta.')
-      }
-    } catch (error) {
-      notificar('error', 'Error al eliminar la carpeta.')
+    } else if (tipo === 'documento') {
+      ejecutarEliminarDocumento(documento.id, documento.nombre, documento.pacId)
+    } else if (tipo === 'usuario') {
+      ejecutarEliminarUsuario(usuarioParaBorrar.id, usuarioParaBorrar.nombre)
     }
   }
 
@@ -384,6 +466,26 @@ function AppContent() {
       paciente: paciente,
       fecha_subida: primerDoc ? primerDoc.fecha_subida : 'Expediente Activo'
     })
+
+    // Detección de Alergias o Contenido Sensible en el historial del paciente
+    const notas = paciente.notas_medicas || []
+    const signos = paciente.signos_vitales || []
+    const textoAnalizar = [
+      ...notas.map(n => `${n.diagnostico || ''} ${n.contenido || ''}`),
+      ...signos.map(s => s.observaciones || '')
+    ].join(' ').toLowerCase()
+
+    const contieneAlergia = /alerg|penicilina|latex|intoleran|sensib|reacci[oó]n|asma|anafilax|cuidado especial/.test(textoAnalizar)
+
+    if (contieneAlergia) {
+      notificar({
+        tipo: 'alergia',
+        titulo: 'Alergias / Advertencia',
+        texto: `Atención: El paciente DNI ${paciente.dni} registra alertas de alergias o condición médica de cuidado sensible.`,
+        contador: '2',
+        actionLabel: 'Got it'
+      })
+    }
   }
 
   // Colecciones calculadas
@@ -472,6 +574,8 @@ function AppContent() {
         totalPacientes={pacientes.length}
         totalDocumentos={totalArchivosSistema}
         totalSolicitudesPendientes={solicitudesPendientesCount}
+        busquedaDni={busquedaDni}
+        setBusquedaDni={setBusquedaDni}
       />
 
       {/* 2. PANEL CENTRAL: RUTAS Y VISTAS */}
@@ -485,30 +589,11 @@ function AppContent() {
         display: 'flex',
         flexDirection: 'column'
       }}>
-        {/* Alerta de Estado Global */}
-        {mensaje.texto && (
-          <div style={{
-            padding: '10px 16px',
-            borderRadius: '8px',
-            marginBottom: '16px',
-            backgroundColor: mensaje.tipo === 'exito' ? '#6FE3B4' : '#FFD6E8',
-            color: mensaje.tipo === 'exito' ? '#0a5438' : '#802048',
-            border: `1px solid ${mensaje.tipo === 'exito' ? '#4cc799' : '#f4a7c7'}`,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-            fontSize: '13px'
-          }}>
-            <span style={{ fontWeight: '600' }}>{mensaje.texto}</span>
-            <button
-              onClick={() => setMensaje({ tipo: '', texto: '' })}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: 'inherit' }}
-            >
-              X
-            </button>
-          </div>
-        )}
+        {/* Alerta / Notificación Flotante con Diseño Moderno (Modo Claro y Oscuro) */}
+        <AlertToast
+          alerta={mensaje}
+          onClose={() => setMensaje({ tipo: '', texto: '', titulo: '' })}
+        />
 
         <Routes>
           {/* Ruta Dashboard (Médico y Administrador) */}
@@ -550,6 +635,7 @@ function AppContent() {
                   documentoEnVista={documentoEnVista}
                   setDocumentoEnVista={setDocumentoEnVista}
                   onVerSilueta={handleVerSilueta}
+                  notificar={notificar}
                   loading={loading}
                   cargarDatos={cargarDatos}
                   usuario={usuario}
@@ -670,16 +756,33 @@ function AppContent() {
         onCerrar={() => setDocumentoEnVista(null)}
       />
 
-      {/* 4. MODAL DE SOLICITUD DE ELIMINACIÓN PARA MÉDICOS Y NO-ADMINISTRADORES */}
+      {/* 4. MODAL DE SOLICITUD DE ELIMINACIÓN CON MOTIVO OBLIGATORIO (Bandeja del Admin) */}
       {pacienteParaSolicitud && (
         <SolicitudEliminacionModal
           paciente={pacienteParaSolicitud}
           usuario={usuario}
           onCerrar={() => setPacienteParaSolicitud(null)}
           onSolicitudEnviada={(msg) => {
-            notificar('exito', msg)
+            notificar({
+              tipo: 'exito',
+              titulo: 'Solicitud Enviada',
+              texto: msg || 'Su solicitud de eliminación con justificación obligatoria fue enviada a la bandeja del Administrador.',
+              contador: '1',
+              actionLabel: 'Okay'
+            })
             cargarSolicitudesPendientes()
           }}
+        />
+      )}
+
+      {/* 5. MODAL DE ADVERTENCIA PARA CONFIRMAR ELIMINACIÓN (Reemplaza a localhost:5173 dice) */}
+      {confirmacionEliminar && (
+        <ConfirmDeleteModal
+          paciente={confirmacionEliminar.paciente}
+          titulo="Advertencia"
+          pregunta={confirmacionEliminar.pregunta}
+          onConfirmar={handleConfirmarEliminar}
+          onCancelar={() => setConfirmacionEliminar(null)}
         />
       )}
     </div>
