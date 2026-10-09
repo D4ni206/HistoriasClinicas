@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { API_BASE } from '../api/config'
 import logoHospital from '../assets/logo-login.png'
 import loginDoctorImg from '../assets/login-doctor-clean.png'
@@ -34,6 +34,15 @@ export default function LoginView({ onLoginSuccess }) {
   const [codigoSmsIngresado, setCodigoSmsIngresado] = useState('')
   const [nuevaPassword, setNuevaPassword] = useState('')
   const [mostrarNuevaPassword, setMostrarNuevaPassword] = useState(false)
+
+  // Responsividad: Detección de pantallas móviles / pequeñas
+  const [esMovil, setEsMovil] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 840 : false)
+
+  useEffect(() => {
+    const handleResize = () => setEsMovil(window.innerWidth < 840)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // Lista de especialidades médicas predeterminadas
   const rolesEspecialidades = [
@@ -272,18 +281,20 @@ export default function LoginView({ onLoginSuccess }) {
       {/* TARJETA PRINCIPAL DEL LOGIN (En primer plano encima del fondo) */}
       <div
         style={{
-          width: '1020px',
-          maxWidth: '95vw',
-          minHeight: '560px',
+          width: esMovil ? '92vw' : '1020px',
+          maxWidth: esMovil ? '480px' : '95vw',
+          maxHeight: esMovil ? '92vh' : undefined,
+          minHeight: esMovil ? 'auto' : '560px',
           backgroundColor: '#ffffff',
-          borderRadius: '34px',
+          borderRadius: esMovil ? '24px' : '34px',
           boxShadow: '0 30px 80px -10px rgba(0, 0, 0, 0.45)',
           display: 'flex',
-          flexDirection: 'row',
-          overflow: 'hidden',
+          flexDirection: esMovil ? 'column' : 'row',
+          overflow: esMovil ? 'auto' : 'hidden',
           position: 'relative',
           zIndex: 10,
-          pointerEvents: 'auto'
+          pointerEvents: 'auto',
+          margin: '0 auto'
         }}
       >
         {/* ============================================================== */}
@@ -291,17 +302,18 @@ export default function LoginView({ onLoginSuccess }) {
         {/* ============================================================== */}
         <div
           style={{
-            flex: '1 1 48%',
+            flex: esMovil ? 'none' : '1 1 48%',
+            height: esMovil ? '140px' : undefined,
+            minHeight: esMovil ? '140px' : '560px',
             position: 'relative',
             backgroundColor: '#ffffff',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',
-            overflow: 'visible',
-            minHeight: '560px'
+            overflow: 'hidden'
           }}
         >
-          {/* Ilustración de fondo con doctor 3D y mano que sobrepasa el divisor */}
+          {/* Ilustración de fondo con doctor 3D */}
           <img
             src={loginDoctorImg}
             alt="Doctor 3D Ilustración"
@@ -309,9 +321,9 @@ export default function LoginView({ onLoginSuccess }) {
               position: 'absolute',
               top: 0,
               left: 0,
-              width: '113%',
+              width: esMovil ? '100%' : '113%',
               height: '100%',
-              objectFit: 'fill',
+              objectFit: esMovil ? 'cover' : 'fill',
               zIndex: 5,
               pointerEvents: 'none'
             }}
@@ -322,16 +334,16 @@ export default function LoginView({ onLoginSuccess }) {
             style={{
               position: 'relative',
               zIndex: 10,
-              padding: 'clamp(36px, 5vh, 52px) clamp(30px, 4vw, 48px)',
+              padding: esMovil ? '16px 20px' : 'clamp(36px, 5vh, 52px) clamp(30px, 4vw, 48px)',
               maxWidth: '300px'
             }}
           >
             <h1
               style={{
-                fontSize: 'clamp(36px, 4vw, 46px)',
+                fontSize: esMovil ? '24px' : 'clamp(36px, 4vw, 46px)',
                 fontWeight: '900',
                 color: '#1e293b',
-                margin: '0 0 14px 0',
+                margin: esMovil ? '0 0 2px 0' : '0 0 14px 0',
                 letterSpacing: '-0.5px',
                 lineHeight: 1.1
               }}
@@ -341,10 +353,10 @@ export default function LoginView({ onLoginSuccess }) {
 
             <p
               style={{
-                fontSize: '15px',
+                fontSize: esMovil ? '12px' : '15px',
                 color: '#64748b',
-                lineHeight: '1.45',
-                margin: '0 0 6px 0',
+                lineHeight: '1.35',
+                margin: '0 0 4px 0',
                 fontWeight: '500'
               }}
             >
@@ -355,46 +367,51 @@ export default function LoginView({ onLoginSuccess }) {
                 : 'Please enter your details to continue'}
             </p>
 
-            <p
-              style={{
-                fontSize: '12px',
-                color: '#94a3b8',
-                lineHeight: '1.4',
-                margin: 0,
-                fontWeight: '600'
-              }}
-            >
-              Hospital San Juan de Dios · Pisco
-            </p>
+            {!esMovil && (
+              <p
+                style={{
+                  fontSize: '12px',
+                  color: '#94a3b8',
+                  lineHeight: '1.4',
+                  margin: 0,
+                  fontWeight: '600'
+                }}
+              >
+                Hospital San Juan de Dios · Pisco
+              </p>
+            )}
           </div>
         </div>
 
         {/* LÍNEA DIVISORIA SUTIL */}
-        <div
-          style={{
-            width: '1px',
-            backgroundColor: '#edf2f7',
-            zIndex: 4
-          }}
-        />
+        {!esMovil && (
+          <div
+            style={{
+              width: '1px',
+              backgroundColor: '#edf2f7',
+              zIndex: 4
+            }}
+          />
+        )}
 
         {/* ============================================================== */}
         {/* PANEL DERECHO: Formulario según el modo (Login, Sign Up, SMS) */}
         {/* ============================================================== */}
         <div
           style={{
-            flex: '1 1 52%',
+            flex: esMovil ? 'none' : '1 1 52%',
+            width: '100%',
             backgroundColor: '#f8fafc',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: 'clamp(24px, 3vh, 40px) clamp(22px, 3.5vw, 48px)',
+            padding: esMovil ? '24px 18px' : 'clamp(24px, 3vh, 40px) clamp(22px, 3.5vw, 48px)',
             boxSizing: 'border-box',
             position: 'relative',
             zIndex: 6,
             overflowY: 'auto',
-            maxHeight: '90vh'
+            maxHeight: esMovil ? 'none' : '90vh'
           }}
         >
           {/* Anillos decorativos en esquina superior derecha */}

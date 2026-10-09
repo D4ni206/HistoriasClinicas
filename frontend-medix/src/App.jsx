@@ -80,6 +80,20 @@ function AppContent() {
   const [pacienteParaSolicitud, setPacienteParaSolicitud] = useState(null)
   const [confirmacionEliminar, setConfirmacionEliminar] = useState(null)
 
+  // Responsividad: Detección de pantallas móviles / tablets
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 840 : false)
+  const [sidebarMobileAbierto, setSidebarMobileAbierto] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 840
+      setIsMobile(mobile)
+      if (!mobile) setSidebarMobileAbierto(false)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const notificar = (tipo, texto = '', titulo = '', opciones = {}) => {
     let payload = {}
     if (typeof tipo === 'object' && tipo !== null) {
@@ -565,8 +579,99 @@ function AppContent() {
       backgroundColor: '#f8fafc',
       fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       color: '#2B4A66',
-      display: 'flex'
+      display: 'flex',
+      flexDirection: isMobile ? 'column' : 'row'
     }}>
+      {/* Overlay oscuro para cerrar el menú lateral en dispositivos móviles */}
+      {isMobile && sidebarMobileAbierto && (
+        <div
+          onClick={() => setSidebarMobileAbierto(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(3px)',
+            WebkitBackdropFilter: 'blur(3px)',
+            zIndex: 90,
+            transition: 'opacity 0.25s ease'
+          }}
+        />
+      )}
+
+      {/* BARRA SUPERIOR EXCLUSIVA PARA MÓVILES */}
+      {isMobile && (
+        <header style={{
+          height: '56px',
+          backgroundColor: '#ffffff',
+          borderBottom: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px',
+          flexShrink: 0,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          zIndex: 40
+        }}>
+          {/* Botón de apertura de barra lateral (Hamburguesa) */}
+          <button
+            onClick={() => setSidebarMobileAbierto(true)}
+            title="Abrir menú de navegación"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '38px',
+              height: '38px',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+              backgroundColor: '#f8fafc',
+              color: '#0f172a',
+              cursor: 'pointer'
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          {/* Logo y Nombre Medix */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ffffff'
+            }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2v20M2 12h20M7 7l10 10M17 7L7 17"></path>
+              </svg>
+            </div>
+            <span style={{ fontSize: '15px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.3px' }}>
+              Medix Pisco
+            </span>
+          </div>
+
+          {/* Badge del Usuario Activo */}
+          <div style={{
+            fontSize: '11px',
+            fontWeight: '700',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            backgroundColor: esAdmin ? '#fdf2f8' : '#f0f9ff',
+            color: esAdmin ? '#9d174d' : '#0369a1',
+            border: `1px solid ${esAdmin ? '#fbcfe8' : '#bae6fd'}`
+          }}>
+            {usuario?.username || 'admin'}
+          </div>
+        </header>
+      )}
+
       {/* 1. PANEL IZQUIERDO: HERRAMIENTAS Y NAVEGACIÓN MODULAR */}
       <Sidebar
         usuario={usuario}
@@ -576,14 +681,17 @@ function AppContent() {
         totalSolicitudesPendientes={solicitudesPendientesCount}
         busquedaDni={busquedaDni}
         setBusquedaDni={setBusquedaDni}
+        isMobile={isMobile}
+        sidebarMobileAbierto={sidebarMobileAbierto}
+        onCloseMobile={() => setSidebarMobileAbierto(false)}
       />
 
       {/* 2. PANEL CENTRAL: RUTAS Y VISTAS */}
       <main style={{
         flex: 1,
-        height: '100vh',
+        height: isMobile ? 'calc(100vh - 56px)' : '100vh',
         overflowY: 'auto',
-        padding: '24px 30px',
+        padding: isMobile ? '16px 14px' : '24px 30px',
         boxSizing: 'border-box',
         backgroundColor: '#f8fafc',
         display: 'flex',

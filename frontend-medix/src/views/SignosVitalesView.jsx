@@ -151,7 +151,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '22px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '22px', alignItems: 'start' }}>
         {/* Panel Izquierdo: Lista de Pacientes Registrados */}
         <div style={{
           backgroundColor: '#ffffff',

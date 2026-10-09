@@ -9,6 +9,15 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
   const [imgError, setImgError] = useState(false)
   // 'dividida' (documento + maniquí), 'documento' (solo archivo), 'maniqui' (solo silueta)
   const [modoVista, setModoVista] = useState('dividida')
+  const [esPantallaPequena, setEsPantallaPequena] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 960 : false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setEsPantallaPequena(window.innerWidth < 960)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     setImgError(false)
@@ -20,9 +29,9 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
   const mostrarDoc = modoVista === 'dividida' || modoVista === 'documento'
   const mostrarManiqui = modoVista === 'dividida' || modoVista === 'maniqui'
 
-  // Ancho dinámico del panel visor: más amplio en modo dividido para acomodar ambos sectores cómodamente
-  const anchoVisor = esModoDividido ? '84%' : (modoVista === 'maniqui' ? '65%' : '50%')
-  const minAncho = esModoDividido ? '920px' : '480px'
+  // Ancho dinámico del panel visor adaptable a cualquier resolución
+  const anchoVisor = esPantallaPequena ? '100vw' : (esModoDividido ? '84%' : (modoVista === 'maniqui' ? '65%' : '50%'))
+  const minAncho = esPantallaPequena ? '0' : (esModoDividido ? '680px' : '400px')
 
   const pacienteFinal = paciente || documentoEnVista.paciente || null
   const notas = pacienteFinal?.notas_medicas || []
@@ -33,15 +42,20 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
     <aside style={{
       width: anchoVisor,
       minWidth: minAncho,
-      maxWidth: '1600px',
+      maxWidth: esPantallaPequena ? '100vw' : '1600px',
       flexShrink: 0,
       height: '100vh',
       backgroundColor: '#ffffff',
-      borderLeft: '2.5px solid #7FD6FF',
+      borderLeft: esPantallaPequena ? 'none' : '2.5px solid #7FD6FF',
       display: 'flex',
       flexDirection: 'column',
       boxShadow: '-8px 0 32px rgba(43, 74, 102, 0.22)',
-      zIndex: 30,
+      zIndex: esPantallaPequena ? 120 : 30,
+      position: esPantallaPequena ? 'fixed' : 'relative',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: esPantallaPequena ? 0 : undefined,
       boxSizing: 'border-box',
       transition: 'width 0.22s ease'
     }}>
@@ -197,16 +211,17 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
       <div style={{
         flex: 1,
         display: 'flex',
-        flexDirection: 'row',
-        overflow: 'hidden',
+        flexDirection: (esModoDividido && esPantallaPequena) ? 'column' : 'row',
+        overflow: 'auto',
         backgroundColor: '#f1f5f9'
       }}>
 
         {/* SECTOR IZQUIERDO: DOCUMENTO O RESUMEN CLÍNICO */}
         {mostrarDoc && (
           <div style={{
-            flex: esModoDividido ? '1 1 50%' : '1 1 100%',
-            height: '100%',
+            flex: esModoDividido ? (esPantallaPequena ? 'none' : '1 1 50%') : '1 1 100%',
+            height: esModoDividido && esPantallaPequena ? '50vh' : '100%',
+            minHeight: esModoDividido && esPantallaPequena ? '360px' : undefined,
             backgroundColor: documentoEnVista.id ? '#1e293b' : '#f8fafc',
             padding: documentoEnVista.id ? '10px' : '16px',
             display: 'flex',
@@ -214,7 +229,8 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
             alignItems: 'center',
             overflow: 'auto',
             boxSizing: 'border-box',
-            borderRight: esModoDividido ? '2.5px solid #7FD6FF' : 'none'
+            borderRight: (esModoDividido && !esPantallaPequena) ? '2.5px solid #7FD6FF' : 'none',
+            borderBottom: (esModoDividido && esPantallaPequena) ? '2.5px solid #7FD6FF' : 'none'
           }}>
             {documentoEnVista.id ? (
               esPdf(documentoEnVista.nombre_archivo) ? (

@@ -9,7 +9,10 @@ export default function Sidebar({
   totalDocumentos = 0,
   totalSolicitudesPendientes = 0,
   busquedaDni = '',
-  setBusquedaDni = () => {}
+  setBusquedaDni = () => {},
+  isMobile = false,
+  sidebarMobileAbierto = false,
+  onCloseMobile = () => {}
 }) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -192,54 +195,61 @@ export default function Sidebar({
   return (
     <aside
       style={{
-        width: colapsado ? '74px' : '256px',
-        flex: colapsado ? '0 0 74px' : '0 0 256px',
-        height: 'calc(100vh - 24px)',
-        margin: '12px 0 12px 12px',
-        borderRadius: '24px',
+        width: isMobile ? '264px' : (colapsado ? '74px' : '256px'),
+        flex: isMobile ? 'none' : (colapsado ? '0 0 74px' : '0 0 256px'),
+        height: isMobile ? '100vh' : 'calc(100vh - 24px)',
+        margin: isMobile ? 0 : '12px 0 12px 12px',
+        borderRadius: isMobile ? '0 24px 24px 0' : '24px',
         backgroundColor: theme.bg,
         border: theme.border,
-        boxShadow: theme.shadow,
+        boxShadow: isMobile && !sidebarMobileAbierto ? 'none' : theme.shadow,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         boxSizing: 'border-box',
-        zIndex: 30,
-        transition: 'width 0.26s cubic-bezier(0.4, 0, 0.2, 1), flex 0.26s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease, border-color 0.25s ease',
-        overflow: 'hidden',
-        position: 'relative'
+        zIndex: isMobile ? 100 : 30,
+        position: isMobile ? 'fixed' : 'relative',
+        top: isMobile ? 0 : undefined,
+        left: isMobile ? (sidebarMobileAbierto ? '0px' : '-320px') : undefined,
+        bottom: isMobile ? 0 : undefined,
+        transition: isMobile
+          ? 'left 0.28s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease'
+          : 'width 0.26s cubic-bezier(0.4, 0, 0.2, 1), flex 0.26s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease, border-color 0.25s ease',
+        overflow: 'hidden'
       }}
     >
-      {/* SECCIÓN SUPERIOR: HEADER, BÚSQUEDA Y MENÚ */}
+      {/* SECCIÓN SUPERIOR: HEADER Y MENÚ */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          padding: colapsado ? '16px 10px 8px 10px' : '18px 14px 10px 14px',
+          padding: (colapsado && !isMobile) ? '16px 10px 8px 10px' : '18px 14px 10px 14px',
           overflowY: 'auto',
           overflowX: 'hidden',
           flex: 1
         }}
       >
-        {/* CABECERA (Logo circular + Botón de colapso) */}
+        {/* CABECERA (Logo circular + Botón de colapso o Cerrar en móvil) */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: colapsado ? 'center' : 'space-between',
+            justifyContent: (colapsado && !isMobile) ? 'center' : 'space-between',
             marginBottom: '16px',
             position: 'relative'
           }}
         >
           {/* Logo Circular */}
           <div
-            onClick={() => colapsado && setColapsado(false)}
-            title={colapsado ? "Click para desplegar menú" : "Medix - Hospital San Juan de Dios"}
+            onClick={() => {
+              if (colapsado && !isMobile) setColapsado(false)
+            }}
+            title={(colapsado && !isMobile) ? "Click para desplegar menú" : "Medix - Hospital San Juan de Dios"}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              cursor: colapsado ? 'pointer' : 'default',
+              cursor: (colapsado && !isMobile) ? 'pointer' : 'default',
               userSelect: 'none'
             }}
           >
@@ -257,13 +267,13 @@ export default function Sidebar({
                 flexShrink: 0
               }}
             >
-              {/* Símbolo vectorial moderno (onda/cruz estilizada similar a la imagen) */}
+              {/* Símbolo vectorial moderno */}
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2v20M2 12h20M7 7l10 10M17 7L7 17"></path>
               </svg>
             </div>
 
-            {!colapsado && (
+            {(!colapsado || isMobile) && (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '16px', fontWeight: '800', color: theme.textMain, letterSpacing: '-0.3px', lineHeight: 1.1 }}>
                   Medix
@@ -275,132 +285,72 @@ export default function Sidebar({
             )}
           </div>
 
-          {/* Botón de alternar colapso */}
-          <button
-            onClick={() => setColapsado(!colapsado)}
-            title={colapsado ? "Expandir barra lateral" : "Colapsar barra lateral"}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '10px',
-              backgroundColor: theme.headerBtnBg,
-              color: theme.headerBtnColor,
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.15s ease, transform 0.15s ease',
-              flexShrink: 0,
-              ...(colapsado ? { marginTop: '8px' } : {})
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.headerBtnHover}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.headerBtnBg}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{
-                transform: colapsado ? 'rotate(180deg)' : 'none',
-                transition: 'transform 0.2s ease'
-              }}
-            >
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-          </button>
-        </div>
-
-        {/* BARRA DE BÚSQUEDA RÁPIDA (Search...) */}
-        <div style={{ marginBottom: '16px' }}>
-          {colapsado ? (
+          {/* Botón de alternar colapso o Cerrar en móvil */}
+          {isMobile ? (
             <button
-              onClick={() => {
-                setColapsado(false)
-                if (currentPath !== '/dashboard') navigate('/dashboard')
-              }}
-              title="Buscar paciente o DNI (Click para abrir)"
+              onClick={onCloseMobile}
+              title="Cerrar menú lateral"
               style={{
-                width: '44px',
-                height: '40px',
-                margin: '0 auto',
-                borderRadius: '12px',
-                backgroundColor: theme.searchBg,
-                border: theme.searchBorder,
+                width: '32px',
+                height: '32px',
+                borderRadius: '10px',
+                backgroundColor: theme.headerBtnBg,
+                color: theme.headerBtnColor,
+                border: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: theme.textMuted,
                 cursor: 'pointer',
-                transition: 'all 0.15s ease'
+                transition: 'background-color 0.15s ease',
+                flexShrink: 0
               }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.headerBtnHover}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.headerBtnBg}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
           ) : (
-            <div
+            <button
+              onClick={() => setColapsado(!colapsado)}
+              title={colapsado ? "Expandir barra lateral" : "Colapsar barra lateral"}
               style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '10px',
+                backgroundColor: theme.headerBtnBg,
+                color: theme.headerBtnColor,
+                border: 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '0 12px',
-                height: '40px',
-                borderRadius: '12px',
-                backgroundColor: theme.searchBg,
-                border: theme.searchBorder,
-                boxSizing: 'border-box'
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'background-color 0.15s ease, transform 0.15s ease',
+                flexShrink: 0,
+                ...(colapsado ? { marginTop: '8px' } : {})
               }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.headerBtnHover}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.headerBtnBg}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={theme.searchPlaceholder} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input
-                type="text"
-                value={busquedaDni}
-                onChange={(e) => {
-                  setBusquedaDni(e.target.value)
-                  if (currentPath !== '/dashboard' && e.target.value) {
-                    navigate('/dashboard')
-                  }
-                }}
-                placeholder="Search..."
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 style={{
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  outline: 'none',
-                  color: theme.searchColor,
-                  fontSize: '13px',
-                  width: '100%',
-                  fontWeight: '500'
+                  transform: colapsado ? 'rotate(180deg)' : 'none',
+                  transition: 'transform 0.2s ease'
                 }}
-              />
-              {busquedaDni && (
-                <button
-                  onClick={() => setBusquedaDni('')}
-                  title="Limpiar búsqueda"
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    color: theme.textMuted,
-                    cursor: 'pointer',
-                    padding: '2px',
-                    fontSize: '13px',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+              >
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
           )}
         </div>
 
@@ -412,17 +362,20 @@ export default function Sidebar({
             return (
               <button
                 key={item.id}
-                onClick={() => navigate(item.ruta)}
-                title={colapsado ? `${item.nombre}${item.contador ? ` (${item.contador} pendientes)` : ''}` : undefined}
+                onClick={() => {
+                  navigate(item.ruta)
+                  if (isMobile && onCloseMobile) onCloseMobile()
+                }}
+                title={(colapsado && !isMobile) ? `${item.nombre}${item.contador ? ` (${item.contador} pendientes)` : ''}` : undefined}
                 style={{
                   position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: colapsado ? 'center' : 'space-between',
-                  padding: colapsado ? '0' : '10px 12px',
-                  height: colapsado ? '44px' : '44px',
-                  width: colapsado ? '44px' : '100%',
-                  margin: colapsado ? '0 auto' : '0',
+                  justifyContent: (colapsado && !isMobile) ? 'center' : 'space-between',
+                  padding: (colapsado && !isMobile) ? '0' : '10px 12px',
+                  height: (colapsado && !isMobile) ? '44px' : '44px',
+                  width: (colapsado && !isMobile) ? '44px' : '100%',
+                  margin: (colapsado && !isMobile) ? '0 auto' : '0',
                   borderRadius: '13px',
                   border: 'none',
                   cursor: 'pointer',
@@ -619,7 +572,10 @@ export default function Sidebar({
             </div>
 
             <button
-              onClick={onLogout}
+              onClick={() => {
+                onLogout()
+                if (isMobile && onCloseMobile) onCloseMobile()
+              }}
               title="Cerrar Sesión"
               style={{
                 background: 'transparent',
