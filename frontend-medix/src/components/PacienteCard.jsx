@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Card } from '@heroui/react'
+import { useTheme } from '../context/ThemeContext'
 import { analizarPaciente } from '../utils/symptomAnalyzer'
 
 export default function PacienteCard({
@@ -13,6 +14,7 @@ export default function PacienteCard({
   notificar
 }) {
   const [hovered, setHovered] = useState(false)
+  const { temaOscuro, theme } = useTheme()
 
   if (!paciente) return null
 
@@ -28,7 +30,7 @@ export default function PacienteCard({
     }
   }, [paciente])
 
-  // 3: Descripción de lo que tiene el paciente
+  // 3: Descripción clínica del paciente
   const descripcionClinica = useMemo(() => {
     const notas = paciente.notas_medicas || []
     if (notas.length > 0) {
@@ -56,7 +58,6 @@ export default function PacienteCard({
     return 'Evaluación clínica preventiva. Parámetros fisiológicos estables sin sintomatología aguda reportada.'
   }, [paciente, analisis])
 
-  // 4: Acción de ver historia clínica (abre el visor dividido con la silueta anatómica y el documento)
   const abrirHistoriaClinica = () => {
     if (onVerSilueta) {
       onVerSilueta(paciente)
@@ -89,14 +90,14 @@ export default function PacienteCard({
     <Card
       className="w-full"
       style={{
-        backgroundColor: '#ffffff',
-        color: '#1e293b',
-        border: '1.5px solid #e2e8f0',
-        borderRadius: '24px',
-        padding: '18px',
+        backgroundColor: theme.bgCard,
+        color: theme.textMain,
+        border: theme.border,
+        borderRadius: '18px',
+        padding: '16px',
         boxShadow: hovered
-          ? '0 20px 35px -8px rgba(43, 74, 102, 0.16), 0 8px 16px -4px rgba(43, 74, 102, 0.08)'
-          : '0 8px 24px -4px rgba(43, 74, 102, 0.07), 0 2px 6px -2px rgba(43, 74, 102, 0.04)',
+          ? (temaOscuro ? '0 16px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px #38bdf8' : '0 16px 30px rgba(15, 23, 42, 0.08), 0 0 0 1px #cbd5e1')
+          : theme.shadowCard,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -111,57 +112,56 @@ export default function PacienteCard({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         
         {/* ================================================================= */}
-        {/* 1. FOTO DEL PACIENTE (BANNER MINT GREEN CON SILUETA / PLACEHOLDER) */}
+        {/* 1. FOTO DEL PACIENTE (BANNER CLÍNICO FORMAL CON TONOS FRÍOS) */}
         {/* ================================================================= */}
         <div
           onClick={abrirHistoriaClinica}
           style={{
             width: '100%',
-            height: '170px',
-            backgroundColor: '#a7f3d0',
-            background: 'linear-gradient(145deg, #bbf7d0 0%, #a7f3d0 100%)',
-            borderRadius: '18px',
+            height: '160px',
+            background: theme.bannerGrad,
+            borderRadius: '14px',
+            border: theme.border,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             position: 'relative',
             cursor: 'pointer',
-            overflow: 'hidden',
-            boxShadow: 'inset 0 1px 3px rgba(255, 255, 255, 0.6)'
+            overflow: 'hidden'
           }}
           title="Ver historia clínica del paciente"
         >
           {/* Insignia superior izquierda: Expediente # y Total de Documentos */}
           <div style={{
             position: 'absolute',
-            top: '12px',
-            left: '12px',
+            top: '10px',
+            left: '10px',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
             zIndex: 2
           }}>
             <span style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.92)',
+              backgroundColor: temaOscuro ? 'rgba(15, 23, 42, 0.88)' : 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(4px)',
-              color: '#065f46',
-              fontSize: '11px',
-              fontWeight: '800',
-              padding: '3px 8px',
-              borderRadius: '8px',
-              boxShadow: '0 2px 5px rgba(0, 0, 0, 0.06)'
-            }}>
-              Expediente #{paciente.id}
-            </span>
-            <span style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.92)',
-              backdropFilter: 'blur(4px)',
-              color: '#047857',
+              color: theme.textMain,
               fontSize: '11px',
               fontWeight: '700',
-              padding: '3px 8px',
-              borderRadius: '8px',
-              boxShadow: '0 2px 5px rgba(0, 0, 0, 0.06)'
+              padding: '2px 8px',
+              borderRadius: '6px',
+              border: theme.border
+            }}>
+              Exp. #{paciente.id}
+            </span>
+            <span style={{
+              backgroundColor: temaOscuro ? 'rgba(15, 23, 42, 0.88)' : 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(4px)',
+              color: theme.textSecondary,
+              fontSize: '11px',
+              fontWeight: '600',
+              padding: '2px 8px',
+              borderRadius: '6px',
+              border: theme.border
             }}>
               {docs.length} doc{docs.length !== 1 ? 's' : ''}
             </span>
@@ -176,7 +176,7 @@ export default function PacienteCard({
               right: '10px',
               display: 'flex',
               alignItems: 'center',
-              gap: '5px',
+              gap: '6px',
               zIndex: 3
             }}
           >
@@ -187,15 +187,14 @@ export default function PacienteCard({
                 width: '30px',
                 height: '30px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.94)',
-                border: 'none',
-                color: '#104060',
+                backgroundColor: temaOscuro ? '#1e293b' : '#ffffff',
+                border: theme.border,
+                color: theme.textMain,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
-                transition: 'transform 0.15s ease'
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
               }}
               title="Subir nuevo documento al expediente"
             >
@@ -212,17 +211,16 @@ export default function PacienteCard({
                 height: '30px',
                 padding: '0 8px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.94)',
-                border: 'none',
-                color: '#2B4A66',
+                backgroundColor: temaOscuro ? '#1e293b' : '#ffffff',
+                border: theme.border,
+                color: theme.textMain,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
                 fontSize: '11px',
                 fontWeight: '700',
                 cursor: 'pointer',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
-                transition: 'transform 0.15s ease'
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
               }}
               title="Ver y redactar notas médicas"
             >
@@ -240,15 +238,14 @@ export default function PacienteCard({
                 width: '30px',
                 height: '30px',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(255, 255, 255, 0.94)',
-                border: 'none',
-                color: '#e11d48',
+                backgroundColor: temaOscuro ? '#1e293b' : '#ffffff',
+                border: theme.border,
+                color: '#ef4444',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.08)',
-                transition: 'transform 0.15s ease'
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
               }}
               title="Eliminar expediente clínico"
             >
@@ -259,25 +256,24 @@ export default function PacienteCard({
             </button>
           </div>
 
-          {/* Figura Central: Placeholder exacto de imagen de foto del paciente */}
+          {/* Figura Central: Placeholder clínico de imagen del paciente */}
           <div style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#047857',
-            opacity: 0.9
+            color: temaOscuro ? '#38bdf8' : '#2563eb',
+            opacity: 0.85
           }}>
             <svg
-              width="58"
-              height="58"
+              width="54"
+              height="54"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#047857"
-              strokeWidth="1.9"
+              stroke="currentColor"
+              strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{ filter: 'drop-shadow(0 2px 4px rgba(4, 120, 87, 0.15))' }}
             >
               <rect x="3" y="3" width="18" height="18" rx="4" ry="4" />
               <circle cx="8.5" cy="8.5" r="1.5" />
@@ -290,12 +286,12 @@ export default function PacienteCard({
         {/* 2. DNI DEL PACIENTE (HEADING) */}
         {/* ================================================================= */}
         <div style={{ marginTop: '2px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
             <h3 style={{
               margin: 0,
-              fontSize: '19px',
+              fontSize: '17px',
               fontWeight: '800',
-              color: '#0f172a',
+              color: theme.textMain,
               letterSpacing: '-0.02em',
               lineHeight: '1.25'
             }}>
@@ -321,18 +317,17 @@ export default function PacienteCard({
                   }}
                   title="Paciente con alertas de alergias activas"
                   style={{
-                    fontSize: '11px',
-                    fontWeight: '800',
-                    padding: '2px 8px',
+                    fontSize: '10.5px',
+                    fontWeight: '700',
+                    padding: '2px 7px',
                     borderRadius: '6px',
-                    backgroundColor: '#fef3c7',
-                    color: '#b45309',
-                    border: '1px solid #fde68a',
+                    backgroundColor: temaOscuro ? '#451a03' : '#fffbeb',
+                    color: temaOscuro ? '#fcd34d' : '#b45309',
+                    border: temaOscuro ? '1px solid #78350f' : '1px solid #fde68a',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
-                    boxShadow: '0 1px 2px rgba(180, 83, 9, 0.1)'
+                    gap: '4px'
                   }}
                 >
                   <span style={{ fontSize: '10px' }}>⚠️</span>
@@ -344,9 +339,15 @@ export default function PacienteCard({
                 fontWeight: '700',
                 padding: '2px 8px',
                 borderRadius: '6px',
-                backgroundColor: tieneAlerta ? '#FFD6E8' : '#e0f2fe',
-                color: tieneAlerta ? '#802048' : '#0369a1',
-                border: tieneAlerta ? '1px solid #f4a7c7' : '1px solid #bae6fd',
+                backgroundColor: tieneAlerta
+                  ? (temaOscuro ? '#1e293b' : '#eff6ff')
+                  : (temaOscuro ? '#052e16' : '#f0fdf4'),
+                color: tieneAlerta
+                  ? (temaOscuro ? '#93c5fd' : '#1d4ed8')
+                  : (temaOscuro ? '#86efac' : '#166534'),
+                border: tieneAlerta
+                  ? (temaOscuro ? '1px solid #334155' : '1px solid #bfdbfe')
+                  : (temaOscuro ? '1px solid #14532d' : '1px solid #bbf7d0'),
                 whiteSpace: 'nowrap'
               }}>
                 {tieneAlerta ? 'Sintomático' : 'Estable'}
@@ -356,20 +357,20 @@ export default function PacienteCard({
         </div>
 
         {/* ================================================================= */}
-        {/* 3. DESCRIPCIÓN DE LO QUE TIENE (SÍNTOMAS / DIAGNÓSTICO) */}
+        {/* 3. DESCRIPCIÓN CLÍNICA (SÍNTOMAS / DIAGNÓSTICO) */}
         {/* ================================================================= */}
         <div>
           <p style={{
             margin: 0,
-            fontSize: '13px',
-            color: '#64748b',
+            fontSize: '12.5px',
+            color: theme.textMuted,
             lineHeight: '1.45',
             fontWeight: '500',
             display: '-webkit-box',
             WebkitLineClamp: 3,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-            minHeight: '38px'
+            minHeight: '36px'
           }} title={descripcionClinica}>
             {descripcionClinica}
           </p>
@@ -378,45 +379,39 @@ export default function PacienteCard({
       </div>
 
       {/* ================================================================= */}
-      {/* 4. ACCIÓN DE VER HISTORIA CLÍNICA (BOTÓN GRANDE ACTION DE LA IMAGEN) */}
+      {/* 4. ACCIÓN DE VER HISTORIA CLÍNICA */}
       {/* ================================================================= */}
-      <div style={{ marginTop: '16px' }}>
+      <div style={{ marginTop: '14px' }}>
         <button
           onClick={abrirHistoriaClinica}
           style={{
             width: '100%',
-            height: '46px',
-            backgroundColor: '#4f6df5',
-            background: 'linear-gradient(180deg, #5b79fa 0%, #4461eb 100%)',
-            color: '#ffffff',
+            height: '42px',
+            backgroundColor: theme.primaryBtnBg,
+            color: theme.primaryBtnColor,
             border: 'none',
-            borderRadius: '14px',
-            fontSize: '13.5px',
+            borderRadius: '10px',
+            fontSize: '13px',
             fontWeight: '700',
-            letterSpacing: '0.2px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
             cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(79, 109, 245, 0.35)',
-            transition: 'all 0.18s ease'
+            boxShadow: temaOscuro ? '0 4px 14px rgba(56, 189, 248, 0.25)' : '0 2px 8px rgba(15, 23, 42, 0.15)',
+            transition: 'all 0.15s ease'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#3c5ceb'
-            e.currentTarget.style.boxShadow = '0 6px 18px rgba(79, 109, 245, 0.48)'
-            e.currentTarget.style.transform = 'scale(1.01)'
+            e.currentTarget.style.backgroundColor = theme.primaryBtnHover
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#4f6df5'
-            e.currentTarget.style.boxShadow = '0 4px 14px rgba(79, 109, 245, 0.35)'
-            e.currentTarget.style.transform = 'scale(1)'
+            e.currentTarget.style.backgroundColor = theme.primaryBtnBg
           }}
           title="Ver historia clínica y silueta anatómica"
         >
           <svg
-            width="16"
-            height="16"
+            width="15"
+            height="15"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTheme } from '../context/ThemeContext'
 import { API_BASE } from '../api/config'
 
 const OPCIONES_MOTIVO = [
@@ -16,6 +17,7 @@ export default function SolicitudEliminacionModal({
   onCerrar,
   onSolicitudEnviada
 }) {
+  const { temaOscuro, theme } = useTheme()
   const [motivoSeleccionado, setMotivoSeleccionado] = useState(OPCIONES_MOTIVO[0])
   const [motivoDetalle, setMotivoDetalle] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -74,7 +76,7 @@ export default function SolicitudEliminacionModal({
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(15, 23, 42, 0.65)',
+      backgroundColor: temaOscuro ? 'rgba(5, 8, 15, 0.78)' : 'rgba(15, 23, 42, 0.55)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -84,31 +86,32 @@ export default function SolicitudEliminacionModal({
       boxSizing: 'border-box'
     }}>
       <div style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: theme.bgCard,
         borderRadius: '16px',
         width: '100%',
         maxWidth: '560px',
-        boxShadow: '0 20px 45px rgba(43, 74, 102, 0.28)',
-        border: '1.5px solid #FFD6E8',
+        boxShadow: theme.shadowCard,
+        border: theme.border,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        animation: 'fadeIn 0.2s ease-out'
+        animation: 'fadeIn 0.2s ease-out',
+        color: theme.textMain
       }}>
         {/* Cabecera del Modal */}
         <div style={{
-          backgroundColor: '#FFF6FB',
+          backgroundColor: theme.bgSubtle,
           padding: '16px 20px',
-          borderBottom: '1.5px solid #FFD6E8',
+          borderBottom: theme.border,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
           <div>
-            <span style={{ fontSize: '11px', fontWeight: '800', color: '#802048', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <span style={{ fontSize: '11px', fontWeight: '800', color: theme.accentCool, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Control de Seguridad y Auditoría Clínica
             </span>
-            <h3 style={{ margin: '3px 0 0 0', fontSize: '17px', fontWeight: '800', color: '#2B4A66' }}>
+            <h3 style={{ margin: '3px 0 0 0', fontSize: '17px', fontWeight: '800', color: theme.textMain }}>
               Solicitud de Eliminación de Historia
             </h3>
           </div>
@@ -119,7 +122,7 @@ export default function SolicitudEliminacionModal({
               border: 'none',
               fontSize: '18px',
               fontWeight: 'bold',
-              color: '#802048',
+              color: theme.textMuted,
               cursor: 'pointer',
               padding: '4px 8px',
               borderRadius: '6px'
@@ -134,8 +137,8 @@ export default function SolicitudEliminacionModal({
         <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Tarjeta Informativa del Expediente a Eliminar */}
           <div style={{
-            backgroundColor: '#f8fafc',
-            border: '1.5px solid #7FD6FF',
+            backgroundColor: theme.bgSubtle,
+            border: theme.border,
             borderRadius: '10px',
             padding: '12px 14px',
             display: 'flex',
@@ -144,30 +147,36 @@ export default function SolicitudEliminacionModal({
             fontSize: '12.5px'
           }}>
             <div>
-              <span style={{ color: '#64748b' }}>Paciente DNI: </span>
-              <strong style={{ color: '#0a5438', backgroundColor: '#6FE3B4', padding: '2px 8px', borderRadius: '4px', border: '1px solid #4cc799' }}>
+              <span style={{ color: theme.textMuted }}>Paciente DNI: </span>
+              <strong style={{
+                color: temaOscuro ? '#7dd3fc' : '#0369a1',
+                backgroundColor: temaOscuro ? '#082f49' : '#f0f9ff',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                border: `1px solid ${temaOscuro ? '#0284c7' : '#bae6fd'}`
+              }}>
                 {paciente.dni}
               </strong>
-              <div style={{ marginTop: '4px', color: '#64748b', fontSize: '11.5px' }}>
+              <div style={{ marginTop: '4px', color: theme.textMuted, fontSize: '11.5px' }}>
                 Expediente: <strong>#{paciente.id}</strong> · Documentos: <strong>{paciente.documentos ? paciente.documentos.length : (paciente.total_documentos || 0)}</strong>
               </div>
             </div>
 
-            <div style={{ textAlign: 'right', fontSize: '11.5px', color: '#2B4A66' }}>
+            <div style={{ textAlign: 'right', fontSize: '11.5px', color: theme.textSecondary }}>
               <div>Solicitado por:</div>
-              <strong style={{ color: '#104060' }}>{usuario?.username || 'Usuario'}</strong>
-              <div style={{ fontSize: '10.5px', color: '#64748b' }}>({usuario?.rol || 'Médico'})</div>
+              <strong style={{ color: theme.textMain }}>{usuario?.username || 'Usuario'}</strong>
+              <div style={{ fontSize: '10.5px', color: theme.textMuted }}>({usuario?.rol || 'Médico'})</div>
             </div>
           </div>
 
           {/* Aviso Institucional */}
           <div style={{
-            backgroundColor: '#FFF6FB',
-            borderLeft: '4px solid #FFD6E8',
-            padding: '10px 12px',
+            backgroundColor: temaOscuro ? '#1e293b' : '#f1f5f9',
+            borderLeft: `4px solid ${theme.accentCool}`,
+            padding: '10px 14px',
             borderRadius: '4px',
             fontSize: '12px',
-            color: '#802048',
+            color: theme.textSecondary,
             lineHeight: '1.4'
           }}>
             <strong>Nota institucional:</strong> La eliminación física de un expediente requiere aprobación formal del Administrador. Por favor, seleccione o detalle el motivo correspondiente.
@@ -175,7 +184,7 @@ export default function SolicitudEliminacionModal({
 
           {/* 1. Alternativas de Motivo */}
           <div>
-            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '800', color: '#2B4A66', marginBottom: '8px' }}>
+            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '800', color: theme.textMain, marginBottom: '8px' }}>
               Seleccione el Motivo Principal:
             </label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -189,13 +198,13 @@ export default function SolicitudEliminacionModal({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
-                      padding: '8px 12px',
+                      padding: '9px 12px',
                       borderRadius: '8px',
-                      backgroundColor: seleccionada ? '#FFF6FB' : '#ffffff',
-                      border: seleccionada ? '1.5px solid #802048' : '1px solid #e2e8f0',
+                      backgroundColor: seleccionada ? (temaOscuro ? '#1e293b' : '#f0f9ff') : theme.bgSubtle,
+                      border: seleccionada ? `1.5px solid ${theme.accentCool}` : theme.border,
                       cursor: 'pointer',
                       fontSize: '12px',
-                      color: seleccionada ? '#802048' : '#2B4A66',
+                      color: seleccionada ? theme.textMain : theme.textSecondary,
                       fontWeight: seleccionada ? '700' : '500',
                       transition: 'all 0.12s ease'
                     }}
@@ -205,7 +214,7 @@ export default function SolicitudEliminacionModal({
                       name="motivo_elim"
                       checked={seleccionada}
                       onChange={() => setMotivoSeleccionado(opcion)}
-                      style={{ accentColor: '#802048', cursor: 'pointer' }}
+                      style={{ accentColor: theme.accentCool, cursor: 'pointer' }}
                     />
                     <span>{opcion}</span>
                   </div>
@@ -216,8 +225,8 @@ export default function SolicitudEliminacionModal({
 
           {/* 2. Redacción Obligatoria del Motivo */}
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '800', color: '#2B4A66', marginBottom: '6px' }}>
-              Motivo o Justificación de la Eliminación (Obligatorio) <span style={{ color: '#dc2626' }}>*</span>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '800', color: theme.textMain, marginBottom: '6px' }}>
+              Motivo o Justificación de la Eliminación (Obligatorio) <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <textarea
               rows={3}
@@ -229,16 +238,15 @@ export default function SolicitudEliminacionModal({
                 width: '100%',
                 padding: '10px 12px',
                 borderRadius: '8px',
-                border: '1.5px solid #cbd5e1',
+                border: `1px solid ${theme.borderInput}`,
                 fontSize: '12.5px',
                 fontFamily: 'inherit',
-                color: '#2B4A66',
+                color: theme.textMain,
+                backgroundColor: theme.bgInput,
                 resize: 'vertical',
                 boxSizing: 'border-box',
                 outline: 'none'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#7FD6FF'}
-              onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
             />
           </div>
 
@@ -246,9 +254,9 @@ export default function SolicitudEliminacionModal({
           {errorMsg && (
             <div style={{
               padding: '8px 12px',
-              backgroundColor: '#fee2e2',
-              color: '#991b1b',
-              border: '1px solid #f87171',
+              backgroundColor: temaOscuro ? '#3b121e' : '#fee2e2',
+              color: temaOscuro ? '#fca5a5' : '#991b1b',
+              border: `1px solid ${temaOscuro ? '#881337' : '#f87171'}`,
               borderRadius: '6px',
               fontSize: '12px',
               fontWeight: '600'
@@ -258,16 +266,16 @@ export default function SolicitudEliminacionModal({
           )}
 
           {/* Botones de Acción */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
             <button
               type="button"
               onClick={onCerrar}
               disabled={enviando}
               style={{
-                padding: '8px 16px',
-                backgroundColor: '#f1f5f9',
-                color: '#64748b',
-                border: '1px solid #cbd5e1',
+                padding: '9px 18px',
+                backgroundColor: theme.bgSubtle,
+                color: theme.textSecondary,
+                border: theme.border,
                 borderRadius: '8px',
                 fontSize: '12.5px',
                 fontWeight: '700',
@@ -281,19 +289,19 @@ export default function SolicitudEliminacionModal({
               type="submit"
               disabled={enviando}
               style={{
-                padding: '8px 18px',
-                backgroundColor: '#FFD6E8',
-                color: '#802048',
-                border: '1.5px solid #f4a7c7',
+                padding: '9px 20px',
+                backgroundColor: temaOscuro ? '#3b121e' : '#fef2f2',
+                color: temaOscuro ? '#fca5a5' : '#dc2626',
+                border: `1px solid ${temaOscuro ? '#881337' : '#fecaca'}`,
                 borderRadius: '8px',
                 fontSize: '12.5px',
                 fontWeight: '800',
                 cursor: enviando ? 'not-allowed' : 'pointer',
                 opacity: enviando ? 0.7 : 1,
-                boxShadow: '0 2px 6px rgba(255, 214, 232, 0.6)'
+                boxShadow: theme.shadowCard
               }}
             >
-              {enviando ? 'Enviando...' : 'Enviar Solicitud a la Bandeja del Admin'}
+              {enviando ? 'Enviando...' : 'Enviar Solicitud al Administrador'}
             </button>
           </div>
         </form>

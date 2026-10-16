@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTheme } from '../context/ThemeContext'
 
 export default function UsuariosView({
   usuarios,
@@ -10,6 +11,7 @@ export default function UsuariosView({
   handleEliminarUsuario,
   cargarUsuarios
 }) {
+  const { theme, temaOscuro } = useTheme()
   const [filtroBusqueda, setFiltroBusqueda] = useState('')
   const [mostrarPassword, setMostrarPassword] = useState(false)
 
@@ -37,41 +39,41 @@ export default function UsuariosView({
     return (u.username || 'US').slice(0, 2).toUpperCase()
   }
 
-  // Estilos de badge minimalistas según rol
+  // Estilos de badge minimalistas según rol con soporte tema oscuro/claro
   const obtenerBadgeRol = (rolRaw = '') => {
     const rol = rolRaw.toLowerCase()
     if (rol.includes('admin')) {
       return {
-        bg: '#fdf2f8',
-        text: '#9d174d',
-        border: '1px solid #fbcfe8'
+        bg: temaOscuro ? 'rgba(244, 63, 94, 0.15)' : '#fdf2f8',
+        text: temaOscuro ? '#fda4af' : '#9d174d',
+        border: temaOscuro ? '1px solid rgba(244, 63, 94, 0.3)' : '1px solid #fbcfe8'
       }
     }
     if (rol.includes('enferm')) {
       return {
-        bg: '#f0fdf4',
-        text: '#166534',
-        border: '1px solid #bbf7d0'
+        bg: temaOscuro ? 'rgba(16, 185, 129, 0.15)' : '#f0fdf4',
+        text: temaOscuro ? '#6ee7b7' : '#166534',
+        border: temaOscuro ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid #bbf7d0'
       }
     }
     if (rol.includes('medic') || rol.includes('pediat') || rol.includes('cardio') || rol.includes('gineco') || rol.includes('ciruj') || rol.includes('trauma') || rol.includes('neuro')) {
       return {
-        bg: '#f0f9ff',
-        text: '#0369a1',
-        border: '1px solid #bae6fd'
+        bg: temaOscuro ? 'rgba(56, 189, 248, 0.15)' : '#f0f9ff',
+        text: temaOscuro ? '#7dd3fc' : '#0369a1',
+        border: temaOscuro ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid #bae6fd'
       }
     }
     if (rol.includes('recepc') || rol.includes('admis')) {
       return {
-        bg: '#fefce8',
-        text: '#854d0e',
-        border: '1px solid #fef08a'
+        bg: temaOscuro ? 'rgba(245, 158, 11, 0.15)' : '#fefce8',
+        text: temaOscuro ? '#fcd34d' : '#854d0e',
+        border: temaOscuro ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid #fef08a'
       }
     }
     return {
-      bg: '#f8fafc',
-      text: '#475569',
-      border: '1px solid #e2e8f0'
+      bg: temaOscuro ? '#1e293b' : '#f8fafc',
+      text: temaOscuro ? '#cbd5e1' : '#475569',
+      border: `1px solid ${theme.borderInput}`
     }
   }
 
@@ -81,10 +83,10 @@ export default function UsuariosView({
       {/* 1. ENCABEZADO MINIMALISTA DE LA VISTA */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: '800', color: theme.textMain, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
             Control de Usuarios y Roles
           </h2>
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontWeight: '400' }}>
+          <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted, fontWeight: '400' }}>
             Registro de nuevo personal hospitalario, asignación de especialidades médicas y gestión de accesos.
           </p>
         </div>
@@ -95,14 +97,14 @@ export default function UsuariosView({
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
-            padding: '5px 12px',
+            backgroundColor: theme.bgCard,
+            border: theme.border,
+            padding: '6px 14px',
             borderRadius: '20px',
             boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
             fontSize: '12px',
             fontWeight: '600',
-            color: '#334155'
+            color: theme.textSecondary
           }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }}></span>
             <span>{usuarios.length} Usuarios Registrados</span>
@@ -112,23 +114,24 @@ export default function UsuariosView({
 
       {/* 2. FORMULARIO DE REGISTRO EN LA PARTE SUPERIOR (DISEÑO MINIMALISTA Y LIMPIO) */}
       <div style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
+        backgroundColor: theme.bgCard,
+        border: theme.border,
         borderRadius: '16px',
         padding: '24px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03)'
+        boxShadow: theme.shadowCard
       }}>
         {/* Cabecera del Formulario */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', paddingBottom: '14px', borderBottom: '1px solid #f1f5f9' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', paddingBottom: '14px', borderBottom: theme.borderSubtle }}>
           <div style={{
             width: '34px',
             height: '34px',
             borderRadius: '10px',
-            backgroundColor: '#f1f5f9',
+            backgroundColor: theme.bgSubtle,
+            border: theme.border,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#0f172a'
+            color: theme.textMain
           }}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -138,10 +141,10 @@ export default function UsuariosView({
             </svg>
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: theme.textMain }}>
               Registrar Nuevo Personal
             </h3>
-            <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+            <p style={{ margin: 0, fontSize: '12px', color: theme.textMuted }}>
               Ingresa los datos para generar las credenciales de acceso al sistema clínico.
             </p>
           </div>
@@ -152,7 +155,7 @@ export default function UsuariosView({
             
             {/* Campo 1: Nombres Completos */}
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.textSecondary, marginBottom: '6px' }}>
                 Nombres Completos
               </label>
               <input
@@ -165,19 +168,19 @@ export default function UsuariosView({
                   boxSizing: 'border-box',
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
+                  border: `1px solid ${theme.borderInput}`,
                   fontSize: '13px',
-                  backgroundColor: '#ffffff',
-                  color: '#0f172a',
+                  backgroundColor: theme.bgInput,
+                  color: theme.textMain,
                   outline: 'none',
                   transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3b82f6'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                  e.target.style.borderColor = '#38bdf8'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(56, 189, 248, 0.15)'
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#cbd5e1'
+                  e.target.style.borderColor = theme.borderInput
                   e.target.style.boxShadow = 'none'
                 }}
               />
@@ -185,7 +188,7 @@ export default function UsuariosView({
 
             {/* Campo 2: Nombre de Usuario */}
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.textSecondary, marginBottom: '6px' }}>
                 Nombre de Usuario <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
@@ -199,19 +202,19 @@ export default function UsuariosView({
                   boxSizing: 'border-box',
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
+                  border: `1px solid ${theme.borderInput}`,
                   fontSize: '13px',
-                  backgroundColor: '#ffffff',
-                  color: '#0f172a',
+                  backgroundColor: theme.bgInput,
+                  color: theme.textMain,
                   outline: 'none',
                   transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3b82f6'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                  e.target.style.borderColor = '#38bdf8'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(56, 189, 248, 0.15)'
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#cbd5e1'
+                  e.target.style.borderColor = theme.borderInput
                   e.target.style.boxShadow = 'none'
                 }}
               />
@@ -219,7 +222,7 @@ export default function UsuariosView({
 
             {/* Campo 3: Rol / Especialidad Médica */}
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.textSecondary, marginBottom: '6px' }}>
                 Rol / Especialidad Médica <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <select
@@ -230,45 +233,45 @@ export default function UsuariosView({
                   boxSizing: 'border-box',
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
+                  border: `1px solid ${theme.borderInput}`,
                   fontSize: '13px',
-                  backgroundColor: '#ffffff',
-                  color: '#0f172a',
+                  backgroundColor: theme.bgInput,
+                  color: theme.textMain,
                   outline: 'none',
                   fontWeight: '500',
                   cursor: 'pointer',
                   transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3b82f6'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                  e.target.style.borderColor = '#38bdf8'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(56, 189, 248, 0.15)'
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#cbd5e1'
+                  e.target.style.borderColor = theme.borderInput
                   e.target.style.boxShadow = 'none'
                 }}
               >
-                <option value="Médico General">Médico General</option>
-                <option value="Pediatra">Pediatra</option>
-                <option value="Cardiólogo">Cardiólogo</option>
-                <option value="Ginecólogo">Ginecólogo</option>
-                <option value="Cirujano">Cirujano</option>
-                <option value="Traumatólogo">Traumatólogo</option>
-                <option value="Neurólogo">Neurólogo</option>
-                <option value="Enfermera">Enfermera</option>
-                <option value="Administrador">Administrador</option>
-                <option value="Recepción">Recepción / Admisión</option>
-                <option value="Soporte TI">Soporte TI</option>
+                <option value="Médico General" style={{ backgroundColor: theme.bgCard, color: theme.textMain }}>Médico General</option>
+                <option value="Pediatra" style={{ backgroundColor: theme.bgCard, color: theme.textMain }}>Pediatra</option>
+                <option value="Cardiólogo" style={{ backgroundColor: theme.bgCard, color: theme.textMain }}>Cardiólogo</option>
+                <option value="Ginecólogo" style={{ backgroundColor: theme.bgCard, color: theme.textMain }}>Ginecólogo</option>
+                <option value="Cirujano" style={{ backgroundColor: theme.bgCard, color: theme.textMain }}>Cirujano</option>
+                <option value="Traumatólogo" style={{ backgroundColor: theme.bgCard, color: theme.textMain }}>Traumatólogo</option>
+                <option value="Neurólogo" style={{ backgroundColor: theme.bgCard, color: theme.textMain }}>Neurólogo</option>
+                <option value="Enfermera" style={{ backgroundColor: theme.bgCard, color: theme.textMain }}>Enfermera</option>
+                <option value="Administrador" style={{ backgroundColor: theme.bgCard, color: theme.textMain }}>Administrador</option>
+                <option value="Recepción" style={{ backgroundColor: theme.bgCard, color: theme.textMain }}>Recepción / Admisión</option>
+                <option value="Soporte TI" style={{ backgroundColor: theme.bgCard, color: theme.textMain }}>Soporte TI</option>
               </select>
             </div>
 
             {/* Campo 4: Teléfono (Para SMS de Recuperación) */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label style={{ fontSize: '12px', fontWeight: '600', color: '#334155' }}>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: theme.textSecondary }}>
                   Teléfono Móvil <span style={{ color: '#ef4444' }}>*</span>
                 </label>
-                <span style={{ fontSize: '11px', color: '#0284c7', fontWeight: '500' }}>Para SMS de recuperación</span>
+                <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: '500' }}>Para SMS de recuperación</span>
               </div>
               <div style={{ position: 'relative' }}>
                 <input
@@ -282,23 +285,23 @@ export default function UsuariosView({
                     boxSizing: 'border-box',
                     padding: '10px 12px 10px 34px',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
+                    border: `1px solid ${theme.borderInput}`,
                     fontSize: '13px',
-                    backgroundColor: '#ffffff',
-                    color: '#0f172a',
+                    backgroundColor: theme.bgInput,
+                    color: theme.textMain,
                     outline: 'none',
                     transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = '#3b82f6'
-                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                    e.target.style.borderColor = '#38bdf8'
+                    e.target.style.boxShadow = '0 0 0 3px rgba(56, 189, 248, 0.15)'
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = '#cbd5e1'
+                    e.target.style.borderColor = theme.borderInput
                     e.target.style.boxShadow = 'none'
                   }}
                 />
-                <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#64748b' }}>
+                <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: theme.textMuted }}>
                   📱
                 </span>
               </div>
@@ -306,7 +309,7 @@ export default function UsuariosView({
 
             {/* Campo 5: Correo Electrónico */}
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.textSecondary, marginBottom: '6px' }}>
                 Correo Institucional
               </label>
               <input
@@ -319,19 +322,19 @@ export default function UsuariosView({
                   boxSizing: 'border-box',
                   padding: '10px 12px',
                   borderRadius: '8px',
-                  border: '1px solid #cbd5e1',
+                  border: `1px solid ${theme.borderInput}`,
                   fontSize: '13px',
-                  backgroundColor: '#ffffff',
-                  color: '#0f172a',
+                  backgroundColor: theme.bgInput,
+                  color: theme.textMain,
                   outline: 'none',
                   transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3b82f6'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                  e.target.style.borderColor = '#38bdf8'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(56, 189, 248, 0.15)'
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#cbd5e1'
+                  e.target.style.borderColor = theme.borderInput
                   e.target.style.boxShadow = 'none'
                 }}
               />
@@ -339,7 +342,7 @@ export default function UsuariosView({
 
             {/* Campo 6: Contraseña */}
             <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: theme.textSecondary, marginBottom: '6px' }}>
                 Contraseña Temporal <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
@@ -354,19 +357,19 @@ export default function UsuariosView({
                     boxSizing: 'border-box',
                     padding: '10px 36px 10px 12px',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
+                    border: `1px solid ${theme.borderInput}`,
                     fontSize: '13px',
-                    backgroundColor: '#ffffff',
-                    color: '#0f172a',
+                    backgroundColor: theme.bgInput,
+                    color: theme.textMain,
                     outline: 'none',
                     transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = '#3b82f6'
-                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                    e.target.style.borderColor = '#38bdf8'
+                    e.target.style.boxShadow = '0 0 0 3px rgba(56, 189, 248, 0.15)'
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = '#cbd5e1'
+                    e.target.style.borderColor = theme.borderInput
                     e.target.style.boxShadow = 'none'
                   }}
                 />
@@ -381,7 +384,7 @@ export default function UsuariosView({
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
-                    color: '#64748b',
+                    color: theme.textMuted,
                     padding: 0,
                     display: 'flex',
                     alignItems: 'center'
@@ -406,7 +409,7 @@ export default function UsuariosView({
           </div>
 
           {/* Pie del Formulario: Botón de Acción Minimalista */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', paddingTop: '14px', borderTop: '1px solid #f8fafc' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '12px', paddingTop: '14px', borderTop: theme.borderSubtle }}>
             <button
               type="submit"
               disabled={creandoUsuario}
@@ -414,22 +417,22 @@ export default function UsuariosView({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '9px 22px',
-                backgroundColor: creandoUsuario ? '#94a3b8' : '#0f172a',
-                color: '#ffffff',
+                padding: '10px 22px',
+                backgroundColor: creandoUsuario ? (temaOscuro ? '#334155' : '#94a3b8') : theme.primaryBtnBg,
+                color: theme.primaryBtnColor,
                 border: 'none',
                 borderRadius: '8px',
-                fontWeight: '600',
+                fontWeight: '700',
                 fontSize: '13px',
                 cursor: creandoUsuario ? 'not-allowed' : 'pointer',
                 transition: 'background-color 0.15s ease, transform 0.1s ease',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
               }}
               onMouseEnter={(e) => {
-                if (!creandoUsuario) e.currentTarget.style.backgroundColor = '#1e293b'
+                if (!creandoUsuario) e.currentTarget.style.backgroundColor = theme.primaryBtnHover
               }}
               onMouseLeave={(e) => {
-                if (!creandoUsuario) e.currentTarget.style.backgroundColor = '#0f172a'
+                if (!creandoUsuario) e.currentTarget.style.backgroundColor = theme.primaryBtnBg
               }}
             >
               {creandoUsuario ? (
@@ -452,16 +455,16 @@ export default function UsuariosView({
 
       {/* 3. TABLA DE USUARIOS EN LA PARTE INFERIOR (DISEÑO MINIMALISTA Y ELEGANTE) */}
       <div style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
+        backgroundColor: theme.bgCard,
+        border: theme.border,
         borderRadius: '16px',
         padding: '24px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03)'
+        boxShadow: theme.shadowCard
       }}>
         {/* Cabecera de la Tabla: Título, Filtro de Búsqueda y Botón Refrescar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+            <h3 style={{ fontSize: '15px', fontWeight: '700', color: theme.textMain, margin: 0 }}>
               Usuarios del Sistema
             </h3>
             <span style={{
@@ -469,8 +472,9 @@ export default function UsuariosView({
               fontWeight: '700',
               padding: '2px 8px',
               borderRadius: '12px',
-              backgroundColor: '#f1f5f9',
-              color: '#475569'
+              backgroundColor: theme.bgSubtle,
+              border: theme.border,
+              color: theme.textSecondary
             }}>
               {usuariosFiltrados.length}
             </span>
@@ -489,20 +493,18 @@ export default function UsuariosView({
                   boxSizing: 'border-box',
                   padding: '7px 12px 7px 32px',
                   borderRadius: '8px',
-                  border: '1px solid #e2e8f0',
+                  border: `1px solid ${theme.borderInput}`,
                   fontSize: '12px',
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: theme.bgInput,
                   outline: 'none',
-                  color: '#0f172a',
+                  color: theme.textMain,
                   transition: 'border-color 0.15s ease, background-color 0.15s ease'
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3b82f6'
-                  e.target.style.backgroundColor = '#ffffff'
+                  e.target.style.borderColor = '#38bdf8'
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#e2e8f0'
-                  e.target.style.backgroundColor = '#f8fafc'
+                  e.target.style.borderColor = theme.borderInput
                 }}
               />
               <svg
@@ -510,7 +512,7 @@ export default function UsuariosView({
                 height="14"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#94a3b8"
+                stroke={theme.textMuted}
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -530,22 +532,22 @@ export default function UsuariosView({
                 alignItems: 'center',
                 gap: '6px',
                 padding: '7px 12px',
-                backgroundColor: '#f8fafc',
-                border: '1px solid #e2e8f0',
+                backgroundColor: theme.secondaryBtnBg,
+                border: theme.secondaryBtnBorder,
                 borderRadius: '8px',
                 fontSize: '12px',
                 fontWeight: '600',
                 cursor: 'pointer',
-                color: '#475569',
+                color: theme.secondaryBtnColor,
                 transition: 'all 0.15s ease'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f1f5f9'
-                e.currentTarget.style.color = '#0f172a'
+                e.currentTarget.style.backgroundColor = temaOscuro ? '#334155' : '#f1f5f9'
+                e.currentTarget.style.color = theme.textMain
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#f8fafc'
-                e.currentTarget.style.color = '#475569'
+                e.currentTarget.style.backgroundColor = theme.secondaryBtnBg
+                e.currentTarget.style.color = theme.secondaryBtnColor
               }}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -558,36 +560,36 @@ export default function UsuariosView({
 
         {/* Contenedor de la Tabla */}
         {cargandoUsuarios ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b', fontSize: '13px' }}>
-            <div style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.7s linear infinite', marginBottom: '8px' }}></div>
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: theme.textMuted, fontSize: '13px' }}>
+            <div style={{ display: 'inline-block', width: '20px', height: '20px', border: `2px solid ${theme.borderInput}`, borderTopColor: '#38bdf8', borderRadius: '50%', animation: 'spin 0.7s linear infinite', marginBottom: '8px' }}></div>
             <div>Cargando directorio de usuarios...</div>
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </div>
         ) : usuarios.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b', fontSize: '13px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: theme.textMuted, fontSize: '13px', backgroundColor: theme.bgSubtle, borderRadius: '8px' }}>
             No hay usuarios registrados en el sistema.
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0', fontSize: '13px' }}>
               <thead>
-                <tr style={{ backgroundColor: '#f8fafc' }}>
-                  <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '600', color: '#64748b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0', borderTopLeftRadius: '8px' }}>
+                <tr style={{ backgroundColor: theme.tableHeaderBg }}>
+                  <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '600', color: theme.textMuted, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: theme.border, borderTopLeftRadius: '8px' }}>
                     ID
                   </th>
-                  <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '600', color: '#64748b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '600', color: theme.textMuted, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: theme.border }}>
                     Personal / Usuario
                   </th>
-                  <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '600', color: '#64748b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '600', color: theme.textMuted, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: theme.border }}>
                     Rol / Especialidad
                   </th>
-                  <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '600', color: '#64748b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '600', color: theme.textMuted, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: theme.border }}>
                     Teléfono (SMS)
                   </th>
-                  <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '600', color: '#64748b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>
+                  <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: '600', color: theme.textMuted, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: theme.border }}>
                     Correo
                   </th>
-                  <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: '600', color: '#64748b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0', borderTopRightRadius: '8px' }}>
+                  <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: '600', color: theme.textMuted, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: theme.border, borderTopRightRadius: '8px' }}>
                     Acción
                   </th>
                 </tr>
@@ -595,7 +597,7 @@ export default function UsuariosView({
               <tbody>
                 {usuariosFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: '#94a3b8', fontSize: '13px' }}>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: '30px', color: theme.textMuted, fontSize: '13px' }}>
                       No se encontraron usuarios coincidentes con "{filtroBusqueda}".
                     </td>
                   </tr>
@@ -609,14 +611,14 @@ export default function UsuariosView({
                       <tr
                         key={u.id}
                         style={{
-                          borderBottom: idx === usuariosFiltrados.length - 1 ? 'none' : '1px solid #f1f5f9',
+                          borderBottom: idx === usuariosFiltrados.length - 1 ? 'none' : theme.borderSubtle,
                           transition: 'background-color 0.12s ease'
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.tableRowHover}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
                         {/* ID */}
-                        <td style={{ padding: '12px 14px', color: '#94a3b8', fontSize: '12px', fontWeight: '500', fontFamily: 'monospace' }}>
+                        <td style={{ padding: '12px 14px', color: theme.textMuted, fontSize: '12px', fontWeight: '500', fontFamily: 'monospace' }}>
                           #{u.id}
                         </td>
 
@@ -627,8 +629,8 @@ export default function UsuariosView({
                               width: '32px',
                               height: '32px',
                               borderRadius: '50%',
-                              backgroundColor: esAdmin ? '#0f172a' : '#e2e8f0',
-                              color: esAdmin ? '#ffffff' : '#334155',
+                              backgroundColor: esAdmin ? (temaOscuro ? '#38bdf8' : '#0f172a') : (temaOscuro ? '#1e293b' : '#e2e8f0'),
+                              color: esAdmin ? (temaOscuro ? '#080c14' : '#ffffff') : theme.textSecondary,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -639,20 +641,20 @@ export default function UsuariosView({
                               {iniciales}
                             </div>
                             <div>
-                              <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <div style={{ fontWeight: '600', color: theme.textMain, fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <span>{u.username}</span>
                                 {esAdmin && (
-                                  <span style={{ fontSize: '10px', color: '#0284c7', backgroundColor: '#e0f2fe', padding: '1px 6px', borderRadius: '4px', fontWeight: '600' }}>
+                                  <span style={{ fontSize: '10px', color: temaOscuro ? '#38bdf8' : '#0284c7', backgroundColor: temaOscuro ? 'rgba(56, 189, 248, 0.15)' : '#e0f2fe', padding: '1px 6px', borderRadius: '4px', fontWeight: '600' }}>
                                     Principal
                                   </span>
                                 )}
                               </div>
                               {u.nombres_completos ? (
-                                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '1px' }}>
+                                <div style={{ fontSize: '12px', color: theme.textMuted, marginTop: '1px' }}>
                                   {u.nombres_completos}
                                 </div>
                               ) : (
-                                <div style={{ fontSize: '11px', color: '#94a3b8', fontStyle: 'italic', marginTop: '1px' }}>
+                                <div style={{ fontSize: '11px', color: theme.textMuted, fontStyle: 'italic', marginTop: '1px' }}>
                                   Sin nombre completo
                                 </div>
                               )}
@@ -680,12 +682,12 @@ export default function UsuariosView({
                         {/* Teléfono SMS */}
                         <td style={{ padding: '12px 14px' }}>
                           {u.telefono ? (
-                            <span style={{ fontSize: '12.5px', color: '#334155', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                            <span style={{ fontSize: '12.5px', color: theme.textSecondary, fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                               <span style={{ fontSize: '12px' }}>📱</span>
                               <span>{u.telefono}</span>
                             </span>
                           ) : (
-                            <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>
+                            <span style={{ fontSize: '12px', color: theme.textMuted, fontStyle: 'italic' }}>
                               —
                             </span>
                           )}
@@ -694,11 +696,11 @@ export default function UsuariosView({
                         {/* Correo Electrónico */}
                         <td style={{ padding: '12px 14px' }}>
                           {u.correo ? (
-                            <span style={{ fontSize: '12px', color: '#64748b' }}>
+                            <span style={{ fontSize: '12px', color: theme.textMuted }}>
                               {u.correo}
                             </span>
                           ) : (
-                            <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>
+                            <span style={{ fontSize: '12px', color: theme.textMuted, fontStyle: 'italic' }}>
                               —
                             </span>
                           )}
@@ -709,12 +711,12 @@ export default function UsuariosView({
                           {esAdmin ? (
                             <span style={{
                               fontSize: '11px',
-                              color: '#94a3b8',
+                              color: theme.textMuted,
                               fontWeight: '500',
                               padding: '3px 8px',
                               borderRadius: '4px',
-                              backgroundColor: '#f8fafc',
-                              border: '1px solid #e2e8f0'
+                              backgroundColor: theme.bgSubtle,
+                              border: theme.border
                             }}>
                               Protegido
                             </span>
@@ -728,9 +730,9 @@ export default function UsuariosView({
                                 alignItems: 'center',
                                 gap: '4px',
                                 padding: '4px 8px',
-                                backgroundColor: 'transparent',
-                                color: '#e11d48',
-                                border: '1px solid #fecdd3',
+                                backgroundColor: temaOscuro ? 'rgba(244, 63, 94, 0.1)' : 'transparent',
+                                color: temaOscuro ? '#fda4af' : '#e11d48',
+                                border: temaOscuro ? '1px solid rgba(244, 63, 94, 0.25)' : '1px solid #fecdd3',
                                 borderRadius: '6px',
                                 fontSize: '11.5px',
                                 fontWeight: '600',
@@ -738,12 +740,12 @@ export default function UsuariosView({
                                 transition: 'all 0.15s ease'
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = '#ffe4e6'
-                                e.currentTarget.style.borderColor = '#fda4af'
+                                e.currentTarget.style.backgroundColor = temaOscuro ? 'rgba(244, 63, 94, 0.2)' : '#ffe4e6'
+                                e.currentTarget.style.borderColor = temaOscuro ? 'rgba(244, 63, 94, 0.4)' : '#fda4af'
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent'
-                                e.currentTarget.style.borderColor = '#fecdd3'
+                                e.currentTarget.style.backgroundColor = temaOscuro ? 'rgba(244, 63, 94, 0.1)' : 'transparent'
+                                e.currentTarget.style.borderColor = temaOscuro ? 'rgba(244, 63, 94, 0.25)' : '#fecdd3'
                               }}
                             >
                               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

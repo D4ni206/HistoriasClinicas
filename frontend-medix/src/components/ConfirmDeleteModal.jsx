@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useTheme } from '../context/ThemeContext'
 
 export default function ConfirmDeleteModal({
   paciente,
@@ -7,20 +7,7 @@ export default function ConfirmDeleteModal({
   onConfirmar,
   onCancelar
 }) {
-  // Sincronizar tema con el sistema o permitir alternar
-  const [temaOscuro, setTemaOscuro] = useState(() => {
-    const saved = localStorage.getItem('medix_sidebar_theme')
-    return saved !== null ? saved === 'dark' : false
-  })
-
-  useEffect(() => {
-    const checkTheme = () => {
-      const current = localStorage.getItem('medix_sidebar_theme') === 'dark'
-      setTemaOscuro(current)
-    }
-    window.addEventListener('storage', checkTheme)
-    return () => window.removeEventListener('storage', checkTheme)
-  }, [])
+  const { temaOscuro } = useTheme()
 
   if (!paciente) return null
 

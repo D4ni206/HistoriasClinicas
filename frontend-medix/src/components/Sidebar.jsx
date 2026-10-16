@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useTheme } from '../context/ThemeContext'
 import logoHospital from '../assets/logo-login.png'
 
 export default function Sidebar({
@@ -17,25 +18,17 @@ export default function Sidebar({
   const location = useLocation()
   const navigate = useNavigate()
   const currentPath = location.pathname
+  const { temaOscuro, toggleTema } = useTheme()
 
-  // Estado de colapso y tema guardados en localStorage
+  // Estado de colapso guardado en localStorage
   const [colapsado, setColapsado] = useState(() => {
     return localStorage.getItem('medix_sidebar_collapsed') === 'true'
   })
 
-  const [temaOscuro, setTemaOscuro] = useState(() => {
-    const guardado = localStorage.getItem('medix_sidebar_theme')
-    return guardado !== null ? guardado === 'dark' : true
-  })
-
-  // Guardar preferencias en localStorage
+  // Guardar preferencia de colapso en localStorage
   useEffect(() => {
     localStorage.setItem('medix_sidebar_collapsed', colapsado ? 'true' : 'false')
   }, [colapsado])
-
-  useEffect(() => {
-    localStorage.setItem('medix_sidebar_theme', temaOscuro ? 'dark' : 'light')
-  }, [temaOscuro])
 
   const rolRaw = (usuario?.rol || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
   const esAdmin = rolRaw.includes('admin')
@@ -49,47 +42,39 @@ export default function Sidebar({
   const esSolicitudes = currentPath === '/solicitudes'
   const esConfiguracion = currentPath === '/configuracion'
 
-  // Paleta dinámica según Tema Oscuro o Claro
+  // Paleta formal y seria con tonos fríos
   const theme = temaOscuro ? {
-    bg: '#14161f',
-    border: '1px solid #232738',
-    textMain: '#ffffff',
+    bg: '#0b0f19',
+    border: '1px solid #1e293b',
+    textMain: '#f8fafc',
     textMuted: '#94a3b8',
-    itemHoverBg: '#1e2230',
+    itemHoverBg: '#162032',
     itemHoverText: '#ffffff',
-    searchBg: '#1e2230',
-    searchBorder: '1px solid #282d3f',
-    searchColor: '#f1f5f9',
-    searchPlaceholder: '#64748b',
-    activeBg: '#5855f2',
+    activeBg: '#2563eb',
     activeColor: '#ffffff',
-    toggleBoxBg: '#1e2230',
-    headerBtnBg: '#1e2230',
-    headerBtnHover: '#292f42',
+    toggleBoxBg: '#162032',
+    headerBtnBg: '#162032',
+    headerBtnHover: '#1e293b',
     headerBtnColor: '#94a3b8',
-    shadow: '0 12px 32px rgba(0, 0, 0, 0.45)',
-    userCardBg: '#1c202d',
-    userCardBorder: '1px solid #272d3e',
+    shadow: '0 12px 32px rgba(0, 0, 0, 0.55)',
+    userCardBg: '#0f172a',
+    userCardBorder: '1px solid #1e293b',
   } : {
     bg: '#ffffff',
-    border: '1.5px solid #e2e8f0',
+    border: '1px solid #e2e8f0',
     textMain: '#0f172a',
     textMuted: '#64748b',
     itemHoverBg: '#f1f5f9',
     itemHoverText: '#0f172a',
-    searchBg: '#f3f4f8',
-    searchBorder: '1px solid #e2e8f0',
-    searchColor: '#1e293b',
-    searchPlaceholder: '#94a3b8',
-    activeBg: '#5855f2',
+    activeBg: '#0f172a',
     activeColor: '#ffffff',
-    toggleBoxBg: '#f3f4f8',
+    toggleBoxBg: '#f1f5f9',
     headerBtnBg: '#f1f5f9',
     headerBtnHover: '#e2e8f0',
     headerBtnColor: '#64748b',
-    shadow: '0 10px 30px rgba(0, 0, 0, 0.06)',
+    shadow: '0 4px 16px rgba(15, 23, 42, 0.05)',
     userCardBg: '#f8fafc',
-    userCardBorder: '1px solid #e2e8f0',
+    userCardBorder: '1px solid #e2e8f0'
   }
 
   // Lista de items de navegación configurados según permisos de rol
@@ -601,10 +586,10 @@ export default function Sidebar({
           </div>
         )}
 
-        {/* TOGGLE MODO OSCURO / MODO CLARO (Exacto al diseño de la imagen) */}
+        {/* TOGGLE MODO OSCURO / MODO CLARO */}
         {colapsado ? (
           <button
-            onClick={() => setTemaOscuro(!temaOscuro)}
+            onClick={toggleTema}
             title={temaOscuro ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
             style={{
               width: '44px',
@@ -630,7 +615,7 @@ export default function Sidebar({
             }}
           >
             {temaOscuro ? (
-              // Icono Sol en modo oscuro colapsado (como en la imagen del medio)
+              // Icono Sol en modo oscuro colapsado
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="5"></circle>
                 <line x1="12" y1="1" x2="12" y2="3"></line>
@@ -643,7 +628,7 @@ export default function Sidebar({
                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
               </svg>
             ) : (
-              // Icono Luna en modo claro colapsado (como en la imagen de la derecha)
+              // Icono Luna en modo claro colapsado
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
               </svg>
@@ -651,7 +636,7 @@ export default function Sidebar({
           </button>
         ) : (
           <div
-            onClick={() => setTemaOscuro(!temaOscuro)}
+            onClick={toggleTema}
             title="Alternar entre modo oscuro y claro"
             style={{
               height: '42px',
@@ -672,7 +657,7 @@ export default function Sidebar({
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
               </svg>
               <span style={{ fontSize: '13px', fontWeight: '600', color: theme.textMain }}>
-                Dark mode
+                Modo Oscuro
               </span>
             </div>
 
@@ -682,7 +667,7 @@ export default function Sidebar({
                 width: '38px',
                 height: '22px',
                 borderRadius: '11px',
-                backgroundColor: temaOscuro ? '#5855f2' : '#cbd5e1',
+                backgroundColor: temaOscuro ? '#2563eb' : '#cbd5e1',
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',

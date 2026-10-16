@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { API_BASE } from '../api/config'
 import ConfirmDeleteModal from './ConfirmDeleteModal'
+import { useTheme } from '../context/ThemeContext'
 
 export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAgregada, notificar }) {
+  const { theme, temaOscuro } = useTheme()
   const [notas, setNotas] = useState(paciente?.notas_medicas || [])
   const [cargandoNotas, setCargandoNotas] = useState(false)
   const [nuevaNota, setNuevaNota] = useState('')
@@ -117,8 +119,8 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.45)',
-        backdropFilter: 'blur(2px)',
+        backgroundColor: 'rgba(8, 12, 20, 0.72)',
+        backdropFilter: 'blur(4px)',
         zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
@@ -135,10 +137,10 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
           width: '100%',
           maxWidth: '680px',
           maxHeight: '90vh',
-          backgroundColor: '#ffffff',
-          borderRadius: '12px',
-          border: '1.5px solid #7FD6FF',
-          boxShadow: '0 10px 30px rgba(43, 74, 102, 0.25)',
+          backgroundColor: theme.bgCard,
+          borderRadius: '16px',
+          border: theme.border,
+          boxShadow: theme.shadowCard,
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden'
@@ -147,22 +149,22 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
         {/* Cabecera del Modal */}
         <div
           style={{
-            padding: '16px 20px',
-            backgroundColor: '#7FD6FF',
-            borderBottom: '1.5px solid #54bde8',
+            padding: '16px 22px',
+            backgroundColor: theme.bgSubtle,
+            borderBottom: theme.borderSubtle,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div
               style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '8px',
-                backgroundColor: '#2B4A66',
-                color: '#ffffff',
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                backgroundColor: temaOscuro ? '#38bdf8' : '#0f172a',
+                color: temaOscuro ? '#080c14' : '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -177,11 +179,11 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
               </svg>
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#2B4A66' }}>
+              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: theme.textMain }}>
                 Notas Clínicas y Evolución Médica
               </h3>
-              <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#104060', fontWeight: '600' }}>
-                Paciente DNI: <span style={{ backgroundColor: '#ffffff', padding: '1px 6px', borderRadius: '4px', border: '1px solid #54bde8' }}>{paciente.dni}</span> · Expediente #{paciente.id}
+              <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: theme.textMuted }}>
+                Paciente DNI: <span style={{ backgroundColor: theme.bgCard, color: theme.textMain, padding: '1px 6px', borderRadius: '4px', border: theme.border, fontWeight: '700' }}>{paciente.dni}</span> · Expediente #{paciente.id}
               </p>
             </div>
           </div>
@@ -189,14 +191,23 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
           <button
             onClick={onClose}
             style={{
-              background: '#ffffff',
-              border: '1px solid #54bde8',
-              borderRadius: '6px',
+              backgroundColor: theme.secondaryBtnBg,
+              border: theme.secondaryBtnBorder,
+              borderRadius: '8px',
               padding: '6px 12px',
               fontSize: '12px',
-              fontWeight: '700',
-              color: '#2B4A66',
-              cursor: 'pointer'
+              fontWeight: '600',
+              color: theme.secondaryBtnColor,
+              cursor: 'pointer',
+              transition: 'all 0.12s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = temaOscuro ? '#334155' : '#f8fafc'
+              e.currentTarget.style.color = theme.textMain
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = theme.secondaryBtnBg
+              e.currentTarget.style.color = theme.secondaryBtnColor
             }}
           >
             Cerrar
@@ -204,14 +215,14 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
         </div>
 
         {/* Cuerpo del Modal con scroll */}
-        <div style={{ padding: '20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div style={{ padding: '22px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Formulario de Redacción de Nota */}
-          <form onSubmit={handleGuardarNota} style={{ backgroundColor: '#FFF6FB', padding: '16px', borderRadius: '8px', border: '1.5px solid #e2c5d5' }}>
+          <form onSubmit={handleGuardarNota} style={{ backgroundColor: theme.bgSubtle, padding: '16px', borderRadius: '12px', border: theme.border }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '800', color: '#2B4A66', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <label style={{ fontSize: '11.5px', fontWeight: '700', color: theme.textMain, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 Nueva Nota / Diagnóstico de Evolución
               </label>
-              <span style={{ fontSize: '11px', color: '#104060', fontWeight: '600' }}>
+              <span style={{ fontSize: '11px', color: theme.textMuted, fontWeight: '600' }}>
                 Firmante: Dr. {usuario?.username || 'Médico'}
               </span>
             </div>
@@ -225,20 +236,21 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
                 width: '100%',
                 boxSizing: 'border-box',
                 padding: '10px 12px',
-                borderRadius: '6px',
-                border: '1.5px solid #cbd5e1',
+                borderRadius: '8px',
+                border: `1px solid ${theme.borderInput}`,
                 fontSize: '13px',
                 fontFamily: 'inherit',
                 outline: 'none',
                 resize: 'vertical',
-                backgroundColor: '#ffffff'
+                backgroundColor: theme.bgInput,
+                color: theme.textMain
               }}
-              onFocus={(e) => e.target.style.borderColor = '#7FD6FF'}
-              onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+              onFocus={(e) => e.target.style.borderColor = '#38bdf8'}
+              onBlur={(e) => e.target.style.borderColor = theme.borderInput}
             />
 
             {errorLocal && (
-              <div style={{ marginTop: '8px', fontSize: '12px', color: '#802048', fontWeight: '600' }}>
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#f43f5e', fontWeight: '600' }}>
                 {errorLocal}
               </div>
             )}
@@ -248,15 +260,22 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
                 type="submit"
                 disabled={guardando}
                 style={{
-                  padding: '8px 18px',
-                  backgroundColor: guardando ? '#c4eeff' : '#7FD6FF',
-                  color: '#104060',
-                  border: '1.5px solid #54bde8',
-                  borderRadius: '6px',
-                  fontSize: '12px',
+                  padding: '9px 18px',
+                  backgroundColor: guardando ? (temaOscuro ? '#334155' : '#94a3b8') : theme.primaryBtnBg,
+                  color: theme.primaryBtnColor,
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '12.5px',
                   fontWeight: '700',
                   cursor: guardando ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 2px 4px rgba(127, 214, 255, 0.4)'
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  transition: 'background-color 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  if (!guardando) e.currentTarget.style.backgroundColor = theme.primaryBtnHover
+                }}
+                onMouseLeave={(e) => {
+                  if (!guardando) e.currentTarget.style.backgroundColor = theme.primaryBtnBg
                 }}
               >
                 {guardando ? 'Guardando...' : 'Agregar Nota a la Historia'}
@@ -266,17 +285,17 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
 
           {/* Historial de Notas Anteriores */}
           <div>
-            <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', fontWeight: '800', color: '#2B4A66', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '12.5px', fontWeight: '800', color: theme.textMain, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Historial de Notas Registradas ({notas.length})
             </h4>
 
             {cargandoNotas ? (
-              <p style={{ textAlign: 'center', color: '#64748b', fontSize: '12px', padding: '16px' }}>
+              <p style={{ textAlign: 'center', color: theme.textMuted, fontSize: '12px', padding: '16px' }}>
                 Cargando notas médicas...
               </p>
             ) : notas.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', backgroundColor: '#FFF6FB', borderRadius: '8px', border: '1px dashed #e2c5d5' }}>
-                <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+              <div style={{ padding: '24px', textAlign: 'center', backgroundColor: theme.bgSubtle, borderRadius: '12px', border: `1px dashed ${theme.borderInput}` }}>
+                <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted }}>
                   Aún no se han registrado notas clínicas para este paciente.
                 </p>
               </div>
@@ -287,18 +306,26 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
                     key={n.id}
                     style={{
                       padding: '14px 16px',
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                      backgroundColor: theme.bgCard,
+                      border: theme.border,
+                      borderRadius: '10px',
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: theme.borderSubtle, paddingBottom: '6px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '700', color: '#104060', backgroundColor: '#7FD6FF', padding: '2px 8px', borderRadius: '4px' }}>
+                        <span style={{
+                          fontSize: '11.5px',
+                          fontWeight: '700',
+                          color: temaOscuro ? '#7dd3fc' : '#0369a1',
+                          backgroundColor: temaOscuro ? 'rgba(56, 189, 248, 0.15)' : '#e0f2fe',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          border: temaOscuro ? '1px solid rgba(56, 189, 248, 0.25)' : '1px solid #bae6fd'
+                        }}>
                           {n.medico_nombre}
                         </span>
-                        <span style={{ fontSize: '11px', color: '#64748b' }}>
+                        <span style={{ fontSize: '11px', color: theme.textMuted }}>
                           {n.fecha || 'Fecha no disponible'}
                         </span>
                       </div>
@@ -307,8 +334,9 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: '#94a3b8',
+                          color: temaOscuro ? '#fda4af' : '#e11d48',
                           fontSize: '11px',
+                          fontWeight: '600',
                           cursor: 'pointer',
                           padding: '2px 6px'
                         }}
@@ -317,7 +345,7 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
                         Eliminar
                       </button>
                     </div>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#1e293b', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                    <p style={{ margin: 0, fontSize: '13px', color: theme.textSecondary, whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
                       {n.contenido}
                     </p>
                   </div>
@@ -340,3 +368,4 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
     </div>
   )
 }
+

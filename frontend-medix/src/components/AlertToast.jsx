@@ -1,21 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useTheme } from '../context/ThemeContext'
 
 export default function AlertToast({ alerta, onClose }) {
-  // Estado local para alternar modo claro y oscuro directamente desde la alerta o sincronizado con el sistema
-  const [temaOscuro, setTemaOscuro] = useState(() => {
-    const saved = localStorage.getItem('medix_sidebar_theme')
-    return saved !== null ? saved === 'dark' : false
-  })
-
-  // Sincronizar con cambios en localStorage si el sidebar cambia de tema
-  useEffect(() => {
-    const checkTheme = () => {
-      const current = localStorage.getItem('medix_sidebar_theme') === 'dark'
-      setTemaOscuro(current)
-    }
-    window.addEventListener('storage', checkTheme)
-    return () => window.removeEventListener('storage', checkTheme)
-  }, [])
+  const { temaOscuro, toggleTema } = useTheme()
 
   if (!alerta || !alerta.texto) return null
 
@@ -290,8 +276,8 @@ export default function AlertToast({ alerta, onClose }) {
         <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', alignItems: 'center', gap: '5px' }}>
           {/* Botón de alternar Tema Claro / Oscuro directamente en la alerta */}
           <button
-            onClick={() => setTemaOscuro(!temaOscuro)}
-            title={temaOscuro ? "Cambiar alerta a Modo Claro" : "Cambiar alerta a Modo Oscuro"}
+            onClick={() => toggleTema()}
+            title={temaOscuro ? "Cambiar aplicación a Modo Claro" : "Cambiar aplicación a Modo Oscuro"}
             style={{
               width: '24px',
               height: '24px',

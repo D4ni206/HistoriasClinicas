@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { useTheme } from './context/ThemeContext'
 import { API_BASE } from './api/config'
 import { esPdf, esDocx, esImagen, esTexto } from './utils/fileHelpers'
 import Sidebar from './components/Sidebar'
@@ -18,6 +19,7 @@ import ConfirmDeleteModal from './components/ConfirmDeleteModal'
 function AppContent() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { temaOscuro, theme } = useTheme()
 
   // Estado de usuario autenticado
   const [usuario, setUsuario] = useState(() => {
@@ -576,11 +578,12 @@ function AppContent() {
       width: '100vw',
       height: '100vh',
       overflow: 'hidden',
-      backgroundColor: '#f8fafc',
+      backgroundColor: theme.bgApp,
       fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      color: '#2B4A66',
+      color: theme.textMain,
       display: 'flex',
-      flexDirection: isMobile ? 'column' : 'row'
+      flexDirection: isMobile ? 'column' : 'row',
+      transition: 'background-color 0.2s ease, color 0.2s ease'
     }}>
       {/* Overlay oscuro para cerrar el menú lateral en dispositivos móviles */}
       {isMobile && sidebarMobileAbierto && (
@@ -589,7 +592,7 @@ function AppContent() {
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+            backgroundColor: 'rgba(5, 8, 15, 0.65)',
             backdropFilter: 'blur(3px)',
             WebkitBackdropFilter: 'blur(3px)',
             zIndex: 90,
@@ -602,14 +605,14 @@ function AppContent() {
       {isMobile && (
         <header style={{
           height: '56px',
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #e2e8f0',
+          backgroundColor: theme.bgCard,
+          borderBottom: theme.border,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 16px',
           flexShrink: 0,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          boxShadow: theme.shadowCard,
           zIndex: 40
         }}>
           {/* Botón de apertura de barra lateral (Hamburguesa) */}
@@ -623,9 +626,9 @@ function AppContent() {
               width: '38px',
               height: '38px',
               borderRadius: '8px',
-              border: '1px solid #e2e8f0',
-              backgroundColor: '#f8fafc',
-              color: '#0f172a',
+              border: theme.border,
+              backgroundColor: theme.bgSubtle,
+              color: theme.textMain,
               cursor: 'pointer'
             }}
           >
@@ -652,7 +655,7 @@ function AppContent() {
                 <path d="M12 2v20M2 12h20M7 7l10 10M17 7L7 17"></path>
               </svg>
             </div>
-            <span style={{ fontSize: '15px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.3px' }}>
+            <span style={{ fontSize: '15px', fontWeight: '800', color: theme.textMain, letterSpacing: '-0.3px' }}>
               Medix Pisco
             </span>
           </div>
@@ -663,9 +666,9 @@ function AppContent() {
             fontWeight: '700',
             padding: '4px 8px',
             borderRadius: '6px',
-            backgroundColor: esAdmin ? '#fdf2f8' : '#f0f9ff',
-            color: esAdmin ? '#9d174d' : '#0369a1',
-            border: `1px solid ${esAdmin ? '#fbcfe8' : '#bae6fd'}`
+            backgroundColor: esAdmin ? (temaOscuro ? '#3b0764' : '#fdf2f8') : (temaOscuro ? '#082f49' : '#f0f9ff'),
+            color: esAdmin ? (temaOscuro ? '#d8b4fe' : '#9d174d') : (temaOscuro ? '#7dd3fc' : '#0369a1'),
+            border: `1px solid ${esAdmin ? (temaOscuro ? '#581c87' : '#fbcfe8') : (temaOscuro ? '#0369a1' : '#bae6fd')}`
           }}>
             {usuario?.username || 'admin'}
           </div>
@@ -693,9 +696,11 @@ function AppContent() {
         overflowY: 'auto',
         padding: isMobile ? '16px 14px' : '24px 30px',
         boxSizing: 'border-box',
-        backgroundColor: '#f8fafc',
+        backgroundColor: theme.bgApp,
+        color: theme.textMain,
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        transition: 'background-color 0.2s ease, color 0.2s ease'
       }}>
         {/* Alerta / Notificación Flotante con Diseño Moderno (Modo Claro y Oscuro) */}
         <AlertToast

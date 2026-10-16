@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTheme } from '../context/ThemeContext'
 import DocxViewer from './DocxViewer'
 import TextViewer from './TextViewer'
 import ManiquiAnatomico from './ManiquiAnatomico'
@@ -6,6 +7,7 @@ import { esPdf, esDocx, esImagen, esTexto, obtenerIconoArchivo } from '../utils/
 import { API_BASE } from '../api/config'
 
 export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
+  const { temaOscuro, theme } = useTheme()
   const [imgError, setImgError] = useState(false)
   // 'dividida' (documento + maniquí), 'documento' (solo archivo), 'maniqui' (solo silueta)
   const [modoVista, setModoVista] = useState('dividida')
@@ -45,11 +47,11 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
       maxWidth: esPantallaPequena ? '100vw' : '1600px',
       flexShrink: 0,
       height: '100vh',
-      backgroundColor: '#ffffff',
-      borderLeft: esPantallaPequena ? 'none' : '2.5px solid #7FD6FF',
+      backgroundColor: theme.bgCard,
+      borderLeft: esPantallaPequena ? 'none' : theme.border,
       display: 'flex',
       flexDirection: 'column',
-      boxShadow: '-8px 0 32px rgba(43, 74, 102, 0.22)',
+      boxShadow: theme.shadowCard,
       zIndex: esPantallaPequena ? 120 : 30,
       position: esPantallaPequena ? 'fixed' : 'relative',
       top: 0,
@@ -61,12 +63,12 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
     }}>
       {/* 1. CABECERA DEL PANEL CON SELECTOR DE VISTAS */}
       <div style={{
-        padding: '12px 18px',
-        borderBottom: '2px solid #7FD6FF',
+        padding: '14px 20px',
+        borderBottom: theme.border,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#FFF6FB',
+        backgroundColor: theme.bgSubtle,
         flexWrap: 'wrap',
         gap: '12px'
       }}>
@@ -77,7 +79,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
             <h3 style={{
               margin: 0,
               fontSize: '15px',
-              color: '#2B4A66',
+              color: theme.textMain,
               fontWeight: '800',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -87,82 +89,58 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
               {documentoEnVista.nombre_archivo}
             </h3>
           </div>
-          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>
-            Expediente DNI: <strong style={{ color: '#0a5438', backgroundColor: '#6FE3B4', padding: '1px 7px', borderRadius: '4px', border: '1px solid #4cc799' }}>{documentoEnVista.paciente_dni || pacienteFinal?.dni || 'Sin DNI'}</strong> | {documentoEnVista.fecha_subida || 'Expediente Activo'}
+          <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: theme.textMuted }}>
+            Expediente DNI: <strong style={{
+              color: temaOscuro ? '#7dd3fc' : '#0369a1',
+              backgroundColor: temaOscuro ? '#082f49' : '#f0f9ff',
+              padding: '2px 8px',
+              borderRadius: '6px',
+              border: `1px solid ${temaOscuro ? '#0284c7' : '#bae6fd'}`
+            }}>
+              {documentoEnVista.paciente_dni || pacienteFinal?.dni || 'Sin DNI'}
+            </strong> | {documentoEnVista.fecha_subida || 'Expediente Activo'}
           </p>
         </div>
 
         {/* SELECTOR DE MODO: VISTA DIVIDIDA / DOCUMENTO / MANIQUÍ */}
         <div style={{
           display: 'flex',
-          backgroundColor: '#ffffff',
+          backgroundColor: theme.bgCard,
           borderRadius: '8px',
           padding: '3px',
-          border: '1.5px solid #7FD6FF',
+          border: theme.border,
           gap: '4px'
         }}>
-          <button
-            onClick={() => setModoVista('dividida')}
-            style={{
-              padding: '5px 10px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: modoVista === 'dividida' ? '#6FE3B4' : 'transparent',
-              color: modoVista === 'dividida' ? '#0a5438' : '#64748b',
-              fontWeight: modoVista === 'dividida' ? '700' : '500',
-              fontSize: '11.5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              transition: 'all 0.15s ease'
-            }}
-            title="Ver el documento escaneado y la silueta anatómica simultáneamente en el mismo sector dividido"
-          >
-            <span>Vista Dividida</span>
-          </button>
-
-          <button
-            onClick={() => setModoVista('documento')}
-            style={{
-              padding: '5px 10px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: modoVista === 'documento' ? '#7FD6FF' : 'transparent',
-              color: modoVista === 'documento' ? '#104060' : '#64748b',
-              fontWeight: modoVista === 'documento' ? '700' : '500',
-              fontSize: '11.5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              transition: 'all 0.15s ease'
-            }}
-            title="Ver exclusivamente el documento clínico"
-          >
-            <span>Solo Documento</span>
-          </button>
-
-          <button
-            onClick={() => setModoVista('maniqui')}
-            style={{
-              padding: '5px 10px',
-              borderRadius: '6px',
-              border: 'none',
-              backgroundColor: modoVista === 'maniqui' ? '#2B4A66' : 'transparent',
-              color: modoVista === 'maniqui' ? '#ffffff' : '#64748b',
-              fontWeight: modoVista === 'maniqui' ? '700' : '500',
-              fontSize: '11.5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              transition: 'all 0.15s ease'
-            }}
-            title="Ver exclusivamente la silueta anatómica y el mapa de síntomas"
-          >
-            <span>Solo Maniquí</span>
-          </button>
+          {[
+            { id: 'dividida', label: 'Vista Dividida', desc: 'Ver documento y silueta anatómica simultáneamente' },
+            { id: 'documento', label: 'Solo Documento', desc: 'Ver exclusivamente el documento clínico' },
+            { id: 'maniqui', label: 'Solo Maniquí', desc: 'Ver exclusivamente la silueta anatómica' }
+          ].map(m => {
+            const activo = modoVista === m.id
+            return (
+              <button
+                key={m.id}
+                onClick={() => setModoVista(m.id)}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: activo ? (temaOscuro ? '#1e293b' : '#0f172a') : 'transparent',
+                  color: activo ? (temaOscuro ? '#38bdf8' : '#ffffff') : theme.textMuted,
+                  fontWeight: activo ? '700' : '500',
+                  fontSize: '11.5px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  transition: 'all 0.15s ease'
+                }}
+                title={m.desc}
+              >
+                <span>{m.label}</span>
+              </button>
+            )
+          })}
         </div>
 
         {/* Botones de Descargar y Cerrar */}
@@ -171,14 +149,16 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
             <a
               href={`${API_BASE}/documentos/${documentoEnVista.id}/archivo`}
               style={{
-                padding: '6px 12px',
-                backgroundColor: '#7FD6FF',
-                color: '#104060',
-                border: '1px solid #54bde8',
+                padding: '6px 14px',
+                backgroundColor: theme.bgCard,
+                color: theme.accentCool,
+                border: theme.border,
                 borderRadius: '6px',
                 textDecoration: 'none',
                 fontSize: '12px',
-                fontWeight: '700'
+                fontWeight: '700',
+                display: 'inline-flex',
+                alignItems: 'center'
               }}
               title="Descargar archivo físico"
             >
@@ -188,10 +168,10 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
           <button
             onClick={onCerrar}
             style={{
-              padding: '6px 12px',
-              backgroundColor: '#FFD6E8',
-              color: '#802048',
-              border: '1px solid #f4a7c7',
+              padding: '6px 14px',
+              backgroundColor: temaOscuro ? '#3b121e' : '#fef2f2',
+              color: temaOscuro ? '#fca5a5' : '#dc2626',
+              border: `1px solid ${temaOscuro ? '#881337' : '#fecaca'}`,
               borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '12px',
@@ -213,7 +193,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
         display: 'flex',
         flexDirection: (esModoDividido && esPantallaPequena) ? 'column' : 'row',
         overflow: 'auto',
-        backgroundColor: '#f1f5f9'
+        backgroundColor: theme.bgApp
       }}>
 
         {/* SECTOR IZQUIERDO: DOCUMENTO O RESUMEN CLÍNICO */}
@@ -222,15 +202,15 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
             flex: esModoDividido ? (esPantallaPequena ? 'none' : '1 1 50%') : '1 1 100%',
             height: esModoDividido && esPantallaPequena ? '50vh' : '100%',
             minHeight: esModoDividido && esPantallaPequena ? '360px' : undefined,
-            backgroundColor: documentoEnVista.id ? '#1e293b' : '#f8fafc',
+            backgroundColor: documentoEnVista.id ? (temaOscuro ? '#0b111e' : '#1e293b') : theme.bgApp,
             padding: documentoEnVista.id ? '10px' : '16px',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             overflow: 'auto',
             boxSizing: 'border-box',
-            borderRight: (esModoDividido && !esPantallaPequena) ? '2.5px solid #7FD6FF' : 'none',
-            borderBottom: (esModoDividido && esPantallaPequena) ? '2.5px solid #7FD6FF' : 'none'
+            borderRight: (esModoDividido && !esPantallaPequena) ? theme.border : 'none',
+            borderBottom: (esModoDividido && esPantallaPequena) ? theme.border : 'none'
           }}>
             {documentoEnVista.id ? (
               esPdf(documentoEnVista.nombre_archivo) ? (
@@ -241,7 +221,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
                     width: '100%',
                     height: '100%',
                     border: 'none',
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     backgroundColor: '#ffffff'
                   }}
                 />
@@ -252,8 +232,8 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
               ) : esImagen(documentoEnVista.nombre_archivo) ? (
                 <div style={{ textAlign: 'center', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '16px', boxSizing: 'border-box' }}>
                   {imgError ? (
-                    <div style={{ textAlign: 'center', color: '#64748b', padding: '24px', backgroundColor: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                      <p style={{ fontSize: '15px', color: '#e53e3e', fontWeight: 'bold', margin: '0 0 8px 0' }}>
+                    <div style={{ textAlign: 'center', color: theme.textMuted, padding: '24px', backgroundColor: theme.bgCard, borderRadius: '10px', border: theme.border }}>
+                      <p style={{ fontSize: '15px', color: '#ef4444', fontWeight: 'bold', margin: '0 0 8px 0' }}>
                         No se pudo cargar la vista previa de la imagen.
                       </p>
                       <p style={{ fontSize: '13px', margin: 0 }}>
@@ -270,7 +250,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
                         maxHeight: '100%',
                         objectFit: 'contain',
                         borderRadius: '6px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                        boxShadow: theme.shadowCard
                       }}
                     />
                   )}
@@ -280,19 +260,19 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
                   <TextViewer url={`${API_BASE}/documentos/${documentoEnVista.id}/archivo?view=1`} />
                 </div>
               ) : (
-                <div style={{ textAlign: 'center', color: '#f3f4f6', padding: '30px' }}>
-                  <p style={{ fontSize: '15px', marginBottom: '12px' }}>
+                <div style={{ textAlign: 'center', color: theme.textSecondary, padding: '30px' }}>
+                  <p style={{ fontSize: '15px', marginBottom: '14px' }}>
                     Este tipo de archivo no admite previsualización directa en el navegador.
                   </p>
                   <a
                     href={`${API_BASE}/documentos/${documentoEnVista.id}/archivo`}
                     style={{
                       display: 'inline-block',
-                      padding: '8px 16px',
-                      backgroundColor: '#7FD6FF',
-                      color: '#104060',
-                      border: '1px solid #54bde8',
-                      borderRadius: '6px',
+                      padding: '8px 18px',
+                      backgroundColor: theme.primaryBtnBg,
+                      color: theme.primaryBtnColor,
+                      border: 'none',
+                      borderRadius: '8px',
                       textDecoration: 'none',
                       fontWeight: '700',
                       fontSize: '13px'
@@ -304,21 +284,21 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
               )
             ) : (
               /* Paciente sin archivo PDF cargado todavía: Mostrar Ficha Clínica Digital */
-              <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: '14px', color: '#2B4A66' }}>
+              <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: '14px', color: theme.textMain }}>
                 <div style={{
-                  backgroundColor: '#ffffff',
+                  backgroundColor: theme.bgCard,
                   borderRadius: '12px',
-                  padding: '16px',
-                  border: '1.5px solid #FFD6E8',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                  padding: '18px 20px',
+                  border: theme.border,
+                  boxShadow: theme.shadowCard
                 }}>
-                  <span style={{ fontSize: '11px', fontWeight: '800', color: '#802048', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
                     Expediente Clínico Digital
                   </span>
-                  <h3 style={{ margin: '4px 0 2px 0', fontSize: '18px', fontWeight: '900', color: '#2B4A66' }}>
+                  <h3 style={{ margin: '4px 0 2px 0', fontSize: '18px', fontWeight: '900', color: theme.textMain, letterSpacing: '-0.3px' }}>
                     Historia Clínica - DNI {documentoEnVista.paciente_dni || pacienteFinal?.dni}
                   </h3>
-                  <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+                  <p style={{ margin: 0, fontSize: '12px', color: theme.textMuted }}>
                     Hospital San Juan de Dios de Pisco · Registro Digital Centralizado
                   </p>
                 </div>
@@ -326,37 +306,37 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
                 {/* Notas Médicas Registradas */}
                 <div style={{
                   flex: 1,
-                  backgroundColor: '#ffffff',
+                  backgroundColor: theme.bgCard,
                   borderRadius: '12px',
-                  padding: '16px',
-                  border: '1.5px solid #7FD6FF',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  padding: '18px 20px',
+                  border: theme.border,
+                  boxShadow: theme.shadowCard,
                   overflowY: 'auto'
                 }}>
-                  <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: '800', color: '#104060' }}>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '800', color: theme.textMain }}>
                     Notas Médicas Registradas ({notas.length})
                   </h4>
                   {notas.length === 0 ? (
-                    <div style={{ padding: '16px', textAlign: 'center', color: '#94a3b8', fontSize: '12px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
+                    <div style={{ padding: '20px', textAlign: 'center', color: theme.textMuted, fontSize: '12.5px', backgroundColor: theme.bgSubtle, borderRadius: '8px' }}>
                       No hay notas clínicas registradas todavía para este paciente.
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       {notas.map((n) => (
                         <div key={n.id} style={{
-                          padding: '10px 12px',
-                          backgroundColor: '#FFF6FB',
-                          border: '1px solid #FFD6E8',
+                          padding: '12px 14px',
+                          backgroundColor: theme.bgSubtle,
+                          border: theme.borderSubtle,
                           borderRadius: '8px'
                         }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '700', color: '#802048', marginBottom: '4px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', fontWeight: '700', color: theme.accentCool, marginBottom: '4px' }}>
                             <span>{n.diagnostico || 'Diagnóstico General'}</span>
-                            <span style={{ color: '#64748b' }}>{n.fecha || 'Reciente'}</span>
+                            <span style={{ color: theme.textMuted }}>{n.fecha || 'Reciente'}</span>
                           </div>
-                          <p style={{ margin: 0, fontSize: '12px', color: '#2B4A66', lineHeight: '1.35' }}>
+                          <p style={{ margin: 0, fontSize: '12.5px', color: theme.textMain, lineHeight: '1.4' }}>
                             {n.contenido}
                           </p>
-                          <div style={{ fontSize: '10.5px', color: '#64748b', marginTop: '4px', textAlign: 'right' }}>
+                          <div style={{ fontSize: '11px', color: theme.textMuted, marginTop: '6px', textAlign: 'right' }}>
                             Dr(a). {n.medico_nombre || 'Médico de Turno'}
                           </div>
                         </div>
@@ -365,7 +345,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
                   )}
 
                   {/* Historial de Signos Vitales */}
-                  <h4 style={{ margin: '18px 0 8px 0', fontSize: '14px', fontWeight: '800', color: '#104060' }}>
+                  <h4 style={{ margin: '20px 0 10px 0', fontSize: '14px', fontWeight: '800', color: theme.textMain }}>
                     Último Registro de Triaje
                   </h4>
                   {ultimoSigno ? (
@@ -373,11 +353,12 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
                       display: 'grid',
                       gridTemplateColumns: 'repeat(2, 1fr)',
                       gap: '8px',
-                      backgroundColor: '#f8fafc',
-                      padding: '12px',
+                      backgroundColor: theme.bgSubtle,
+                      padding: '12px 14px',
                       borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      fontSize: '12px'
+                      border: theme.borderSubtle,
+                      fontSize: '12px',
+                      color: theme.textMain
                     }}>
                       <div><strong>PA:</strong> {ultimoSigno.presion_arterial || '—'} mmHg</div>
                       <div><strong>FC:</strong> {ultimoSigno.frecuencia_cardiaca || '—'} lpm</div>
@@ -385,7 +366,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
                       <div><strong>Temp:</strong> {ultimoSigno.temperatura || '—'} °C</div>
                     </div>
                   ) : (
-                    <div style={{ padding: '12px', textAlign: 'center', color: '#94a3b8', fontSize: '12px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
+                    <div style={{ padding: '14px', textAlign: 'center', color: theme.textMuted, fontSize: '12px', backgroundColor: theme.bgSubtle, borderRadius: '8px' }}>
                       Sin tomas de signos vitales recientes.
                     </div>
                   )}
@@ -403,7 +384,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar }) {
             overflowY: 'auto',
             padding: '10px',
             boxSizing: 'border-box',
-            backgroundColor: '#f8fafc'
+            backgroundColor: theme.bgApp
           }}>
             <ManiquiAnatomico
               paciente={pacienteFinal}

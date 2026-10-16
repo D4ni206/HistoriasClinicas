@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTheme } from '../context/ThemeContext'
 
 export default function NuevaHistoriaView({
   dni,
@@ -12,6 +13,7 @@ export default function NuevaHistoriaView({
   handleUpload
 }) {
   const navigate = useNavigate()
+  const { theme, temaOscuro } = useTheme()
   const [isDragging, setIsDragging] = useState(false)
 
   const dniLimpio = (dni || '').trim()
@@ -45,10 +47,10 @@ export default function NuevaHistoriaView({
       {/* 1. ENCABEZADO MINIMALISTA */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: '800', color: theme.textMain, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
             Agregar Nueva Historia Clínica
           </h2>
-          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+          <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted }}>
             Registra un nuevo expediente clínico o anexa documentos a una carpeta existente por DNI.
           </p>
         </div>
@@ -61,24 +63,24 @@ export default function NuevaHistoriaView({
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
-            padding: '6px 12px',
-            backgroundColor: '#ffffff',
-            border: '1px solid #e2e8f0',
+            padding: '7px 14px',
+            backgroundColor: theme.secondaryBtnBg,
+            border: theme.secondaryBtnBorder,
             borderRadius: '8px',
             fontSize: '12px',
             fontWeight: '600',
-            color: '#475569',
+            color: theme.secondaryBtnColor,
             cursor: 'pointer',
             transition: 'all 0.15s ease',
             boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#f8fafc'
-            e.currentTarget.style.color = '#0f172a'
+            e.currentTarget.style.backgroundColor = temaOscuro ? '#334155' : '#f8fafc'
+            e.currentTarget.style.color = theme.textMain
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#ffffff'
-            e.currentTarget.style.color = '#475569'
+            e.currentTarget.style.backgroundColor = theme.secondaryBtnBg
+            e.currentTarget.style.color = theme.secondaryBtnColor
           }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -89,19 +91,19 @@ export default function NuevaHistoriaView({
         </button>
       </div>
 
-      {/* 2. TARJETA PRINCIPAL DEL FORMULARIO (MINIMALISTA, LIMPIA Y SIN FONDOS ROSAS) */}
+      {/* 2. TARJETA PRINCIPAL DEL FORMULARIO (MINIMALISTA Y FORMAL CON TONOS FRÍOS) */}
       <div style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
+        backgroundColor: theme.bgCard,
+        border: theme.border,
         borderRadius: '16px',
         padding: '28px 30px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 4px 12px rgba(0,0,0,0.03)'
+        boxShadow: theme.shadowCard
       }}>
         <form onSubmit={handleUpload}>
           
           {/* Campo DNI */}
           <div style={{ marginBottom: '22px' }}>
-            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '700', color: '#1e293b', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '700', color: theme.textMain, marginBottom: '6px' }}>
               DNI del Paciente <span style={{ color: '#ef4444' }}>*</span>
             </label>
             
@@ -118,24 +120,24 @@ export default function NuevaHistoriaView({
                   boxSizing: 'border-box',
                   padding: '11px 14px 11px 38px',
                   borderRadius: '9px',
-                  border: '1px solid #cbd5e1',
+                  border: `1px solid ${theme.borderInput}`,
                   fontSize: '14.5px',
                   fontWeight: '600',
-                  color: '#0f172a',
-                  backgroundColor: '#ffffff',
+                  color: theme.textMain,
+                  backgroundColor: theme.bgInput,
                   outline: 'none',
                   transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = '#3b82f6'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                  e.target.style.borderColor = '#38bdf8'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(56, 189, 248, 0.15)'
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#cbd5e1'
+                  e.target.style.borderColor = theme.borderInput
                   e.target.style.boxShadow = 'none'
                 }}
               />
-              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: '#94a3b8' }}>
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: theme.textMuted }}>
                 🪪
               </span>
             </div>
@@ -147,9 +149,9 @@ export default function NuevaHistoriaView({
                   <div style={{
                     padding: '10px 14px',
                     borderRadius: '8px',
-                    backgroundColor: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    color: '#166534',
+                    backgroundColor: temaOscuro ? 'rgba(16, 185, 129, 0.12)' : '#f0fdf4',
+                    border: temaOscuro ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid #bbf7d0',
+                    color: temaOscuro ? '#6ee7b7' : '#166534',
                     fontSize: '12.5px',
                     lineHeight: '1.45',
                     display: 'flex',
@@ -167,9 +169,9 @@ export default function NuevaHistoriaView({
                   <div style={{
                     padding: '10px 14px',
                     borderRadius: '8px',
-                    backgroundColor: '#f0f9ff',
-                    border: '1px solid #bae6fd',
-                    color: '#0369a1',
+                    backgroundColor: temaOscuro ? 'rgba(56, 189, 248, 0.12)' : '#f0f9ff',
+                    border: temaOscuro ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid #bae6fd',
+                    color: temaOscuro ? '#7dd3fc' : '#0369a1',
                     fontSize: '12.5px',
                     lineHeight: '1.45',
                     display: 'flex',
@@ -193,21 +195,21 @@ export default function NuevaHistoriaView({
           {/* Campo Selector de Archivo (Dropzone Minimalista) */}
           <div style={{ marginBottom: '26px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: '700', color: '#1e293b' }}>
+              <label style={{ fontSize: '12.5px', fontWeight: '700', color: theme.textMain }}>
                 Documento o Archivo Adjunto <span style={{ color: '#ef4444' }}>*</span>
               </label>
-              <span style={{ fontSize: '11.5px', color: '#64748b' }}>
+              <span style={{ fontSize: '11.5px', color: theme.textMuted }}>
                 Formatos: PDF, Word, JPG, PNG, TXT
               </span>
             </div>
 
             <div
               style={{
-                border: isDragging ? '2px dashed #3b82f6' : (file ? '1.5px solid #cbd5e1' : '1.5px dashed #cbd5e1'),
+                border: isDragging ? '2px dashed #38bdf8' : (file ? `1.5px solid ${theme.borderInput}` : `1.5px dashed ${theme.borderInput}`),
                 borderRadius: '12px',
                 padding: '28px 20px',
                 textAlign: 'center',
-                backgroundColor: isDragging ? '#eff6ff' : (file ? '#f8fafc' : '#f8fafc'),
+                backgroundColor: isDragging ? (temaOscuro ? 'rgba(56, 189, 248, 0.1)' : '#eff6ff') : (temaOscuro ? theme.bgSubtle : '#f8fafc'),
                 cursor: 'pointer',
                 transition: 'all 0.15s ease'
               }}
@@ -231,8 +233,8 @@ export default function NuevaHistoriaView({
                     width: '42px',
                     height: '42px',
                     borderRadius: '10px',
-                    backgroundColor: '#e2e8f0',
-                    color: '#0f172a',
+                    backgroundColor: temaOscuro ? '#1e293b' : '#e2e8f0',
+                    color: theme.textMain,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -243,20 +245,20 @@ export default function NuevaHistoriaView({
                     {obtenerExtBadge(file.name)}
                   </div>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '13.5px', fontWeight: '700', color: '#0f172a', wordBreak: 'break-all' }}>
+                    <div style={{ fontSize: '13.5px', fontWeight: '700', color: theme.textMain, wordBreak: 'break-all' }}>
                       {file.name}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
-                      {(file.size / 1024).toFixed(1)} KB · <span style={{ color: '#0284c7', fontWeight: '600' }}>Clic para cambiar archivo</span>
+                    <div style={{ fontSize: '12px', color: theme.textMuted, marginTop: '2px' }}>
+                      {(file.size / 1024).toFixed(1)} KB · <span style={{ color: '#38bdf8', fontWeight: '600' }}>Clic para cambiar archivo</span>
                     </div>
                   </div>
                   <div style={{
                     marginLeft: 'auto',
                     padding: '4px 10px',
                     borderRadius: '20px',
-                    backgroundColor: '#f0fdf4',
-                    border: '1px solid #bbf7d0',
-                    color: '#166534',
+                    backgroundColor: temaOscuro ? 'rgba(16, 185, 129, 0.15)' : '#f0fdf4',
+                    border: temaOscuro ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid #bbf7d0',
+                    color: temaOscuro ? '#34d399' : '#166534',
                     fontSize: '11.5px',
                     fontWeight: '700'
                   }}>
@@ -269,13 +271,13 @@ export default function NuevaHistoriaView({
                     width: '44px',
                     height: '44px',
                     borderRadius: '50%',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #e2e8f0',
+                    backgroundColor: theme.bgCard,
+                    border: theme.border,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     margin: '0 auto 10px auto',
-                    color: '#475569',
+                    color: theme.textMuted,
                     boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
                   }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -284,10 +286,10 @@ export default function NuevaHistoriaView({
                       <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
                   </div>
-                  <div style={{ fontSize: '13.5px', fontWeight: '700', color: '#0f172a', marginBottom: '3px' }}>
+                  <div style={{ fontSize: '13.5px', fontWeight: '700', color: theme.textMain, marginBottom: '3px' }}>
                     Haz clic aquí o arrastra un archivo
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748b' }}>
+                  <div style={{ fontSize: '12px', color: theme.textMuted }}>
                     Formatos admitidos: PDF, Word (.docx), Imágenes (.jpg, .png) y Texto (.txt)
                   </div>
                 </div>
@@ -303,11 +305,11 @@ export default function NuevaHistoriaView({
               style={{
                 flex: 1,
                 padding: '11px 20px',
-                backgroundColor: subiendo ? '#94a3b8' : '#0f172a',
-                color: '#ffffff',
+                backgroundColor: subiendo ? (temaOscuro ? '#334155' : '#94a3b8') : theme.primaryBtnBg,
+                color: theme.primaryBtnColor,
                 border: 'none',
                 borderRadius: '8px',
-                fontWeight: '600',
+                fontWeight: '700',
                 fontSize: '13.5px',
                 cursor: subiendo ? 'not-allowed' : 'pointer',
                 transition: 'background-color 0.15s ease, transform 0.1s ease',
@@ -318,10 +320,10 @@ export default function NuevaHistoriaView({
                 gap: '8px'
               }}
               onMouseEnter={(e) => {
-                if (!subiendo) e.currentTarget.style.backgroundColor = '#1e293b'
+                if (!subiendo) e.currentTarget.style.backgroundColor = theme.primaryBtnHover
               }}
               onMouseLeave={(e) => {
-                if (!subiendo) e.currentTarget.style.backgroundColor = '#0f172a'
+                if (!subiendo) e.currentTarget.style.backgroundColor = theme.primaryBtnBg
               }}
             >
               {subiendo ? (
@@ -343,9 +345,9 @@ export default function NuevaHistoriaView({
               onClick={() => navigate('/dashboard')}
               style={{
                 padding: '11px 18px',
-                backgroundColor: '#ffffff',
-                color: '#475569',
-                border: '1px solid #e2e8f0',
+                backgroundColor: theme.secondaryBtnBg,
+                color: theme.secondaryBtnColor,
+                border: theme.secondaryBtnBorder,
                 borderRadius: '8px',
                 fontWeight: '600',
                 fontSize: '13px',
@@ -353,12 +355,12 @@ export default function NuevaHistoriaView({
                 transition: 'all 0.15s ease'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f8fafc'
-                e.currentTarget.style.color = '#0f172a'
+                e.currentTarget.style.backgroundColor = temaOscuro ? '#334155' : '#f8fafc'
+                e.currentTarget.style.color = theme.textMain
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#ffffff'
-                e.currentTarget.style.color = '#475569'
+                e.currentTarget.style.backgroundColor = theme.secondaryBtnBg
+                e.currentTarget.style.color = theme.secondaryBtnColor
               }}
             >
               Cancelar
@@ -369,14 +371,14 @@ export default function NuevaHistoriaView({
 
       {/* 3. TARJETA DE INFORMACIÓN Y PROTOCOLO CLÍNICO (MINIMALISTA) */}
       <div style={{
-        backgroundColor: '#f8fafc',
-        border: '1px solid #e2e8f0',
+        backgroundColor: theme.bgSubtle,
+        border: theme.border,
         borderRadius: '12px',
         padding: '16px 20px',
         display: 'flex',
         alignItems: 'flex-start',
         gap: '12px',
-        color: '#475569',
+        color: theme.textMuted,
         fontSize: '12.5px',
         lineHeight: '1.5'
       }}>
@@ -384,12 +386,12 @@ export default function NuevaHistoriaView({
           width: '28px',
           height: '28px',
           borderRadius: '8px',
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
+          backgroundColor: theme.bgCard,
+          border: theme.border,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#64748b',
+          color: theme.textMuted,
           flexShrink: 0,
           marginTop: '2px'
         }}>
@@ -400,7 +402,7 @@ export default function NuevaHistoriaView({
           </svg>
         </div>
         <div>
-          <strong style={{ display: 'block', fontSize: '13px', color: '#1e293b', marginBottom: '2px' }}>
+          <strong style={{ display: 'block', fontSize: '13px', color: theme.textMain, marginBottom: '2px' }}>
             Gestión Automatizada de Expedientes:
           </strong>
           El sistema agrupa automáticamente los archivos bajo el mismo DNI. Si el paciente ya existe en el sistema, el nuevo documento se anexa a su carpeta clínica sin duplicar expedientes.

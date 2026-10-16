@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import { useTheme } from '../context/ThemeContext'
 import { API_BASE } from '../api/config'
 
 export default function SignosVitalesView({ pacientes, usuario, notificar, cargarDatos }) {
+  const { temaOscuro, theme } = useTheme()
   const [pacienteSeleccionado, setPacienteSeleccionado] = useState(null)
   const [busquedaDni, setBusquedaDni] = useState('')
   const [historialSignos, setHistorialSignos] = useState([])
@@ -130,15 +132,15 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
     <div style={{ maxWidth: '1100px', width: '100%', margin: '0 auto' }}>
       {/* Cabecera */}
       <div style={{ marginBottom: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#2B4A66', margin: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h2 style={{ fontSize: '22px', fontWeight: '800', color: theme.textMain, margin: 0, letterSpacing: '-0.3px' }}>
             Triaje y Signos Vitales
           </h2>
           <span style={{
-            backgroundColor: '#6FE3B4',
-            color: '#0a5438',
-            border: '1px solid #4cc799',
-            padding: '2px 8px',
+            backgroundColor: temaOscuro ? '#082f49' : '#f0f9ff',
+            color: temaOscuro ? '#7dd3fc' : '#0369a1',
+            border: `1px solid ${temaOscuro ? '#0284c7' : '#bae6fd'}`,
+            padding: '3px 10px',
             borderRadius: '12px',
             fontSize: '11px',
             fontWeight: '700'
@@ -146,7 +148,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
             Rol Enfermería
           </span>
         </div>
-        <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
+        <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: theme.textMuted }}>
           Toma y registro exclusivo de signos vitales (presión arterial, peso, talla, temperatura) en pacientes registrados.
         </p>
       </div>
@@ -154,14 +156,14 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '22px', alignItems: 'start' }}>
         {/* Panel Izquierdo: Lista de Pacientes Registrados */}
         <div style={{
-          backgroundColor: '#ffffff',
+          backgroundColor: theme.bgCard,
           borderRadius: '12px',
-          border: '1.5px solid #e2e8f0',
+          border: theme.border,
           padding: '16px',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+          boxShadow: theme.shadowCard
         }}>
           <div style={{ marginBottom: '12px' }}>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#475569', textTransform: 'uppercase', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: theme.textSecondary, textTransform: 'uppercase', marginBottom: '6px' }}>
               Pacientes Registrados ({pacientes.length})
             </label>
             <input
@@ -172,10 +174,12 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
-                padding: '8px 10px',
-                borderRadius: '6px',
-                border: '1.5px solid #cbd5e1',
-                fontSize: '12px',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                border: `1px solid ${theme.borderInput}`,
+                fontSize: '12.5px',
+                backgroundColor: theme.bgInput,
+                color: theme.textMain,
                 outline: 'none'
               }}
             />
@@ -183,7 +187,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
 
           <div style={{ maxHeight: 'calc(100vh - 270px)', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {pacientesFiltrados.length === 0 ? (
-              <p style={{ fontSize: '12px', color: '#94a3b8', textAlign: 'center', padding: '16px' }}>
+              <p style={{ fontSize: '12px', color: theme.textMuted, textAlign: 'center', padding: '16px' }}>
                 No se encontraron pacientes.
               </p>
             ) : (
@@ -199,9 +203,9 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       justifyContent: 'space-between',
                       padding: '10px 12px',
                       borderRadius: '8px',
-                      border: esActivo ? '1.5px solid #4cc799' : '1px solid #f1f5f9',
-                      backgroundColor: esActivo ? '#6FE3B4' : '#ffffff',
-                      color: esActivo ? '#0a5438' : '#1e293b',
+                      border: esActivo ? `1.5px solid ${theme.accentCool}` : theme.borderSubtle,
+                      backgroundColor: esActivo ? (temaOscuro ? '#1e293b' : '#0f172a') : theme.bgSubtle,
+                      color: esActivo ? (temaOscuro ? '#38bdf8' : '#ffffff') : theme.textMain,
                       cursor: 'pointer',
                       textAlign: 'left',
                       transition: 'all 0.15s ease'
@@ -211,17 +215,18 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       <div style={{ fontWeight: '700', fontSize: '13px' }}>
                         DNI {p.dni}
                       </div>
-                      <div style={{ fontSize: '10px', color: esActivo ? '#0a5438' : '#64748b' }}>
+                      <div style={{ fontSize: '10.5px', color: esActivo ? (temaOscuro ? '#94a3b8' : '#cbd5e1') : theme.textMuted }}>
                         Expediente #{p.id}
                       </div>
                     </div>
                     <span style={{
-                      fontSize: '10px',
+                      fontSize: '10.5px',
                       fontWeight: '700',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      backgroundColor: esActivo ? '#ffffff' : '#f1f5f9',
-                      border: '1px solid #cbd5e1'
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: esActivo ? (temaOscuro ? '#0f172a' : '#1e293b') : theme.bgCard,
+                      border: theme.border,
+                      color: esActivo ? '#ffffff' : theme.textSecondary
                     }}>
                       Seleccionar
                     </span>
@@ -237,22 +242,30 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Formulario de Entrada */}
             <div style={{
-              backgroundColor: '#ffffff',
-              border: '2px solid #6FE3B4',
+              backgroundColor: theme.bgCard,
+              border: theme.border,
               borderRadius: '12px',
               padding: '22px',
-              boxShadow: '0 4px 14px rgba(111, 227, 180, 0.35)'
+              boxShadow: theme.shadowCard
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1.5px solid #6FE3B4', paddingBottom: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: theme.border, paddingBottom: '12px' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#0a5438' }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: theme.textMain }}>
                     Registrar Nuevos Signos Vitales
                   </h3>
-                  <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#475569' }}>
-                    Paciente: <strong>DNI {pacienteSeleccionado.dni}</strong> · Expediente #{pacienteSeleccionado.id}
+                  <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: theme.textMuted }}>
+                    Paciente: <strong style={{ color: theme.textMain }}>DNI {pacienteSeleccionado.dni}</strong> · Expediente #{pacienteSeleccionado.id}
                   </p>
                 </div>
-                <span style={{ fontSize: '11px', color: '#0a5438', fontWeight: '700', backgroundColor: '#6FE3B4', padding: '3px 8px', borderRadius: '4px' }}>
+                <span style={{
+                  fontSize: '11px',
+                  color: temaOscuro ? '#7dd3fc' : '#0369a1',
+                  fontWeight: '700',
+                  backgroundColor: temaOscuro ? '#082f49' : '#f0f9ff',
+                  border: `1px solid ${temaOscuro ? '#0284c7' : '#bae6fd'}`,
+                  padding: '3px 9px',
+                  borderRadius: '6px'
+                }}>
                   Responsable: {usuario?.username || 'Enfermera'}
                 </span>
               </div>
@@ -261,7 +274,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '16px' }}>
                   {/* Presión Arterial */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: theme.textSecondary, marginBottom: '4px' }}>
                       PRESIÓN ARTERIAL
                     </label>
                     <input
@@ -272,10 +285,12 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       style={{
                         width: '100%',
                         boxSizing: 'border-box',
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        border: '1.5px solid #d1d5db',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: `1px solid ${theme.borderInput}`,
                         fontSize: '13px',
+                        backgroundColor: theme.bgInput,
+                        color: theme.textMain,
                         outline: 'none'
                       }}
                     />
@@ -283,7 +298,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
 
                   {/* Peso */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: theme.textSecondary, marginBottom: '4px' }}>
                       PESO
                     </label>
                     <input
@@ -294,10 +309,12 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       style={{
                         width: '100%',
                         boxSizing: 'border-box',
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        border: '1.5px solid #d1d5db',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: `1px solid ${theme.borderInput}`,
                         fontSize: '13px',
+                        backgroundColor: theme.bgInput,
+                        color: theme.textMain,
                         outline: 'none'
                       }}
                     />
@@ -305,7 +322,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
 
                   {/* Talla */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: theme.textSecondary, marginBottom: '4px' }}>
                       TALLA
                     </label>
                     <input
@@ -316,10 +333,12 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       style={{
                         width: '100%',
                         boxSizing: 'border-box',
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        border: '1.5px solid #d1d5db',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: `1px solid ${theme.borderInput}`,
                         fontSize: '13px',
+                        backgroundColor: theme.bgInput,
+                        color: theme.textMain,
                         outline: 'none'
                       }}
                     />
@@ -327,7 +346,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
 
                   {/* Temperatura */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: theme.textSecondary, marginBottom: '4px' }}>
                       TEMPERATURA
                     </label>
                     <input
@@ -338,10 +357,12 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       style={{
                         width: '100%',
                         boxSizing: 'border-box',
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        border: '1.5px solid #d1d5db',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: `1px solid ${theme.borderInput}`,
                         fontSize: '13px',
+                        backgroundColor: theme.bgInput,
+                        color: theme.textMain,
                         outline: 'none'
                       }}
                     />
@@ -349,7 +370,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
 
                   {/* Frecuencia Cardíaca */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: theme.textSecondary, marginBottom: '4px' }}>
                       FRECUENCIA CARDÍACA
                     </label>
                     <input
@@ -360,10 +381,12 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       style={{
                         width: '100%',
                         boxSizing: 'border-box',
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        border: '1.5px solid #d1d5db',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: `1px solid ${theme.borderInput}`,
                         fontSize: '13px',
+                        backgroundColor: theme.bgInput,
+                        color: theme.textMain,
                         outline: 'none'
                       }}
                     />
@@ -371,7 +394,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
 
                   {/* Saturación O2 */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: theme.textSecondary, marginBottom: '4px' }}>
                       SATURACIÓN OXÍGENO
                     </label>
                     <input
@@ -382,10 +405,12 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       style={{
                         width: '100%',
                         boxSizing: 'border-box',
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        border: '1.5px solid #d1d5db',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: `1px solid ${theme.borderInput}`,
                         fontSize: '13px',
+                        backgroundColor: theme.bgInput,
+                        color: theme.textMain,
                         outline: 'none'
                       }}
                     />
@@ -394,7 +419,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
 
                 {/* Observaciones */}
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: theme.textSecondary, marginBottom: '4px' }}>
                     OBSERVACIONES ADICIONALES DE ENFERMERÍA
                   </label>
                   <textarea
@@ -405,10 +430,12 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                     style={{
                       width: '100%',
                       boxSizing: 'border-box',
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      border: '1.5px solid #d1d5db',
+                      padding: '9px 12px',
+                      borderRadius: '8px',
+                      border: `1px solid ${theme.borderInput}`,
                       fontSize: '13px',
+                      backgroundColor: theme.bgInput,
+                      color: theme.textMain,
                       outline: 'none',
                       resize: 'none'
                     }}
@@ -421,14 +448,15 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                     disabled={guardando}
                     style={{
                       padding: '10px 22px',
-                      backgroundColor: guardando ? '#bbf7d0' : '#6FE3B4',
-                      color: '#0a5438',
-                      border: '1.5px solid #4cc799',
+                      backgroundColor: theme.primaryBtnBg,
+                      color: theme.primaryBtnColor,
+                      border: 'none',
                       borderRadius: '8px',
                       fontWeight: '700',
                       fontSize: '13px',
                       cursor: guardando ? 'not-allowed' : 'pointer',
-                      boxShadow: '0 2px 5px rgba(111, 227, 180, 0.4)'
+                      boxShadow: theme.shadowCard,
+                      transition: 'all 0.15s ease'
                     }}
                   >
                     {guardando ? 'Guardando...' : 'Guardar Signos Vitales'}
@@ -439,52 +467,52 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
 
             {/* Historial de Signos Vitales del Paciente */}
             <div style={{
-              backgroundColor: '#ffffff',
-              border: '1.5px solid #7FD6FF',
+              backgroundColor: theme.bgCard,
+              border: theme.border,
               borderRadius: '12px',
               padding: '20px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+              boxShadow: theme.shadowCard
             }}>
-              <h4 style={{ margin: '0 0 14px 0', fontSize: '14px', fontWeight: '800', color: '#2B4A66' }}>
+              <h4 style={{ margin: '0 0 14px 0', fontSize: '14px', fontWeight: '800', color: theme.textMain }}>
                 Historial de Tomas de Signos Vitales ({historialSignos.length})
               </h4>
 
               {cargandoHistorial ? (
-                <p style={{ textAlign: 'center', color: '#64748b', fontSize: '13px', padding: '16px' }}>
+                <p style={{ textAlign: 'center', color: theme.textMuted, fontSize: '13px', padding: '16px' }}>
                   Cargando signos vitales...
                 </p>
               ) : historialSignos.length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
-                  <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+                <div style={{ padding: '20px', textAlign: 'center', backgroundColor: theme.bgSubtle, borderRadius: '8px', border: `1px dashed ${temaOscuro ? '#1e293b' : '#cbd5e1'}` }}>
+                  <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted }}>
                     No hay registros de signos vitales para este paciente todavía.
                   </p>
                 </div>
               ) : (
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px' }}>
                     <thead>
-                      <tr style={{ backgroundColor: '#FFF6FB', borderBottom: '2px solid #7FD6FF', color: '#2B4A66' }}>
-                        <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>Fecha y Hora</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>Presión</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>Peso</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>Talla</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>Temp.</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>FC</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>Sat O2</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '700' }}>Responsable</th>
+                      <tr style={{ backgroundColor: theme.tableHeaderBg, borderBottom: theme.border, color: theme.textSecondary }}>
+                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '700' }}>Fecha y Hora</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '700' }}>Presión</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '700' }}>Peso</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '700' }}>Talla</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '700' }}>Temp.</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '700' }}>FC</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '700' }}>Sat O2</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: '700' }}>Responsable</th>
                       </tr>
                     </thead>
                     <tbody>
                       {historialSignos.map((s) => (
-                        <tr key={s.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                          <td style={{ padding: '8px 10px', color: '#64748b', whiteSpace: 'nowrap' }}>{s.fecha}</td>
-                          <td style={{ padding: '8px 10px', fontWeight: '700', color: '#2B4A66' }}>{s.presion_arterial || '—'}</td>
-                          <td style={{ padding: '8px 10px', fontWeight: '600' }}>{s.peso || '—'}</td>
-                          <td style={{ padding: '8px 10px' }}>{s.talla || '—'}</td>
-                          <td style={{ padding: '8px 10px' }}>{s.temperatura || '—'}</td>
-                          <td style={{ padding: '8px 10px' }}>{s.frecuencia_cardiaca || '—'}</td>
-                          <td style={{ padding: '8px 10px' }}>{s.saturacion_oxigeno || '—'}</td>
-                          <td style={{ padding: '8px 10px', color: '#0a5438', fontWeight: '600' }}>{s.enfermera_nombre}</td>
+                        <tr key={s.id} style={{ borderBottom: theme.borderSubtle }}>
+                          <td style={{ padding: '10px 12px', color: theme.textMuted, whiteSpace: 'nowrap' }}>{s.fecha}</td>
+                          <td style={{ padding: '10px 12px', fontWeight: '700', color: theme.textMain }}>{s.presion_arterial || '—'}</td>
+                          <td style={{ padding: '10px 12px', fontWeight: '600', color: theme.textMain }}>{s.peso || '—'}</td>
+                          <td style={{ padding: '10px 12px', color: theme.textMain }}>{s.talla || '—'}</td>
+                          <td style={{ padding: '10px 12px', color: theme.textMain }}>{s.temperatura || '—'}</td>
+                          <td style={{ padding: '10px 12px', color: theme.textMain }}>{s.frecuencia_cardiaca || '—'}</td>
+                          <td style={{ padding: '10px 12px', color: theme.textMain }}>{s.saturacion_oxigeno || '—'}</td>
+                          <td style={{ padding: '10px 12px', color: theme.accentCool, fontWeight: '600' }}>{s.enfermera_nombre}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -495,12 +523,12 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
           </div>
         ) : (
           <div style={{
-            backgroundColor: '#ffffff',
-            border: '1.5px solid #e2e8f0',
+            backgroundColor: theme.bgCard,
+            border: theme.border,
             borderRadius: '12px',
             padding: '40px 20px',
             textAlign: 'center',
-            color: '#64748b'
+            color: theme.textMuted
           }}>
             <p style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>
               Seleccione un paciente de la lista para registrar o consultar sus signos vitales.
