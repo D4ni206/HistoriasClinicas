@@ -1,42 +1,57 @@
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, g
 from flask_cors import CORS
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
 from extensions import db
 from models import Paciente, Documento_Escaneado as Documento, Usuario, NotaMedica, SignosVitales, SolicitudEliminacion
+from migrations import ejecutar_migraciones
 import boto3
+from botocore.config import Config
 import os
 import uuid
 import mimetypes
 import random
 import re
-from datetime import datetime, timedelta
+import jwt
+from datetime import datetime, timedelta, timezone
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app) # Permite que React (puerto 5173) se comunique con Flask (puerto 5000)
+CORS(app)  # Permite que React se comunique con Flask
 
 # Configuración de Base de Datos (SQL Server)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    'DATABASE_URL',
-    'mssql+pyodbc://@MONIT-02/General?driver=SQL+Server+Native+Client+11.0&trusted_connection=yes'
+DEFAULT_DB_URI = (
+    'mssql+pyodbc://@localhost\\SQLEXPRESS/General?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes'
 )
-
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', DEFAULT_DB_URI)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
-with app.app_context():
-    try:
-        db.create_all()
-    except Exception as e:
-        print(f"Aviso al inicializar tablas: {e}")
+# Directorio de respaldo local si MinIO no está corriendo
+LOCAL_STORAGE_DIR = os.path.join(os.path.dirname(__file__), 'uploads')
+os.makedirs(LOCAL_STORAGE_DIR, exist_ok=True)
 
-# Configuración de MinIO
+# Configuración de Seguridad y JWT
+JWT_SECRET = os.getenv('JWT_SECRET', 'medix-jwt-secret-hospital-san-juan-de-dios-pisco-2026')
+JWT_ALGORITHM = 'HS256'
+JWT_EXP_HOURS = 24
+
+DEFAULT_ADMIN_USER = os.getenv('DEFAULT_ADMIN_USER', 'admin')
+DEFAULT_ADMIN_PASS = os.getenv('DEFAULT_ADMIN_PASS', 'admin123')
+
+# Configuración de MinIO S3 con timeout rápido para evitar demoras si no está activo
+s3_config = Config(
+    connect_timeout=1,
+    read_timeout=2,
+    retries={'max_attempts': 1}
+)
 s3_client = boto3.client('s3',
     endpoint_url=os.getenv('MINIO_ENDPOINT', 'http://localhost:9000'),
     aws_access_key_id=os.getenv('MINIO_ACCESS_KEY', 'minioadmin'),
-    aws_secret_access_key=os.getenv('MINIO_SECRET_KEY', 'minioadmin')
+    aws_secret_access_key=os.getenv('MINIO_SECRET_KEY', 'minioadmin'),
+    config=s3_config
 )
 BUCKET_NAME = 'historias-clinicas'
 
@@ -48,23 +63,98 @@ def asegurar_bucket():
     except Exception as e:
         print(f"Aviso MinIO: {e}")
 
-# Crear tablas si no existen e inicializar usuario admin
+# ==========================================
+# INICIALIZACIÓN Y AUTO-MIGRACIÓN
+# ==========================================
 with app.app_context():
-    db.create_all()
+    try:
+        db.create_all()
+        ejecutar_migraciones(db)
+    except Exception as e:
+        print(f"Aviso al inicializar tablas / migraciones: {e}")
+
     asegurar_bucket()
+
     try:
         if Usuario.query.count() == 0:
             admin_inicial = Usuario(
-                username='admin',
-                password_hash=generate_password_hash('admin123'),
-                rol='Administrador'
+                username=DEFAULT_ADMIN_USER,
+                password_hash=generate_password_hash(DEFAULT_ADMIN_PASS),
+                rol='Administrador',
+                nombres_completos='Administrador Principal del Sistema',
+                correo='admin@medix.pisco.gob.pe'
             )
             db.session.add(admin_inicial)
             db.session.commit()
-            print("Usuario admin inicial creado exitosamente (admin / admin123)")
+            print(f"Usuario admin inicial creado exitosamente ({DEFAULT_ADMIN_USER} / {DEFAULT_ADMIN_PASS})")
     except Exception as e:
         db.session.rollback()
         print(f"Aviso al inicializar usuario admin: {e}")
+
+# ==========================================
+# HELPERS DE AUTENTICACIÓN Y ROLES
+# ==========================================
+def generar_token(usuario):
+    payload = {
+        'sub': str(usuario.id),
+        'username': usuario.username,
+        'rol': usuario.rol,
+        'exp': datetime.now(timezone.utc) + timedelta(hours=JWT_EXP_HOURS),
+        'iat': datetime.now(timezone.utc)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def token_required(f):
+    @wraps(f)
+    def decorador(*args, **kwargs):
+        token = None
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ', 1)[1].strip()
+        elif request.args.get('token'):
+            token = request.args.get('token').strip()
+
+        if not token:
+            return jsonify({'mensaje': 'Autenticación requerida. Token no proporcionado.'}), 401
+
+        try:
+            data = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            usuario_id = int(data['sub'])
+            usuario = Usuario.query.get(usuario_id)
+            if not usuario:
+                return jsonify({'mensaje': 'Usuario no válido o ya no existe.'}), 401
+            g.current_user = usuario
+        except jwt.ExpiredSignatureError:
+            return jsonify({'mensaje': 'La sesión ha expirado. Por favor inicie sesión nuevamente.'}), 401
+        except Exception:
+            return jsonify({'mensaje': 'Token de autenticación inválido o alterado.'}), 401
+
+        return f(*args, **kwargs)
+    return decorador
+
+def roles_required(*roles_permitidos):
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            if not hasattr(g, 'current_user') or not g.current_user:
+                return jsonify({'mensaje': 'Acceso no autorizado'}), 401
+
+            rol_actual = (g.current_user.rol or '').lower()
+            permitidos = [r.lower() for r in roles_permitidos]
+
+            # Administrador tiene acceso total a cualquier operación
+            if 'admin' in rol_actual:
+                return f(*args, **kwargs)
+
+            coincide = any(p in rol_actual for p in permitidos)
+            if not coincide:
+                return jsonify({
+                    'mensaje': f'Permiso denegado. Se requiere uno de los siguientes roles: {", ".join(roles_permitidos)}'
+                }), 403
+
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
 
 # ==========================================
 # RUTAS DE DIAGNÓSTICO
@@ -73,22 +163,9 @@ with app.app_context():
 def inicio():
     return jsonify({
         "estado": "activo",
-        "mensaje": "Servidor Backend Medix (CRUD) funcionando correctamente",
-        "endpoints": {
-            "Pacientes": {
-                "GET /api/pacientes": "Listar todos los pacientes",
-                "POST /api/pacientes": "Crear nuevo paciente (json: {dni})",
-                "GET /api/pacientes/<id>": "Detalle de paciente y sus documentos",
-                "PUT /api/pacientes/<id>": "Actualizar paciente (json: {dni})",
-                "DELETE /api/pacientes/<id>": "Eliminar paciente y sus archivos"
-            },
-            "Documentos": {
-                "GET /api/documentos": "Listar todos los documentos escaneados",
-                "POST /api/documentos": "Subir archivo asociado a un DNI (form-data)",
-                "GET /api/documentos/<id>/archivo": "Descargar o visualizar archivo (?view=1)",
-                "DELETE /api/documentos/<id>": "Eliminar documento de BD y MinIO"
-            }
-        }
+        "mensaje": "Servidor Backend Medix funcionando correctamente",
+        "seguridad": "JWT + RBAC activo",
+        "hospital": "Hospital San Juan de Dios de Pisco"
     })
 
 # ==========================================
@@ -106,11 +183,13 @@ def login():
     usuario = Usuario.query.filter_by(username=username).first()
 
     # Si la tabla quedó vacía por algún motivo, crear el admin al vuelo
-    if not usuario and Usuario.query.count() == 0 and username == 'admin' and password == 'admin123':
+    if not usuario and Usuario.query.count() == 0 and username == DEFAULT_ADMIN_USER and password == DEFAULT_ADMIN_PASS:
         usuario = Usuario(
-            username='admin',
-            password_hash=generate_password_hash('admin123'),
-            rol='Administrador'
+            username=DEFAULT_ADMIN_USER,
+            password_hash=generate_password_hash(DEFAULT_ADMIN_PASS),
+            rol='Administrador',
+            nombres_completos='Administrador Principal',
+            correo='admin@medix.pisco.gob.pe'
         )
         db.session.add(usuario)
         db.session.commit()
@@ -118,20 +197,57 @@ def login():
     if not usuario or not check_password_hash(usuario.password_hash, password):
         return jsonify({"mensaje": "Usuario o contraseña incorrectos"}), 401
 
+    # Detección de uso de credenciales por defecto (admin / admin123)
+    es_clave_defecto = (usuario.username.lower() == 'admin' and check_password_hash(usuario.password_hash, 'admin123'))
+
+    token = generar_token(usuario)
+
     return jsonify({
         "mensaje": f"Bienvenido al sistema, {usuario.username}",
-        "usuario": {
-            "id": usuario.id,
-            "username": usuario.username,
-            "rol": usuario.rol
-        }
+        "token": token,
+        "debe_cambiar_password": es_clave_defecto,
+        "usuario": usuario.to_dict()
     }), 200
 
 @app.route('/api/auth/me', methods=['GET'])
+@token_required
 def usuario_actual():
+    es_clave_defecto = (g.current_user.username.lower() == 'admin' and check_password_hash(g.current_user.password_hash, 'admin123'))
     return jsonify({
         "sistema": "Medix - Hospital San Juan de Dios de Pisco",
-        "estado": "autenticado"
+        "estado": "autenticado",
+        "usuario": g.current_user.to_dict(),
+        "debe_cambiar_password": es_clave_defecto
+    }), 200
+
+@app.route('/api/auth/cambiar-password', methods=['POST'])
+@token_required
+def cambiar_password():
+    data = request.get_json() or {}
+    password_actual = data.get('password_actual', '').strip()
+    nueva_password = data.get('nueva_password', '').strip()
+
+    if not nueva_password or len(nueva_password) < 6:
+        return jsonify({"mensaje": "La nueva contraseña debe tener al menos 6 caracteres"}), 400
+
+    usuario = g.current_user
+    es_admin_defecto = (usuario.username.lower() == 'admin' and check_password_hash(usuario.password_hash, 'admin123'))
+
+    # Si no es clave por defecto obligatoria, exigir y verificar la contraseña actual
+    if not (es_admin_defecto and not password_actual):
+        if not check_password_hash(usuario.password_hash, password_actual):
+            return jsonify({"mensaje": "La contraseña actual no es correcta"}), 400
+
+    usuario.password_hash = generate_password_hash(nueva_password)
+    db.session.commit()
+
+    nuevo_token = generar_token(usuario)
+
+    return jsonify({
+        "mensaje": "¡Contraseña actualizada exitosamente! Las credenciales por defecto han sido cambiadas.",
+        "token": nuevo_token,
+        "usuario": usuario.to_dict(),
+        "debe_cambiar_password": False
     }), 200
 
 # Almacenamiento temporal para códigos SMS de recuperación (user_id -> info)
@@ -150,7 +266,6 @@ def registrar_usuario():
     if not nombres or not correo or not telefono:
         return jsonify({"mensaje": "Nombres completos, correo y teléfono son obligatorios"}), 400
 
-    # Si no se envió username, se genera a partir del correo o nombres
     if not username:
         base_user = correo.split('@')[0].lower() if '@' in correo else nombres.split(' ')[0].lower()
         base_user = re.sub(r'[^a-zA-Z0-9_]', '', base_user)
@@ -162,7 +277,6 @@ def registrar_usuario():
             username = f"{base_user}{idx}"
             idx += 1
 
-    # Si no se envió contraseña, se genera una segura
     if not password:
         password = f"Medix{random.randint(100, 999)}*"
 
@@ -212,14 +326,12 @@ def solicitar_recuperar_sms():
             "mensaje": f"El usuario '{usuario.username}' no tiene un número telefónico asociado. Comuníquese con Soporte TI para actualizar sus datos."
         }), 400
 
-    # Generar código SMS de 6 dígitos
     codigo = f"{random.randint(100000, 999999)}"
     recuperacion_codigos[usuario.id] = {
         "codigo": codigo,
         "exp": datetime.now() + timedelta(minutes=15)
     }
 
-    # Ofuscar el teléfono para privacidad (ej. +51 987***321)
     tel = usuario.telefono.strip()
     tel_ofuscado = (tel[:3] + "****" + tel[-3:]) if len(tel) >= 7 else "****"
 
@@ -262,7 +374,6 @@ def confirmar_recuperar_sms():
     if info_codigo['codigo'] != codigo:
         return jsonify({"mensaje": "El código SMS ingresado no es válido"}), 400
 
-    # Actualizar la clave
     usuario.password_hash = generate_password_hash(nueva_password)
     db.session.commit()
     recuperacion_codigos.pop(usuario.id, None)
@@ -272,14 +383,18 @@ def confirmar_recuperar_sms():
     }), 200
 
 # ==========================================
-# GESTIÓN DE USUARIOS
+# GESTIÓN DE USUARIOS (ROL: ADMINISTRADOR)
 # ==========================================
 @app.route('/api/usuarios', methods=['GET'])
+@token_required
+@roles_required('Administrador')
 def listar_usuarios():
     usuarios = Usuario.query.order_by(Usuario.id.asc()).all()
     return jsonify([u.to_dict() for u in usuarios]), 200
 
 @app.route('/api/usuarios', methods=['POST'])
+@token_required
+@roles_required('Administrador')
 def crear_usuario():
     data = request.get_json() or {}
     username = data.get('username', '').strip()
@@ -311,6 +426,8 @@ def crear_usuario():
     }), 201
 
 @app.route('/api/usuarios/<int:id>', methods=['DELETE'])
+@token_required
+@roles_required('Administrador')
 def eliminar_usuario(id):
     usuario = Usuario.query.get_or_404(id)
     if usuario.username.lower() == 'admin':
@@ -363,29 +480,69 @@ def estado_sistema():
     }), 200
 
 # ==========================================
-# CRUD PACIENTES
+# CRUD PACIENTES (PAGINACIÓN Y BÚSQUEDA)
 # ==========================================
 @app.route('/api/pacientes', methods=['GET'])
+@token_required
 def listar_pacientes():
-    pacientes = Paciente.query.order_by(Paciente.id.desc()).all()
+    q = request.args.get('q', '').strip()
+    page = request.args.get('page', type=int)
+    per_page = request.args.get('per_page', 12, type=int)
+
+    query = Paciente.query
+    if q:
+        patron = f"%{q}%"
+        query = query.filter(
+            db.or_(
+                Paciente.dni.ilike(patron),
+                Paciente.nombre.ilike(patron),
+                Paciente.alergias.ilike(patron)
+            )
+        )
+
+    query = query.order_by(Paciente.id.desc())
+
+    # Si se solicita paginación explícita
+    if page:
+        paginacion = query.paginate(page=page, per_page=per_page, error_out=False)
+        return jsonify({
+            'items': [p.to_dict(include_documentos=True) for p in paginacion.items],
+            'total': paginacion.total,
+            'page': paginacion.page,
+            'per_page': paginacion.per_page,
+            'total_paginas': paginacion.pages
+        }), 200
+
+    # Modo estándar compatible hacia atrás
+    pacientes = query.all()
     return jsonify([p.to_dict(include_documentos=True) for p in pacientes]), 200
 
 @app.route('/api/pacientes/<int:id>', methods=['GET'])
+@token_required
 def obtener_paciente(id):
     paciente = Paciente.query.get_or_404(id)
     return jsonify(paciente.to_dict(include_documentos=True)), 200
 
 @app.route('/api/pacientes', methods=['POST'])
+@token_required
+@roles_required('Administrador', 'Médico')
 def crear_paciente():
     data = request.get_json() or {}
     dni = data.get('dni', '').strip()
+    nombre = data.get('nombre', '').strip()
+    alergias = data.get('alergias', '').strip()
+
     if not dni:
         return jsonify({"mensaje": "El DNI es obligatorio"}), 400
 
     if Paciente.query.filter_by(dni=dni).first():
         return jsonify({"mensaje": f"El paciente con DNI {dni} ya existe"}), 409
 
-    nuevo_paciente = Paciente(dni=dni)
+    nuevo_paciente = Paciente(
+        dni=dni,
+        nombre=nombre if nombre else None,
+        alergias=alergias if alergias else None
+    )
     db.session.add(nuevo_paciente)
     db.session.commit()
     return jsonify({
@@ -394,19 +551,27 @@ def crear_paciente():
     }), 201
 
 @app.route('/api/pacientes/<int:id>', methods=['PUT'])
+@token_required
+@roles_required('Administrador', 'Médico')
 def actualizar_paciente(id):
     paciente = Paciente.query.get_or_404(id)
     data = request.get_json() or {}
     nuevo_dni = data.get('dni', '').strip()
+    nuevo_nombre = data.get('nombre')
+    nuevas_alergias = data.get('alergias')
 
-    if not nuevo_dni:
-        return jsonify({"mensaje": "El nuevo DNI es obligatorio"}), 400
+    if nuevo_dni:
+        existente = Paciente.query.filter_by(dni=nuevo_dni).first()
+        if existente and existente.id != id:
+            return jsonify({"mensaje": f"Ya existe otro paciente con el DNI {nuevo_dni}"}), 409
+        paciente.dni = nuevo_dni
 
-    existente = Paciente.query.filter_by(dni=nuevo_dni).first()
-    if existente and existente.id != id:
-        return jsonify({"mensaje": f"Ya existe otro paciente con el DNI {nuevo_dni}"}), 409
+    if nuevo_nombre is not None:
+        paciente.nombre = nuevo_nombre.strip() if nuevo_nombre.strip() else None
 
-    paciente.dni = nuevo_dni
+    if nuevas_alergias is not None:
+        paciente.alergias = nuevas_alergias.strip() if nuevas_alergias.strip() else None
+
     db.session.commit()
     return jsonify({
         "mensaje": "Paciente actualizado exitosamente",
@@ -414,6 +579,8 @@ def actualizar_paciente(id):
     }), 200
 
 @app.route('/api/pacientes/<int:id>', methods=['DELETE'])
+@token_required
+@roles_required('Administrador')
 def eliminar_paciente(id):
     paciente = Paciente.query.get_or_404(id)
     try:
@@ -432,16 +599,21 @@ def eliminar_paciente(id):
         return jsonify({"mensaje": f"Error al eliminar paciente: {str(e)}"}), 500
 
 # ==========================================
-# CRUD DOCUMENTOS
+# CRUD DOCUMENTOS (CON NOMBRE ORIGINAL)
 # ==========================================
 @app.route('/api/documentos', methods=['GET'])
+@token_required
 def listar_documentos():
     documentos = Documento.query.order_by(Documento.fecha_subida.desc()).all()
     return jsonify([d.to_dict() for d in documentos]), 200
 
 @app.route('/api/documentos', methods=['POST'])
+@token_required
+@roles_required('Administrador', 'Médico')
 def subir_documento():
     dni_paciente = request.form.get('dni', '').strip()
+    nombre_paciente = request.form.get('nombre', '').strip()
+    alergias_paciente = request.form.get('alergias', '').strip()
     archivo = request.files.get('archivo')
 
     if not dni_paciente or not archivo or archivo.filename == '':
@@ -450,28 +622,59 @@ def subir_documento():
     # 1. Buscar o registrar paciente
     paciente = Paciente.query.filter_by(dni=dni_paciente).first()
     if not paciente:
-        paciente = Paciente(dni=dni_paciente)
+        paciente = Paciente(
+            dni=dni_paciente,
+            nombre=nombre_paciente if nombre_paciente else None,
+            alergias=alergias_paciente if alergias_paciente else None
+        )
         db.session.add(paciente)
         db.session.commit()
+    else:
+        # Actualizar datos si no estaban presentes y se proporcionan
+        actualizado = False
+        if nombre_paciente and (not paciente.nombre or paciente.nombre != nombre_paciente):
+            paciente.nombre = nombre_paciente
+            actualizado = True
+        if alergias_paciente and (not paciente.alergias or paciente.alergias != alergias_paciente):
+            paciente.alergias = alergias_paciente
+            actualizado = True
+        if actualizado:
+            db.session.commit()
 
-    # 2. Generar nombre único y subir a MinIO
-    extension = archivo.filename.rsplit('.', 1)[-1].lower() if '.' in archivo.filename else 'bin'
+    # 2. Generar nombre único y subir a MinIO o almacenamiento local
+    nombre_original = archivo.filename
+    extension = nombre_original.rsplit('.', 1)[-1].lower() if '.' in nombre_original else 'bin'
     nombre_archivo_s3 = f"{dni_paciente}/{uuid.uuid4().hex}.{extension}"
 
+    subido_s3 = False
     try:
         asegurar_bucket()
-        content_type = archivo.content_type or mimetypes.guess_type(archivo.filename)[0] or 'application/octet-stream'
+        content_type = archivo.content_type or mimetypes.guess_type(nombre_original)[0] or 'application/octet-stream'
         s3_client.upload_fileobj(
             archivo,
             BUCKET_NAME,
             nombre_archivo_s3,
             ExtraArgs={'ContentType': content_type}
         )
+        subido_s3 = True
     except Exception as e:
-        return jsonify({"mensaje": f"Error al subir a MinIO: {str(e)}"}), 500
+        print(f"Aviso MinIO: {e}. Guardando copia en almacenamiento local.")
 
-    # 3. Guardar registro en la base de datos
-    nuevo_doc = Documento(paciente_id=paciente.id, ruta_minio=nombre_archivo_s3)
+    if not subido_s3:
+        try:
+            ruta_local = os.path.join(LOCAL_STORAGE_DIR, nombre_archivo_s3.replace('/', os.sep))
+            os.makedirs(os.path.dirname(ruta_local), exist_ok=True)
+            archivo.seek(0)
+            archivo.save(ruta_local)
+        except Exception as e:
+            return jsonify({"mensaje": f"Error al guardar archivo en el servidor: {str(e)}"}), 500
+
+    # 3. Guardar registro en la base de datos conservando nombre original
+    nuevo_doc = Documento(
+        paciente_id=paciente.id,
+        ruta_minio=nombre_archivo_s3,
+        nombre_original=nombre_original
+    )
     db.session.add(nuevo_doc)
     db.session.commit()
 
@@ -482,58 +685,88 @@ def subir_documento():
 
 @app.route('/api/documentos/<int:id>/archivo', methods=['GET'])
 def descargar_documento(id):
+    # Soporta token por header o por query param ?token= para visualización fluida en <iframe>
+    token = None
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(' ', 1)[1].strip()
+    elif request.args.get('token'):
+        token = request.args.get('token').strip()
+
+    if token:
+        try:
+            jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        except Exception:
+            return jsonify({"mensaje": "Token inválido o expirado"}), 401
+
     doc = Documento.query.get_or_404(id)
+    cuerpo_bytes = None
+    content_type = None
+
     try:
         s3_obj = s3_client.get_object(Bucket=BUCKET_NAME, Key=doc.ruta_minio)
-
-        # Mapeo preciso de tipo MIME según extensión
-        extension = doc.ruta_minio.rsplit('.', 1)[-1].lower() if '.' in doc.ruta_minio else ''
-        mime_map = {
-            'pdf': 'application/pdf',
-            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'doc': 'application/msword',
-            'jpg': 'image/jpeg',
-            'jpeg': 'image/jpeg',
-            'png': 'image/png',
-            'gif': 'image/gif',
-            'webp': 'image/webp',
-            'txt': 'text/plain; charset=utf-8'
-        }
-        content_type = mime_map.get(extension)
-        if not content_type:
-            content_type = s3_obj.get('ContentType') or mimetypes.guess_type(doc.ruta_minio)[0] or 'application/octet-stream'
-
-        is_view = request.args.get('view') == '1'
-        nombre_descarga = doc.ruta_minio.split('/')[-1]
-
-        headers = {
-            "Content-Type": content_type,
-            "X-Content-Type-Options": "nosniff"
-        }
-        if is_view:
-            headers["Content-Disposition"] = f'inline; filename="{nombre_descarga}"'
-        else:
-            headers["Content-Disposition"] = f'attachment; filename="{nombre_descarga}"'
-
-        return Response(
-            s3_obj['Body'].read(),
-            mimetype=content_type,
-            headers=headers
-        )
+        cuerpo_bytes = s3_obj['Body'].read()
+        content_type = s3_obj.get('ContentType')
     except Exception as e:
-        return jsonify({"mensaje": f"Error al recuperar archivo de MinIO: {str(e)}"}), 500
+        # Fallback a almacenamiento local si no está en MinIO
+        ruta_local = os.path.join(LOCAL_STORAGE_DIR, doc.ruta_minio.replace('/', os.sep))
+        if os.path.exists(ruta_local):
+            with open(ruta_local, 'rb') as f:
+                cuerpo_bytes = f.read()
+
+    if cuerpo_bytes is None:
+        return jsonify({"mensaje": "El archivo físico no se encuentra disponible en el servidor de almacenamiento."}), 404
+
+    extension = doc.ruta_minio.rsplit('.', 1)[-1].lower() if '.' in doc.ruta_minio else ''
+    mime_map = {
+        'pdf': 'application/pdf',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'doc': 'application/msword',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'txt': 'text/plain; charset=utf-8'
+    }
+    if not content_type:
+        content_type = mime_map.get(extension) or mimetypes.guess_type(doc.ruta_minio)[0] or 'application/octet-stream'
+
+    is_view = request.args.get('view') == '1'
+    nombre_descarga = doc.nombre_original if doc.nombre_original else doc.ruta_minio.split('/')[-1]
+
+    headers = {
+        "Content-Type": content_type,
+        "X-Content-Type-Options": "nosniff"
+    }
+    if is_view:
+        headers["Content-Disposition"] = f'inline; filename="{nombre_descarga}"'
+    else:
+        headers["Content-Disposition"] = f'attachment; filename="{nombre_descarga}"'
+
+    return Response(
+        cuerpo_bytes,
+        mimetype=content_type,
+        headers=headers
+    )
 
 @app.route('/api/documentos/<int:id>', methods=['DELETE'])
+@token_required
+@roles_required('Administrador')
 def eliminar_documento(id):
     doc = Documento.query.get_or_404(id)
     try:
-        # 1. Borrar de MinIO
         try:
             s3_client.delete_object(Bucket=BUCKET_NAME, Key=doc.ruta_minio)
         except Exception as e:
-            print(f"Aviso al borrar de MinIO: {e}")
+            pass
+        try:
+            ruta_local = os.path.join(LOCAL_STORAGE_DIR, doc.ruta_minio.replace('/', os.sep))
+            if os.path.exists(ruta_local):
+                os.remove(ruta_local)
+        except Exception:
+            pass
 
-        # 2. Borrar de SQL Server
         db.session.delete(doc)
         db.session.commit()
         return jsonify({"mensaje": "Documento eliminado exitosamente", "id": id}), 200
@@ -545,17 +778,20 @@ def eliminar_documento(id):
 # NOTAS MÉDICAS (ROL: MÉDICO / ADMIN)
 # ==========================================
 @app.route('/api/pacientes/<int:id>/notas', methods=['GET'])
+@token_required
 def listar_notas_paciente(id):
     paciente = Paciente.query.get_or_404(id)
     notas = NotaMedica.query.filter_by(paciente_id=id).order_by(NotaMedica.fecha.desc()).all()
     return jsonify([n.to_dict() for n in notas]), 200
 
 @app.route('/api/pacientes/<int:id>/notas', methods=['POST'])
+@token_required
+@roles_required('Administrador', 'Médico')
 def agregar_nota_paciente(id):
     paciente = Paciente.query.get_or_404(id)
     data = request.get_json() or {}
     contenido = data.get('contenido', '').strip()
-    medico_nombre = data.get('medico_nombre', data.get('medico', 'Médico Tratante')).strip()
+    medico_nombre = data.get('medico_nombre', data.get('medico', g.current_user.nombres_completos or g.current_user.username)).strip()
 
     if not contenido:
         return jsonify({"mensaje": "El contenido de la nota médica no puede estar vacío"}), 400
@@ -573,6 +809,8 @@ def agregar_nota_paciente(id):
     }), 201
 
 @app.route('/api/notas/<int:id>', methods=['DELETE'])
+@token_required
+@roles_required('Administrador', 'Médico')
 def eliminar_nota(id):
     nota = NotaMedica.query.get_or_404(id)
     db.session.delete(nota)
@@ -583,17 +821,20 @@ def eliminar_nota(id):
 # SIGNOS VITALES / TRIAJE (ROL: ENFERMERA / ADMIN)
 # ==========================================
 @app.route('/api/pacientes/<int:id>/signos-vitales', methods=['GET'])
+@token_required
 def listar_signos_paciente(id):
     paciente = Paciente.query.get_or_404(id)
     signos = SignosVitales.query.filter_by(paciente_id=id).order_by(SignosVitales.fecha.desc()).all()
     return jsonify([s.to_dict() for s in signos]), 200
 
 @app.route('/api/pacientes/<int:id>/signos-vitales', methods=['POST'])
+@token_required
+@roles_required('Administrador', 'Enfermera')
 def agregar_signos_paciente(id):
     paciente = Paciente.query.get_or_404(id)
     data = request.get_json() or {}
-    
-    enfermera_nombre = data.get('enfermera_nombre', data.get('enfermera', 'Personal de Enfermería')).strip()
+
+    enfermera_nombre = data.get('enfermera_nombre', data.get('enfermera', g.current_user.nombres_completos or g.current_user.username)).strip()
     presion = data.get('presion_arterial', '').strip()
     peso = data.get('peso', '').strip()
     talla = data.get('talla', '').strip()
@@ -624,11 +865,14 @@ def agregar_signos_paciente(id):
     }), 201
 
 @app.route('/api/signos-vitales', methods=['GET'])
+@token_required
 def listar_todos_signos():
     signos = SignosVitales.query.order_by(SignosVitales.fecha.desc()).limit(50).all()
     return jsonify([s.to_dict() for s in signos]), 200
 
 @app.route('/api/signos-vitales/<int:id>', methods=['DELETE'])
+@token_required
+@roles_required('Administrador')
 def eliminar_signos(id):
     registro = SignosVitales.query.get_or_404(id)
     db.session.delete(registro)
@@ -639,6 +883,7 @@ def eliminar_signos(id):
 # GESTIÓN DE SOLICITUDES DE ELIMINACIÓN
 # ==========================================
 @app.route('/api/solicitudes-eliminacion', methods=['GET'])
+@token_required
 def listar_solicitudes_eliminacion():
     estado_filtro = request.args.get('estado')
     query = SolicitudEliminacion.query
@@ -648,14 +893,16 @@ def listar_solicitudes_eliminacion():
     return jsonify([s.to_dict() for s in solicitudes]), 200
 
 @app.route('/api/solicitudes-eliminacion', methods=['POST'])
+@token_required
+@roles_required('Administrador', 'Médico')
 def crear_solicitud_eliminacion():
     data = request.get_json() or {}
     paciente_dni = data.get('paciente_dni', '').strip()
-    usuario_nombre = data.get('usuario_nombre', '').strip()
+    usuario_nombre = data.get('usuario_nombre', g.current_user.username).strip()
     motivo_categoria = data.get('motivo_categoria', '').strip()
     motivo_detalle = data.get('motivo_detalle', '').strip()
     paciente_id = data.get('paciente_id')
-    usuario_rol = data.get('usuario_rol', 'Médico').strip()
+    usuario_rol = data.get('usuario_rol', g.current_user.rol).strip()
 
     if not paciente_dni or not usuario_nombre or not motivo_categoria:
         return jsonify({"mensaje": "Faltan datos obligatorios (DNI, solicitante o motivo)"}), 400
@@ -678,6 +925,8 @@ def crear_solicitud_eliminacion():
     }), 201
 
 @app.route('/api/solicitudes-eliminacion/<int:id>/aprobar', methods=['PUT'])
+@token_required
+@roles_required('Administrador')
 def aprobar_solicitud_eliminacion(id):
     solicitud = SolicitudEliminacion.query.get_or_404(id)
     if solicitud.estado == 'Aprobada':
@@ -686,7 +935,6 @@ def aprobar_solicitud_eliminacion(id):
     data = request.get_json() or {}
     respuesta_admin = data.get('respuesta_admin', 'Eliminación aprobada por el Administrador').strip()
 
-    # Si el paciente aún existe en el sistema, proceder a su eliminación física y de MinIO
     if solicitud.paciente_id:
         paciente = Paciente.query.get(solicitud.paciente_id)
         if paciente:
@@ -701,7 +949,6 @@ def aprobar_solicitud_eliminacion(id):
                 db.session.rollback()
                 return jsonify({"mensaje": f"Error al eliminar datos del paciente: {str(e)}"}), 500
 
-    from datetime import datetime
     solicitud.estado = 'Aprobada'
     solicitud.respuesta_admin = respuesta_admin
     solicitud.fecha_resolucion = datetime.utcnow()
@@ -713,6 +960,8 @@ def aprobar_solicitud_eliminacion(id):
     }), 200
 
 @app.route('/api/solicitudes-eliminacion/<int:id>/rechazar', methods=['PUT'])
+@token_required
+@roles_required('Administrador')
 def rechazar_solicitud_eliminacion(id):
     solicitud = SolicitudEliminacion.query.get_or_404(id)
     if solicitud.estado != 'Pendiente':
@@ -721,7 +970,6 @@ def rechazar_solicitud_eliminacion(id):
     data = request.get_json() or {}
     respuesta_admin = data.get('respuesta_admin', 'Solicitud desestimada por el Administrador').strip()
 
-    from datetime import datetime
     solicitud.estado = 'Rechazada'
     solicitud.respuesta_admin = respuesta_admin
     solicitud.fecha_resolucion = datetime.utcnow()

@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useTheme } from './context/ThemeContext'
-import { API_BASE } from './api/config'
+import { useAuth } from './context/AuthContext'
 import { esPdf, esDocx, esImagen, esTexto } from './utils/fileHelpers'
+import * as api from './api/pacientesService'
+
 import Sidebar from './components/Sidebar'
 import VisorLateral from './components/VisorLateral'
 import LoginView from './views/LoginView'
@@ -15,47 +17,50 @@ import SolicitudesView from './views/SolicitudesView'
 import SolicitudEliminacionModal from './components/SolicitudEliminacionModal'
 import AlertToast from './components/AlertToast'
 import ConfirmDeleteModal from './components/ConfirmDeleteModal'
+import CambiarPasswordModal from './components/CambiarPasswordModal'
 
 function AppContent() {
   const navigate = useNavigate()
   const location = useLocation()
   const { temaOscuro, theme } = useTheme()
-
-  // Estado de usuario autenticado
-  const [usuario, setUsuario] = useState(() => {
-    try {
-      const u = localStorage.getItem('medix_usuario')
-      return u ? JSON.parse(u) : null
-    } catch {
-      return null
-    }
-  })
+  const {
+    usuario,
+    setUsuario,
+    authFetch,
+    logout,
+    esAdmin,
+    esMedico,
+    esEnfermera,
+    modalPasswordAbierto,
+    abrirModalPassword,
+    cerrarModalPassword
+  } = useAuth()
 
   // Datos principales
   const [pacientes, setPacientes] = useState([])
   const [loading, setLoading] = useState(false)
   const [mensaje, setMensaje] = useState({ tipo: '', texto: '' })
 
-  // Filtro de búsqueda rápida por DNI
+  // Búsqueda y Carpetas
   const [busquedaDni, setBusquedaDni] = useState('')
-
-  // Control de carpetas expandidas (Set de IDs)
   const [carpetasAbiertas, setCarpetasAbiertas] = useState(new Set())
 
-  // Formulario nuevo documento / historia
+  // Formulario nuevo documento / historia con datos del paciente
   const [dni, setDni] = useState('')
+  const [nombre, setNombre] = useState('')
+  const [alergias, setAlergias] = useState('')
   const [file, setFile] = useState(null)
   const [subiendo, setSubiendo] = useState(false)
   const fileInputRef = useRef(null)
 
-  // Edición de DNI de paciente
+  // Edición rápida de DNI
   const [editandoPaciente, setEditandoPaciente] = useState(null)
   const [nuevoDni, setNuevoDni] = useState('')
 
-  // Panel / Visor de documento (panel lateral derecho desplegable)
+  // Panel Visor de documento lateral
   const [documentoEnVista, setDocumentoEnVista] = useState(null)
 
-  // Gestión de Usuarios
+  // Usuarios del sistema
   const [usuarios, setUsuarios] = useState([])
   const [cargandoUsuarios, setCargandoUsuarios] = useState(false)
   const [formUsuario, setFormUsuario] = useState({
@@ -68,21 +73,20 @@ function AppContent() {
   })
   const [creandoUsuario, setCreandoUsuario] = useState(false)
 
-  // Diagnóstico / Configuración del sistema
+  // Diagnóstico
   const [diagnostico, setDiagnostico] = useState(null)
   const [cargandoDiagnostico, setCargandoDiagnostico] = useState(false)
 
-  // Modalidad activa dentro del Dashboard ('cards' | 'carpetas' | 'tabla-documentos' | 'analitica')
+  // Vistas Dashboard
   const [vistaDashboard, setVistaDashboard] = useState('cards')
-  // Filtro por tipo de documento en la vista de tabla general ('todos' | 'pdf' | 'docx' | 'imagen' | 'texto')
   const [filtroTipoDoc, setFiltroTipoDoc] = useState('todos')
 
-  // Solicitudes de Eliminación (para Administrador y Médicos)
+  // Solicitudes de Eliminación y Modales
   const [solicitudesPendientesCount, setSolicitudesPendientesCount] = useState(0)
   const [pacienteParaSolicitud, setPacienteParaSolicitud] = useState(null)
   const [confirmacionEliminar, setConfirmacionEliminar] = useState(null)
 
-  // Responsividad: Detección de pantallas móviles / tablets
+  // Responsividad móvil
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 840 : false)
   const [sidebarMobileAbierto, setSidebarMobileAbierto] = useState(false)
 
@@ -121,7 +125,6 @@ function AppContent() {
     setMensaje(payload)
   }
 
-  // Temporizador para auto-cerrar la notificación después de 6.5 segundos
   useEffect(() => {
     if (mensaje && mensaje.texto) {
       const timer = setTimeout(() => {
@@ -131,139 +134,61 @@ function AppContent() {
     }
   }, [mensaje])
 
-  const cargarDatos = async (abrirTodos = false) => {
+  // Carga de Pacientes
+  const cargarDatos = useCallback(async (abrirTodos = false) => {
+    if (!usuario) return
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/pacientes`)
-      if (res.ok) {
-        const data = await res.json()
-        setPacientes(data)
-        if (abrirTodos) {
-          setCarpetasAbiertas(new Set(data.map(p => p.id)))
-        }
-      } else {
-        notificar('error', 'No se pudieron cargar las carpetas de pacientes.')
+      const data = await api.listarPacientes(authFetch)
+      setPacientes(data)
+      if (abrirTodos) {
+        setCarpetasAbiertas(new Set(data.map(p => p.id)))
       }
-    } catch (error) {
-      notificar('error', 'Error al conectar con el backend.')
+    } catch {
+      notificar('error', 'No se pudieron cargar los expedientes de pacientes.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [authFetch, usuario])
 
-  const cargarUsuarios = async () => {
+  // Carga de Usuarios
+  const cargarUsuarios = useCallback(async () => {
+    if (!usuario || !esAdmin) return
     setCargandoUsuarios(true)
     try {
-      const res = await fetch(`${API_BASE}/usuarios`)
-      if (res.ok) {
-        const data = await res.json()
-        setUsuarios(data)
-      }
+      const data = await api.listarUsuarios(authFetch)
+      setUsuarios(data)
     } catch (err) {
       console.error('Error cargando usuarios:', err)
     } finally {
       setCargandoUsuarios(false)
     }
-  }
+  }, [authFetch, usuario, esAdmin])
 
-  const handleCrearUsuario = async (e) => {
-    e.preventDefault()
-    if (!formUsuario.username.trim() || !formUsuario.password.trim()) {
-      notificar('error', 'Por favor complete todos los campos para crear el usuario.')
-      return
-    }
-    setCreandoUsuario(true)
-    try {
-      const res = await fetch(`${API_BASE}/usuarios`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formUsuario)
-      })
-      const data = await res.json()
-      if (res.ok) {
-        notificar({
-          tipo: 'exito',
-          titulo: '¡Usuario Creado!',
-          texto: data.mensaje || `Usuario "${formUsuario.username}" registrado exitosamente.`,
-          contador: '1',
-          actionLabel: 'Okay'
-        })
-        setFormUsuario({
-          username: '',
-          password: '',
-          rol: 'Médico',
-          telefono: '',
-          correo: '',
-          nombres_completos: ''
-        })
-        cargarUsuarios()
-      } else {
-        notificar('error', data.mensaje || 'Error al registrar el usuario.')
-      }
-    } catch (err) {
-      notificar('error', 'Error de red al registrar usuario.')
-    } finally {
-      setCreandoUsuario(false)
-    }
-  }
-
-  const handleEliminarUsuario = (id, nombre) => {
-    setConfirmacionEliminar({
-      tipo: 'usuario',
-      usuarioParaBorrar: { id, nombre },
-      paciente: { dni: nombre },
-      pregunta: `¿Desea eliminar al usuario "${nombre}"? Esta acción no se puede deshacer.`
-    })
-  }
-
-  const ejecutarEliminarUsuario = async (id, nombre) => {
-    try {
-      const res = await fetch(`${API_BASE}/usuarios/${id}`, { method: 'DELETE' })
-      const data = await res.json()
-      if (res.ok) {
-        notificar({
-          tipo: 'eliminacion',
-          titulo: 'Usuario Eliminado',
-          texto: data.mensaje || `El usuario "${nombre}" ha sido eliminado del sistema.`,
-          contador: '1',
-          actionLabel: 'Delete',
-          secondaryLabel: 'Cancel'
-        })
-        cargarUsuarios()
-      } else {
-        notificar('error', data.mensaje || 'No se pudo eliminar el usuario.')
-      }
-    } catch (err) {
-      notificar('error', 'Error al comunicarse con el servidor.')
-    }
-  }
-
-  const cargarDiagnostico = async () => {
+  // Carga de Diagnóstico
+  const cargarDiagnostico = useCallback(async () => {
+    if (!usuario) return
     setCargandoDiagnostico(true)
     try {
-      const res = await fetch(`${API_BASE}/sistema/estado`)
-      if (res.ok) {
-        const data = await res.json()
-        setDiagnostico(data)
-      }
+      const data = await api.obtenerDiagnostico(authFetch)
+      setDiagnostico(data)
     } catch (err) {
       console.error('Error cargando diagnóstico:', err)
     } finally {
       setCargandoDiagnostico(false)
     }
-  }
+  }, [authFetch, usuario])
 
-  const cargarSolicitudesPendientes = async () => {
+  // Carga de Solicitudes Pendientes
+  const cargarSolicitudesPendientes = useCallback(async () => {
+    if (!usuario) return
     try {
-      const res = await fetch(`${API_BASE}/solicitudes-eliminacion?estado=Pendiente`)
-      if (res.ok) {
-        const data = await res.json()
-        setSolicitudesPendientesCount(data.length)
-      }
+      const data = await api.listarSolicitudes(authFetch, 'Pendiente')
+      setSolicitudesPendientesCount(data.length)
     } catch (err) {
       console.error('Error cargando conteo de solicitudes:', err)
     }
-  }
+  }, [authFetch, usuario])
 
   useEffect(() => {
     if (usuario) {
@@ -277,32 +202,27 @@ function AppContent() {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [usuario])
+  }, [usuario, cargarDatos, cargarUsuarios, cargarDiagnostico, cargarSolicitudesPendientes])
 
-  // Alternar apertura/cierre de una carpeta
+  // Control de carpetas
   const toggleCarpeta = (id) => {
     setCarpetasAbiertas(prev => {
       const nuevo = new Set(prev)
-      if (nuevo.has(id)) {
-        nuevo.delete(id)
-      } else {
-        nuevo.add(id)
-      }
+      nuevo.has(id) ? nuevo.delete(id) : nuevo.add(id)
       return nuevo
     })
   }
 
-  const expandirTodas = () => {
-    setCarpetasAbiertas(new Set(pacientes.map(p => p.id)))
-  }
+  const expandirTodas = () => setCarpetasAbiertas(new Set(pacientes.map(p => p.id)))
+  const colapsarTodas = () => setCarpetasAbiertas(new Set())
 
-  const colapsarTodas = () => {
-    setCarpetasAbiertas(new Set())
-  }
-
-  // Pre-cargar DNI y navegar a /agregarhistoria
   const agregarArchivoACarpeta = (dniPaciente, pacId) => {
     setDni(dniPaciente)
+    const pacExistente = pacientes.find(p => p.id === pacId || p.dni === dniPaciente)
+    if (pacExistente) {
+      setNombre(pacExistente.nombre || '')
+      setAlergias(pacExistente.alergias || '')
+    }
     setCarpetasAbiertas(prev => new Set([...prev, pacId]))
     navigate('/agregarhistoria')
     setTimeout(() => {
@@ -313,7 +233,7 @@ function AppContent() {
     }, 150)
   }
 
-  // C: Subir documento a MinIO y SQL Server
+  // Subir Documento e Historia Clínica con Nombre y Alergias
   const handleUpload = async (e) => {
     e.preventDefault()
     const dniLimpio = dni.trim()
@@ -326,52 +246,43 @@ function AppContent() {
     const formData = new FormData()
     formData.append('dni', dniLimpio)
     formData.append('archivo', file)
+    if (nombre.trim()) formData.append('nombre', nombre.trim())
+    if (alergias.trim()) formData.append('alergias', alergias.trim())
 
     try {
-      const response = await fetch(`${API_BASE}/documentos`, {
-        method: 'POST',
-        body: formData,
+      const data = await api.subirDocumento(authFetch, formData)
+      const pacId = data.documento ? data.documento.paciente_id : null
+      const esNuevo = !pacientes.some(p => p.dni.trim() === dniLimpio)
+
+      notificar({
+        tipo: 'exito',
+        titulo: esNuevo ? '¡Paciente Creado!' : '¡Expediente Actualizado!',
+        texto: data.mensaje || (esNuevo
+          ? `El expediente clínico del paciente DNI ${dniLimpio} fue creado con éxito.`
+          : `El archivo clínico fue anexado con éxito a la carpeta del DNI ${dniLimpio}.`),
+        actionLabel: 'Entendido'
       })
-      const data = await response.json()
 
-      if (response.ok) {
-        const pacId = data.documento ? data.documento.paciente_id : null
-        const esNuevo = !pacientes.some(p => p.dni.trim() === dniLimpio)
-        notificar({
-          tipo: 'exito',
-          titulo: esNuevo ? '¡Paciente Creado!' : '¡Expediente Actualizado!',
-          texto: data.mensaje || (esNuevo
-            ? `El expediente clínico del paciente DNI ${dniLimpio} fue creado y registrado con éxito.`
-            : `El archivo clínico fue anexado con éxito a la carpeta del DNI ${dniLimpio}.`),
-          contador: '1',
-          actionLabel: 'Okay'
-        })
-        setDni('')
-        setFile(null)
-        if (fileInputRef.current) fileInputRef.current.value = ''
+      setDni('')
+      setNombre('')
+      setAlergias('')
+      setFile(null)
+      if (fileInputRef.current) fileInputRef.current.value = ''
 
-        // Recargar datos y volver al dashboard con la carpeta abierta
-        const res = await fetch(`${API_BASE}/pacientes`)
-        if (res.ok) {
-          const lista = await res.json()
-          setPacientes(lista)
-          if (pacId) {
-            setCarpetasAbiertas(prev => new Set([...prev, pacId]))
-          }
-        }
-        cargarDiagnostico()
-        navigate('/dashboard')
-      } else {
-        notificar('error', data.mensaje || 'Error al subir el documento.')
+      await cargarDatos()
+      if (pacId) {
+        setCarpetasAbiertas(prev => new Set([...prev, pacId]))
       }
+      cargarDiagnostico()
+      navigate('/dashboard')
     } catch (error) {
-      notificar('error', 'Error de conexión con el backend.')
+      notificar('error', error.message || 'Error al subir el documento.')
     } finally {
       setSubiendo(false)
     }
   }
 
-  // U: Actualizar DNI Paciente
+  // Actualizar DNI
   const handleGuardarDni = async (id) => {
     if (!nuevoDni.trim()) {
       notificar('error', 'El nuevo DNI no puede estar vacío.')
@@ -379,65 +290,45 @@ function AppContent() {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/pacientes/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dni: nuevoDni.trim() })
-      })
-      const data = await response.json()
-
-      if (response.ok) {
-        notificar('exito', 'DNI actualizado exitosamente.')
-        setEditandoPaciente(null)
-        cargarDatos()
-      } else {
-        notificar('error', data.mensaje || 'Error al actualizar DNI.')
-      }
+      await api.actualizarPaciente(authFetch, id, { dni: nuevoDni.trim() })
+      notificar('exito', 'DNI actualizado exitosamente.')
+      setEditandoPaciente(null)
+      cargarDatos()
     } catch (error) {
-      notificar('error', 'Error al comunicarse con el servidor.')
+      notificar('error', error.message || 'Error al actualizar DNI.')
     }
   }
 
-  // D: Eliminar Documento individual
-  const handleEliminarDocumento = (id, nombre, pacId) => {
+  // Eliminar Documento
+  const handleEliminarDocumento = (id, nombreDoc, pacId) => {
     setConfirmacionEliminar({
       tipo: 'documento',
-      documento: { id, nombre, pacId },
-      paciente: { dni: nombre },
-      pregunta: `¿Desea eliminar el archivo clínico "${nombre}"?`
+      documento: { id, nombre: nombreDoc, pacId },
+      paciente: { dni: nombreDoc },
+      pregunta: `¿Desea eliminar el archivo clínico "${nombreDoc}"?`
     })
   }
 
-  const ejecutarEliminarDocumento = async (id, nombre, pacId) => {
+  const ejecutarEliminarDocumento = async (id, nombreDoc) => {
     try {
-      const response = await fetch(`${API_BASE}/documentos/${id}`, { method: 'DELETE' })
-      const data = await response.json()
-      if (response.ok) {
-        notificar({
-          tipo: 'eliminacion',
-          titulo: 'Historia Eliminada',
-          texto: data.mensaje || `El archivo clínico "${nombre}" ha sido eliminado del expediente.`,
-          contador: '1',
-          actionLabel: 'Delete',
-          secondaryLabel: 'Cancel'
-        })
-        if (documentoEnVista && documentoEnVista.id === id) {
-          setDocumentoEnVista(null)
-        }
-        const res = await fetch(`${API_BASE}/pacientes`)
-        if (res.ok) setPacientes(await res.json())
-        cargarDiagnostico()
-      } else {
-        notificar('error', data.mensaje || 'Error al eliminar.')
+      const data = await api.eliminarDocumento(authFetch, id)
+      notificar({
+        tipo: 'eliminacion',
+        titulo: 'Archivo Eliminado',
+        texto: data.mensaje || `El archivo clínico "${nombreDoc}" ha sido eliminado del expediente.`,
+        actionLabel: 'Entendido'
+      })
+      if (documentoEnVista && documentoEnVista.id === id) {
+        setDocumentoEnVista(null)
       }
+      cargarDatos()
+      cargarDiagnostico()
     } catch (error) {
-      notificar('error', 'Error de red al intentar eliminar documento.')
+      notificar('error', error.message || 'Error al eliminar el documento.')
     }
   }
 
-  // D: Iniciar eliminación de la historia clínica del paciente
-  // Abre la tarjeta de Advertencia ("¿Desea eliminar?: Eliminar y Cancelar")
-  // Si presiona "Eliminar", se abre la ventana obligatoria donde explica el motivo que va a la bandeja del Admin
+  // Eliminar Paciente
   const handleEliminarPaciente = (id, dniPac) => {
     const pac = pacientes.find(p => p.id === id || String(p.dni) === String(dniPac)) || { id, dni: dniPac }
     setConfirmacionEliminar({
@@ -447,15 +338,70 @@ function AppContent() {
     })
   }
 
-  // Manejo de la acción "Eliminar" en la tarjeta Advertencia
+  // Crear Usuario
+  const handleCrearUsuario = async (e) => {
+    e.preventDefault()
+    if (!formUsuario.username.trim() || !formUsuario.password.trim()) {
+      notificar('error', 'Por favor complete el nombre de usuario y contraseña.')
+      return
+    }
+    setCreandoUsuario(true)
+    try {
+      const data = await api.crearUsuario(authFetch, formUsuario)
+      notificar({
+        tipo: 'exito',
+        titulo: '¡Usuario Creado!',
+        texto: data.mensaje || `Usuario "${formUsuario.username}" registrado exitosamente.`,
+        actionLabel: 'Entendido'
+      })
+      setFormUsuario({
+        username: '',
+        password: '',
+        rol: 'Médico',
+        telefono: '',
+        correo: '',
+        nombres_completos: ''
+      })
+      cargarUsuarios()
+    } catch (err) {
+      notificar('error', err.message || 'Error al registrar usuario.')
+    } finally {
+      setCreandoUsuario(false)
+    }
+  }
+
+  // Eliminar Usuario
+  const handleEliminarUsuario = (id, nombreUser) => {
+    setConfirmacionEliminar({
+      tipo: 'usuario',
+      usuarioParaBorrar: { id, nombre: nombreUser },
+      paciente: { dni: nombreUser },
+      pregunta: `¿Desea eliminar al usuario "${nombreUser}"? Esta acción no se puede deshacer.`
+    })
+  }
+
+  const ejecutarEliminarUsuario = async (id, nombreUser) => {
+    try {
+      const data = await api.eliminarUsuario(authFetch, id)
+      notificar({
+        tipo: 'eliminacion',
+        titulo: 'Usuario Eliminado',
+        texto: data.mensaje || `El usuario "${nombreUser}" ha sido eliminado del sistema.`,
+        actionLabel: 'Entendido'
+      })
+      cargarUsuarios()
+    } catch (err) {
+      notificar('error', err.message || 'No se pudo eliminar el usuario.')
+    }
+  }
+
+  // Confirmar Acción de Eliminación
   const handleConfirmarEliminar = () => {
     if (!confirmacionEliminar) return
     const { tipo, paciente: pac, documento, usuarioParaBorrar } = confirmacionEliminar
     setConfirmacionEliminar(null)
 
     if (tipo === 'paciente') {
-      // Abre la ventana donde es obligatorio decir por qué desea eliminar la historia,
-      // la cual llegará a la bandeja de solicitudes del admin
       setPacienteParaSolicitud(pac)
     } else if (tipo === 'documento') {
       ejecutarEliminarDocumento(documento.id, documento.nombre, documento.pacId)
@@ -464,56 +410,46 @@ function AppContent() {
     }
   }
 
-  // Cerrar sesión
-  const handleLogout = () => {
-    localStorage.removeItem('medix_usuario')
-    setUsuario(null)
-    navigate('/login')
-  }
-
-  // Visualizar silueta anatómica y expediente clínico
-  const handleVerSilueta = (paciente) => {
-    const primerDoc = (paciente.documentos && paciente.documentos.length > 0) ? paciente.documentos[0] : null
+  // Visualizar Maniquí / Silueta y Expediente
+  const handleVerSilueta = (pacienteSel) => {
+    const primerDoc = (pacienteSel.documentos && pacienteSel.documentos.length > 0) ? pacienteSel.documentos[0] : null
     setDocumentoEnVista({
       id: primerDoc ? primerDoc.id : null,
-      nombre_archivo: primerDoc ? primerDoc.nombre_archivo : `Historia Clínica Digital - DNI ${paciente.dni}`,
-      paciente_id: paciente.id,
-      paciente_dni: paciente.dni,
-      paciente: paciente,
+      nombre_archivo: primerDoc ? (primerDoc.nombre_original || primerDoc.nombre_archivo) : `Historia Clínica Digital - DNI ${pacienteSel.dni}`,
+      paciente_id: pacienteSel.id,
+      paciente_dni: pacienteSel.dni,
+      paciente: pacienteSel,
       fecha_subida: primerDoc ? primerDoc.fecha_subida : 'Expediente Activo'
     })
 
-    // Detección de Alergias o Contenido Sensible en el historial del paciente
-    const notas = paciente.notas_medicas || []
-    const signos = paciente.signos_vitales || []
-    const textoAnalizar = [
-      ...notas.map(n => `${n.diagnostico || ''} ${n.contenido || ''}`),
-      ...signos.map(s => s.observaciones || '')
-    ].join(' ').toLowerCase()
-
-    const contieneAlergia = /alerg|penicilina|latex|intoleran|sensib|reacci[oó]n|asma|anafilax|cuidado especial/.test(textoAnalizar)
-
-    if (contieneAlergia) {
+    if (pacienteSel.alergias && !pacienteSel.alergias.toLowerCase().includes('ninguna')) {
       notificar({
         tipo: 'alergia',
         titulo: 'Alergias / Advertencia',
-        texto: `Atención: El paciente DNI ${paciente.dni} registra alertas de alergias o condición médica de cuidado sensible.`,
+        texto: `Atención: El paciente ${pacienteSel.nombre || `DNI ${pacienteSel.dni}`} registra alertas de alergias: ${pacienteSel.alergias}.`,
         contador: '2',
-        actionLabel: 'Got it'
+        actionLabel: 'Entendido'
       })
     }
   }
 
-  // Colecciones calculadas
-  const pacientesFiltrados = pacientes.filter(p =>
-    p.dni.toLowerCase().includes(busquedaDni.trim().toLowerCase())
-  )
+  // Colecciones calculadas para filtros
+  const pacientesFiltrados = pacientes.filter(p => {
+    const q = busquedaDni.trim().toLowerCase()
+    if (!q) return true
+    return (
+      (p.dni && p.dni.toLowerCase().includes(q)) ||
+      (p.nombre && p.nombre.toLowerCase().includes(q)) ||
+      (p.alergias && p.alergias.toLowerCase().includes(q))
+    )
+  })
 
   const todosLosDocumentos = pacientes.flatMap(p =>
     (p.documentos || []).map(doc => ({
       ...doc,
       paciente_dni: doc.paciente_dni || p.dni,
-      paciente_id: doc.paciente_id || p.id
+      paciente_id: doc.paciente_id || p.id,
+      paciente_nombre: doc.paciente_nombre || p.nombre || null
     }))
   )
 
@@ -521,27 +457,25 @@ function AppContent() {
     const q = busquedaDni.trim().toLowerCase()
     const coincideTexto = !q ||
       (doc.paciente_dni && doc.paciente_dni.toLowerCase().includes(q)) ||
-      (doc.nombre_archivo && doc.nombre_archivo.toLowerCase().includes(q))
+      (doc.paciente_nombre && doc.paciente_nombre.toLowerCase().includes(q)) ||
+      (doc.nombre_archivo && doc.nombre_archivo.toLowerCase().includes(q)) ||
+      (doc.nombre_original && doc.nombre_original.toLowerCase().includes(q))
 
     if (!coincideTexto) return false
 
-    if (filtroTipoDoc === 'pdf') return esPdf(doc.nombre_archivo)
-    if (filtroTipoDoc === 'docx') return esDocx(doc.nombre_archivo)
-    if (filtroTipoDoc === 'imagen') return esImagen(doc.nombre_archivo)
-    if (filtroTipoDoc === 'texto') return esTexto(doc.nombre_archivo)
+    const nombreArchivo = doc.nombre_original || doc.nombre_archivo
+    if (filtroTipoDoc === 'pdf') return esPdf(nombreArchivo)
+    if (filtroTipoDoc === 'docx') return esDocx(nombreArchivo)
+    if (filtroTipoDoc === 'imagen') return esImagen(nombreArchivo)
+    if (filtroTipoDoc === 'texto') return esTexto(nombreArchivo)
     return true
   })
 
-  const totalPdfs = todosLosDocumentos.filter(d => esPdf(d.nombre_archivo)).length
-  const totalDocx = todosLosDocumentos.filter(d => esDocx(d.nombre_archivo)).length
-  const totalImagenes = todosLosDocumentos.filter(d => esImagen(d.nombre_archivo)).length
-  const totalTextos = todosLosDocumentos.filter(d => esTexto(d.nombre_archivo)).length
+  const totalPdfs = todosLosDocumentos.filter(d => esPdf(d.nombre_original || d.nombre_archivo)).length
+  const totalDocx = todosLosDocumentos.filter(d => esDocx(d.nombre_original || d.nombre_archivo)).length
+  const totalImagenes = todosLosDocumentos.filter(d => esImagen(d.nombre_original || d.nombre_archivo)).length
+  const totalTextos = todosLosDocumentos.filter(d => esTexto(d.nombre_original || d.nombre_archivo)).length
   const totalArchivosSistema = pacientes.reduce((acc, p) => acc + (p.total_documentos || 0), 0)
-
-  const rolRaw = (usuario?.rol || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-  const esAdmin = rolRaw.includes('admin')
-  const esMedico = rolRaw.includes('medico')
-  const esEnfermera = rolRaw.includes('enfermer')
 
   // Si no hay sesión iniciada
   if (!usuario) {
@@ -563,7 +497,7 @@ function AppContent() {
     )
   }
 
-  // Si ya tiene sesión e intenta entrar a /login, redirigir según rol
+  // Si tiene sesión e intenta ingresar a /login
   if (location.pathname === '/login') {
     return <Navigate to={esEnfermera ? "/signosvitales" : "/dashboard"} replace />
   }
@@ -571,10 +505,7 @@ function AppContent() {
   return (
     <div style={{
       position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
+      inset: 0,
       width: '100vw',
       height: '100vh',
       overflow: 'hidden',
@@ -585,7 +516,7 @@ function AppContent() {
       flexDirection: isMobile ? 'column' : 'row',
       transition: 'background-color 0.2s ease, color 0.2s ease'
     }}>
-      {/* Overlay oscuro para cerrar el menú lateral en dispositivos móviles */}
+      {/* Overlay para menú en dispositivos móviles */}
       {isMobile && sidebarMobileAbierto && (
         <div
           onClick={() => setSidebarMobileAbierto(false)}
@@ -595,13 +526,12 @@ function AppContent() {
             backgroundColor: 'rgba(5, 8, 15, 0.65)',
             backdropFilter: 'blur(3px)',
             WebkitBackdropFilter: 'blur(3px)',
-            zIndex: 90,
-            transition: 'opacity 0.25s ease'
+            zIndex: 90
           }}
         />
       )}
 
-      {/* BARRA SUPERIOR EXCLUSIVA PARA MÓVILES */}
+      {/* Barra Superior Móvil */}
       {isMobile && (
         <header style={{
           height: '56px',
@@ -615,10 +545,9 @@ function AppContent() {
           boxShadow: theme.shadowCard,
           zIndex: 40
         }}>
-          {/* Botón de apertura de barra lateral (Hamburguesa) */}
           <button
             onClick={() => setSidebarMobileAbierto(true)}
-            title="Abrir menú de navegación"
+            title="Abrir menú"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -639,46 +568,34 @@ function AppContent() {
             </svg>
           </button>
 
-          {/* Logo y Nombre Medix */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff'
-            }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2v20M2 12h20M7 7l10 10M17 7L7 17"></path>
-              </svg>
-            </div>
-            <span style={{ fontSize: '15px', fontWeight: '800', color: theme.textMain, letterSpacing: '-0.3px' }}>
-              Medix Pisco
-            </span>
-          </div>
+          <span style={{ fontSize: '15px', fontWeight: '800', color: theme.textMain }}>
+            Medix Pisco
+          </span>
 
-          {/* Badge del Usuario Activo */}
-          <div style={{
-            fontSize: '11px',
-            fontWeight: '700',
-            padding: '4px 8px',
-            borderRadius: '6px',
-            backgroundColor: esAdmin ? (temaOscuro ? '#3b0764' : '#fdf2f8') : (temaOscuro ? '#082f49' : '#f0f9ff'),
-            color: esAdmin ? (temaOscuro ? '#d8b4fe' : '#9d174d') : (temaOscuro ? '#7dd3fc' : '#0369a1'),
-            border: `1px solid ${esAdmin ? (temaOscuro ? '#581c87' : '#fbcfe8') : (temaOscuro ? '#0369a1' : '#bae6fd')}`
-          }}>
+          <div
+            onClick={abrirModalPassword}
+            style={{
+              fontSize: '11px',
+              fontWeight: '700',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              backgroundColor: esAdmin ? (temaOscuro ? '#3b0764' : '#fdf2f8') : (temaOscuro ? '#082f49' : '#f0f9ff'),
+              color: esAdmin ? (temaOscuro ? '#d8b4fe' : '#9d174d') : (temaOscuro ? '#7dd3fc' : '#0369a1'),
+              border: `1px solid ${esAdmin ? (temaOscuro ? '#581c87' : '#fbcfe8') : (temaOscuro ? '#0369a1' : '#bae6fd')}`,
+              cursor: 'pointer'
+            }}
+            title="Haga clic para cambiar contraseña"
+          >
             {usuario?.username || 'admin'}
           </div>
         </header>
       )}
 
-      {/* 1. PANEL IZQUIERDO: HERRAMIENTAS Y NAVEGACIÓN MODULAR */}
+      {/* 1. SIDEBAR DE NAVEGACIÓN */}
       <Sidebar
         usuario={usuario}
-        onLogout={handleLogout}
+        onLogout={logout}
+        onCambiarPassword={abrirModalPassword}
         totalPacientes={pacientes.length}
         totalDocumentos={totalArchivosSistema}
         totalSolicitudesPendientes={solicitudesPendientesCount}
@@ -689,7 +606,7 @@ function AppContent() {
         onCloseMobile={() => setSidebarMobileAbierto(false)}
       />
 
-      {/* 2. PANEL CENTRAL: RUTAS Y VISTAS */}
+      {/* 2. ÁREA CENTRAL PRINCIPAL DE VISTAS */}
       <main style={{
         flex: 1,
         height: isMobile ? 'calc(100vh - 56px)' : '100vh',
@@ -702,14 +619,12 @@ function AppContent() {
         flexDirection: 'column',
         transition: 'background-color 0.2s ease, color 0.2s ease'
       }}>
-        {/* Alerta / Notificación Flotante con Diseño Moderno (Modo Claro y Oscuro) */}
         <AlertToast
           alerta={mensaje}
           onClose={() => setMensaje({ tipo: '', texto: '', titulo: '' })}
         />
 
         <Routes>
-          {/* Ruta Dashboard (Médico y Administrador) */}
           <Route
             path="/dashboard"
             element={
@@ -757,7 +672,6 @@ function AppContent() {
             }
           />
 
-          {/* Rutas para Agregar Historia (Médico y Administrador - Restringido para Enfermera) */}
           <Route
             path="/agregarhistoria"
             element={
@@ -767,6 +681,10 @@ function AppContent() {
                 <NuevaHistoriaView
                   dni={dni}
                   setDni={setDni}
+                  nombre={nombre}
+                  setNombre={setNombre}
+                  alergias={alergias}
+                  setAlergias={setAlergias}
                   file={file}
                   setFile={setFile}
                   fileInputRef={fileInputRef}
@@ -779,7 +697,6 @@ function AppContent() {
           />
           <Route path="/nueva-historia" element={<Navigate to="/agregarhistoria" replace />} />
 
-          {/* Ruta Signos Vitales / Triaje (Enfermera y Administrador) */}
           <Route
             path="/signosvitales"
             element={
@@ -793,7 +710,6 @@ function AppContent() {
           />
           <Route path="/triaje" element={<Navigate to="/signosvitales" replace />} />
 
-          {/* Ruta Crear / Gestionar Usuarios (Exclusivo Administrador) */}
           <Route
             path="/usuarios"
             element={
@@ -814,7 +730,6 @@ function AppContent() {
             }
           />
 
-          {/* Ruta Configuración (Exclusivo Administrador) */}
           <Route
             path="/configuracion"
             element={
@@ -833,7 +748,6 @@ function AppContent() {
             }
           />
 
-          {/* Ruta Solicitudes de Eliminación (Exclusivo Administrador) */}
           <Route
             path="/solicitudes"
             element={
@@ -852,13 +766,12 @@ function AppContent() {
             }
           />
 
-          {/* Redirección por defecto según rol */}
           <Route path="/" element={<Navigate to={esEnfermera ? "/signosvitales" : "/dashboard"} replace />} />
           <Route path="*" element={<Navigate to={esEnfermera ? "/signosvitales" : "/dashboard"} replace />} />
         </Routes>
       </main>
 
-      {/* 3. PANEL DERECHO DESPLEGABLE: VISOR DE HISTORIA CLÍNICA */}
+      {/* 3. VISOR LATERAL CON CABECERA FIJA Y LÍNEA DE TIEMPO */}
       <VisorLateral
         documentoEnVista={documentoEnVista}
         paciente={
@@ -867,9 +780,16 @@ function AppContent() {
           null
         }
         onCerrar={() => setDocumentoEnVista(null)}
+        onSeleccionarDocumento={(doc) => {
+          const pac = pacientes.find(p => p.id === doc.paciente_id || String(p.dni) === String(doc.paciente_dni))
+          setDocumentoEnVista({
+            ...doc,
+            paciente: pac || null
+          })
+        }}
       />
 
-      {/* 4. MODAL DE SOLICITUD DE ELIMINACIÓN CON MOTIVO OBLIGATORIO (Bandeja del Admin) */}
+      {/* 4. MODAL DE SOLICITUD DE ELIMINACIÓN */}
       {pacienteParaSolicitud && (
         <SolicitudEliminacionModal
           paciente={pacienteParaSolicitud}
@@ -879,16 +799,15 @@ function AppContent() {
             notificar({
               tipo: 'exito',
               titulo: 'Solicitud Enviada',
-              texto: msg || 'Su solicitud de eliminación con justificación obligatoria fue enviada a la bandeja del Administrador.',
-              contador: '1',
-              actionLabel: 'Okay'
+              texto: msg || 'Su solicitud de eliminación con justificación obligatoria fue enviada al Administrador.',
+              actionLabel: 'Entendido'
             })
             cargarSolicitudesPendientes()
           }}
         />
       )}
 
-      {/* 5. MODAL DE ADVERTENCIA PARA CONFIRMAR ELIMINACIÓN (Reemplaza a localhost:5173 dice) */}
+      {/* 5. MODAL DE CONFIRMACIÓN */}
       {confirmacionEliminar && (
         <ConfirmDeleteModal
           paciente={confirmacionEliminar.paciente}
@@ -896,6 +815,14 @@ function AppContent() {
           pregunta={confirmacionEliminar.pregunta}
           onConfirmar={handleConfirmarEliminar}
           onCancelar={() => setConfirmacionEliminar(null)}
+        />
+      )}
+
+      {/* 6. MODAL DE CAMBIO DE CONTRASEÑA (OBLIGATORIO O VOLUNTARIO) */}
+      {modalPasswordAbierto && (
+        <CambiarPasswordModal
+          onCerrar={cerrarModalPassword}
+          notificar={notificar}
         />
       )}
     </div>

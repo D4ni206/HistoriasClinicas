@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
-import { API_BASE } from '../api/config'
+import { useAuth } from '../context/AuthContext'
 
 export default function SignosVitalesView({ pacientes, usuario, notificar, cargarDatos }) {
   const { temaOscuro, theme } = useTheme()
+  const { authFetch } = useAuth()
   const [pacienteSeleccionado, setPacienteSeleccionado] = useState(null)
   const [busquedaDni, setBusquedaDni] = useState('')
   const [historialSignos, setHistorialSignos] = useState([])
@@ -32,7 +33,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
     setPacienteSeleccionado(p)
     setCargandoHistorial(true)
     try {
-      const res = await fetch(`${API_BASE}/pacientes/${p.id}/signos-vitales`)
+      const res = await authFetch(`/pacientes/${p.id}/signos-vitales`)
       if (res.ok) {
         const data = await res.json()
         setHistorialSignos(data)
@@ -74,7 +75,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
         enfermera_nombre: usuario?.username ? `Enf. ${usuario.username}` : 'Personal de Enfermería'
       }
 
-      const res = await fetch(`${API_BASE}/pacientes/${pacienteSeleccionado.id}/signos-vitales`, {
+      const res = await authFetch(`/pacientes/${pacienteSeleccionado.id}/signos-vitales`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -124,8 +125,10 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
     }
   }
 
+  const q = busquedaDni.trim().toLowerCase()
   const pacientesFiltrados = pacientes.filter(p =>
-    p.dni.toLowerCase().includes(busquedaDni.trim().toLowerCase())
+    (p.dni && p.dni.toLowerCase().includes(q)) ||
+    (p.nombre && p.nombre.toLowerCase().includes(q))
   )
 
   return (
@@ -168,7 +171,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
             </label>
             <input
               type="text"
-              placeholder="Buscar por DNI..."
+              placeholder="Buscar por DNI o Nombre..."
               value={busquedaDni}
               onChange={(e) => setBusquedaDni(e.target.value)}
               style={{
@@ -211,13 +214,27 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    <div>
-                      <div style={{ fontWeight: '700', fontSize: '13px' }}>
-                        DNI {p.dni}
+                    <div style={{ minWidth: 0, flex: 1, marginRight: '8px' }}>
+                      <div style={{ fontWeight: '700', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {p.nombre ? p.nombre : `DNI ${p.dni}`}
                       </div>
                       <div style={{ fontSize: '10.5px', color: esActivo ? (temaOscuro ? '#94a3b8' : '#cbd5e1') : theme.textMuted }}>
-                        Expediente #{p.id}
+                        {p.nombre ? `DNI ${p.dni} · ` : ''}Expediente #{p.id}
                       </div>
+                      {p.alergias && (
+                        <div style={{
+                          marginTop: '3px',
+                          display: 'inline-block',
+                          fontSize: '10px',
+                          fontWeight: '700',
+                          color: '#dc2626',
+                          backgroundColor: '#fee2e2',
+                          padding: '1px 6px',
+                          borderRadius: '4px'
+                        }}>
+                          ⚠️ Alergia: {p.alergias}
+                        </div>
+                      )}
                     </div>
                     <span style={{
                       fontSize: '10.5px',
@@ -226,7 +243,8 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                       borderRadius: '6px',
                       backgroundColor: esActivo ? (temaOscuro ? '#0f172a' : '#1e293b') : theme.bgCard,
                       border: theme.border,
-                      color: esActivo ? '#ffffff' : theme.textSecondary
+                      color: esActivo ? '#ffffff' : theme.textSecondary,
+                      whiteSpace: 'nowrap'
                     }}>
                       Seleccionar
                     </span>
@@ -254,8 +272,13 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                     Registrar Nuevos Signos Vitales
                   </h3>
                   <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: theme.textMuted }}>
-                    Paciente: <strong style={{ color: theme.textMain }}>DNI {pacienteSeleccionado.dni}</strong> · Expediente #{pacienteSeleccionado.id}
+                    Paciente: <strong style={{ color: theme.textMain }}>{pacienteSeleccionado.nombre ? `${pacienteSeleccionado.nombre} (DNI ${pacienteSeleccionado.dni})` : `DNI ${pacienteSeleccionado.dni}`}</strong> · Expediente #{pacienteSeleccionado.id}
                   </p>
+                  {pacienteSeleccionado.alergias && (
+                    <div style={{ marginTop: '4px', fontSize: '11px', color: '#dc2626', fontWeight: '700' }}>
+                      ⚠️ Alergias registradas: {pacienteSeleccionado.alergias}
+                    </div>
+                  )}
                 </div>
                 <span style={{
                   fontSize: '11px',

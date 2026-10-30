@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { API_BASE } from '../api/config'
 import ConfirmDeleteModal from './ConfirmDeleteModal'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAgregada, notificar }) {
   const { theme, temaOscuro } = useTheme()
+  const { authFetch } = useAuth()
   const [notas, setNotas] = useState(paciente?.notas_medicas || [])
   const [cargandoNotas, setCargandoNotas] = useState(false)
   const [nuevaNota, setNuevaNota] = useState('')
@@ -21,7 +22,7 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
   const cargarNotas = async () => {
     setCargandoNotas(true)
     try {
-      const res = await fetch(`${API_BASE}/pacientes/${paciente.id}/notas`)
+      const res = await authFetch(`/pacientes/${paciente.id}/notas`)
       if (res.ok) {
         const data = await res.json()
         setNotas(data)
@@ -45,7 +46,7 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
     try {
       const textoGuardado = nuevaNota.trim()
       const nombreMedico = usuario ? `Dr. ${usuario.username}` : 'Médico Tratante'
-      const res = await fetch(`${API_BASE}/pacientes/${paciente.id}/notas`, {
+      const res = await authFetch(`/pacientes/${paciente.id}/notas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -99,7 +100,7 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
     const id = notaParaEliminar
     setNotaParaEliminar(null)
     try {
-      const res = await fetch(`${API_BASE}/notas/${id}`, { method: 'DELETE' })
+      const res = await authFetch(`/notas/${id}`, { method: 'DELETE' })
       if (res.ok) {
         await cargarNotas()
         if (onNotaAgregada) onNotaAgregada()
@@ -183,7 +184,7 @@ export default function NotasMedicasModal({ paciente, usuario, onClose, onNotaAg
                 Notas Clínicas y Evolución Médica
               </h3>
               <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: theme.textMuted }}>
-                Paciente DNI: <span style={{ backgroundColor: theme.bgCard, color: theme.textMain, padding: '1px 6px', borderRadius: '4px', border: theme.border, fontWeight: '700' }}>{paciente.dni}</span> · Expediente #{paciente.id}
+                Paciente: <span style={{ backgroundColor: theme.bgCard, color: theme.textMain, padding: '1px 6px', borderRadius: '4px', border: theme.border, fontWeight: '700' }}>{paciente.nombre ? `${paciente.nombre} (DNI ${paciente.dni})` : `DNI ${paciente.dni}`}</span> · Expediente #{paciente.id}
               </p>
             </div>
           </div>

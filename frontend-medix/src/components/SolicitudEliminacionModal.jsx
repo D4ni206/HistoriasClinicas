@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
-import { API_BASE } from '../api/config'
+import { useAuth } from '../context/AuthContext'
 
 const OPCIONES_MOTIVO = [
   'Historia clínica duplicada o redundante en el sistema',
@@ -18,6 +18,7 @@ export default function SolicitudEliminacionModal({
   onSolicitudEnviada
 }) {
   const { temaOscuro, theme } = useTheme()
+  const { authFetch } = useAuth()
   const [motivoSeleccionado, setMotivoSeleccionado] = useState(OPCIONES_MOTIVO[0])
   const [motivoDetalle, setMotivoDetalle] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -47,7 +48,7 @@ export default function SolicitudEliminacionModal({
         motivo_detalle: motivoDetalle.trim()
       }
 
-      const res = await fetch(`${API_BASE}/solicitudes-eliminacion`, {
+      const res = await authFetch('/solicitudes-eliminacion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -147,7 +148,7 @@ export default function SolicitudEliminacionModal({
             fontSize: '12.5px'
           }}>
             <div>
-              <span style={{ color: theme.textMuted }}>Paciente DNI: </span>
+              <span style={{ color: theme.textMuted }}>Paciente: </span>
               <strong style={{
                 color: temaOscuro ? '#7dd3fc' : '#0369a1',
                 backgroundColor: temaOscuro ? '#082f49' : '#f0f9ff',
@@ -155,7 +156,7 @@ export default function SolicitudEliminacionModal({
                 borderRadius: '6px',
                 border: `1px solid ${temaOscuro ? '#0284c7' : '#bae6fd'}`
               }}>
-                {paciente.dni}
+                {paciente.nombre ? `${paciente.nombre} (DNI ${paciente.dni})` : `DNI ${paciente.dni}`}
               </strong>
               <div style={{ marginTop: '4px', color: theme.textMuted, fontSize: '11.5px' }}>
                 Expediente: <strong>#{paciente.id}</strong> · Documentos: <strong>{paciente.documentos ? paciente.documentos.length : (paciente.total_documentos || 0)}</strong>

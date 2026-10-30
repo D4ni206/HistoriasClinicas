@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { API_BASE } from '../api/config'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function SolicitudesView({ usuario, notificar, onActualizacion }) {
   const { theme, temaOscuro } = useTheme()
+  const { authFetch } = useAuth()
   const [solicitudes, setSolicitudes] = useState([])
   const [cargando, setCargando] = useState(false)
   const [filtroEstado, setFiltroEstado] = useState('todas') // 'todas', 'Pendiente', 'Aprobada', 'Rechazada'
@@ -15,7 +16,7 @@ export default function SolicitudesView({ usuario, notificar, onActualizacion })
   const cargarSolicitudes = async () => {
     setCargando(true)
     try {
-      const res = await fetch(`${API_BASE}/solicitudes-eliminacion`)
+      const res = await authFetch('/solicitudes-eliminacion')
       if (res.ok) {
         const data = await res.json()
         setSolicitudes(data)
@@ -41,7 +42,7 @@ export default function SolicitudesView({ usuario, notificar, onActualizacion })
     setSolicitudParaAprobar(null)
     setProcesandoId(solicitud.id)
     try {
-      const res = await fetch(`${API_BASE}/solicitudes-eliminacion/${solicitud.id}/aprobar`, {
+      const res = await authFetch(`/solicitudes-eliminacion/${solicitud.id}/aprobar`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ respuesta_admin: `Aprobado por el Administrador ${usuario?.username || 'admin'}` })
@@ -78,7 +79,7 @@ export default function SolicitudesView({ usuario, notificar, onActualizacion })
     setSolicitudParaRechazar(null)
     setProcesandoId(solicitud.id)
     try {
-      const res = await fetch(`${API_BASE}/solicitudes-eliminacion/${solicitud.id}/rechazar`, {
+      const res = await authFetch(`/solicitudes-eliminacion/${solicitud.id}/rechazar`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ respuesta_admin: 'Desestimada formalmente por el Administrador conforme a protocolos' })

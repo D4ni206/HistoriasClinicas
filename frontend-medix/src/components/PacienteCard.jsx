@@ -77,6 +77,9 @@ export default function PacienteCard({
 
   // Detección de Alergias o Contenido Sensible en el paciente
   const tieneAlergia = useMemo(() => {
+    if (paciente.alergias && paciente.alergias.trim() && !paciente.alergias.toLowerCase().includes('ninguna')) {
+      return true
+    }
     const notas = paciente.notas_medicas || []
     const signos = paciente.signos_vitales || []
     const texto = [
@@ -283,23 +286,46 @@ export default function PacienteCard({
         </div>
 
         {/* ================================================================= */}
-        {/* 2. DNI DEL PACIENTE (HEADING) */}
+        {/* 2. NOMBRE Y DNI DEL PACIENTE (HEADING) */}
         {/* ================================================================= */}
         <div style={{ marginTop: '2px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-            <h3 style={{
-              margin: 0,
-              fontSize: '17px',
-              fontWeight: '800',
-              color: theme.textMain,
-              letterSpacing: '-0.02em',
-              lineHeight: '1.25'
-            }}>
-              DNI: {paciente.dni}
-            </h3>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              {paciente.nombre ? (
+                <>
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: '15.5px',
+                    fontWeight: '800',
+                    color: theme.textMain,
+                    letterSpacing: '-0.02em',
+                    lineHeight: '1.25',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }} title={paciente.nombre}>
+                    {paciente.nombre}
+                  </h3>
+                  <p style={{ margin: '3px 0 0 0', fontSize: '12px', fontWeight: '600', color: theme.textMuted }}>
+                    DNI: <strong style={{ color: temaOscuro ? '#7dd3fc' : '#0369a1' }}>{paciente.dni}</strong>
+                  </p>
+                </>
+              ) : (
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '16.5px',
+                  fontWeight: '800',
+                  color: theme.textMain,
+                  letterSpacing: '-0.02em',
+                  lineHeight: '1.25'
+                }}>
+                  DNI: {paciente.dni}
+                </h3>
+              )}
+            </div>
 
             {/* Badges de estado clínico y advertencias */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
               {tieneAlergia && (
                 <button
                   type="button"
@@ -309,13 +335,13 @@ export default function PacienteCard({
                       notificar({
                         tipo: 'alergia',
                         titulo: 'Alergias / Advertencia',
-                        texto: `Atención: El expediente del paciente DNI ${paciente.dni} registra alertas de alergias o condición médica de cuidado sensible.`,
+                        texto: `Atención: El expediente del paciente DNI ${paciente.dni} (${paciente.nombre || 'Sin nombre'}) registra alergias: ${paciente.alergias || 'condición médica sensible detectada'}.`,
                         contador: '2',
-                        actionLabel: 'Got it'
+                        actionLabel: 'Entendido'
                       })
                     }
                   }}
-                  title="Paciente con alertas de alergias activas"
+                  title={paciente.alergias ? `Alergia: ${paciente.alergias}` : "Paciente con alertas de alergias activas"}
                   style={{
                     fontSize: '10.5px',
                     fontWeight: '700',
@@ -327,11 +353,15 @@ export default function PacienteCard({
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px'
+                    gap: '4px',
+                    maxWidth: '130px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
                   }}
                 >
                   <span style={{ fontSize: '10px' }}>⚠️</span>
-                  <span>Alergias</span>
+                  <span>{paciente.alergias ? (paciente.alergias.length > 12 ? `${paciente.alergias.slice(0, 12)}...` : paciente.alergias) : 'Alergias'}</span>
                 </button>
               )}
               <span style={{

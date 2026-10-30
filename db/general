@@ -1,7 +1,9 @@
 -- 1. Tablas principales y catálogos (sin llaves foráneas dependientes)
 CREATE TABLE paciente (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    dni VARCHAR(20) UNIQUE NOT NULL
+    dni VARCHAR(20) UNIQUE NOT NULL,
+    nombre VARCHAR(150) NULL,
+    alergias VARCHAR(255) NULL
 );
 
 CREATE TABLE medico (
@@ -36,6 +38,7 @@ CREATE TABLE usuario (
 CREATE TABLE documento_escaneado (
     id INT IDENTITY(1,1) PRIMARY KEY,
     ruta_minio VARCHAR(255) NOT NULL,
+    nombre_original VARCHAR(255) NULL,
     fecha_subida DATETIME DEFAULT GETDATE(),
     paciente_id INT NOT NULL FOREIGN KEY REFERENCES paciente(id),
     medico_id INT FOREIGN KEY REFERENCES medico(id),

@@ -5,6 +5,10 @@ import { useTheme } from '../context/ThemeContext'
 export default function NuevaHistoriaView({
   dni,
   setDni,
+  nombre = '',
+  setNombre = () => {},
+  alergias = '',
+  setAlergias = () => {},
   file,
   setFile,
   fileInputRef,
@@ -190,6 +194,139 @@ export default function NuevaHistoriaView({
                 )}
               </div>
             )}
+          </div>
+
+          {/* Campo Nombre Completo del Paciente */}
+          <div style={{ marginBottom: '22px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ fontSize: '12.5px', fontWeight: '700', color: theme.textMain }}>
+                Nombre y Apellidos del Paciente
+              </label>
+              {pacienteDetectado?.nombre && (
+                <span style={{ fontSize: '11.5px', color: theme.accentCool }}>
+                  Registrado: {pacienteDetectado.nombre}
+                </span>
+              )}
+            </div>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder={pacienteDetectado?.nombre ? pacienteDetectado.nombre : "Ejemplo: Carlos Mendoza Silva"}
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                maxLength={150}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '11px 14px 11px 38px',
+                  borderRadius: '9px',
+                  border: `1px solid ${theme.borderInput}`,
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: theme.textMain,
+                  backgroundColor: theme.bgInput,
+                  outline: 'none',
+                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#38bdf8'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(56, 189, 248, 0.15)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = theme.borderInput
+                  e.target.style.boxShadow = 'none'
+                }}
+              />
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: theme.textMuted }}>
+                👤
+              </span>
+            </div>
+          </div>
+
+          {/* Campo Alergias Conocidas y Condiciones Sensibles */}
+          <div style={{ marginBottom: '22px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ fontSize: '12.5px', fontWeight: '700', color: theme.textMain }}>
+                Alergias o Condiciones Médicas de Cuidado
+              </label>
+              <span style={{ fontSize: '11px', color: theme.textMuted }}>
+                Opcional · Alerta preventiva
+              </span>
+            </div>
+            <div style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder={pacienteDetectado?.alergias ? pacienteDetectado.alergias : "Ejemplo: Penicilina, Látex, AINEs, Asma"}
+                value={alergias}
+                onChange={(e) => setAlergias(e.target.value)}
+                maxLength={255}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '11px 14px 11px 38px',
+                  borderRadius: '9px',
+                  border: `1px solid ${theme.borderInput}`,
+                  fontSize: '13.5px',
+                  fontWeight: '500',
+                  color: theme.textMain,
+                  backgroundColor: theme.bgInput,
+                  outline: 'none',
+                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#f59e0b'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.15)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = theme.borderInput
+                  e.target.style.boxShadow = 'none'
+                }}
+              />
+              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: theme.textMuted }}>
+                ⚠️
+              </span>
+            </div>
+
+            {/* Chips de sugerencias rápidas de alergias */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+              {['Penicilina', 'Látex', 'AINEs / Ibuprofeno', 'Sulfas', 'Ninguna conocida'].map((sug) => (
+                <button
+                  type="button"
+                  key={sug}
+                  onClick={() => {
+                    if (sug === 'Ninguna conocida') {
+                      setAlergias('Ninguna conocida')
+                    } else {
+                      if (!alergias || alergias === 'Ninguna conocida') {
+                        setAlergias(sug)
+                      } else if (!alergias.includes(sug)) {
+                        setAlergias(`${alergias}, ${sug}`)
+                      }
+                    }
+                  }}
+                  style={{
+                    padding: '3px 9px',
+                    borderRadius: '6px',
+                    border: theme.border,
+                    backgroundColor: theme.bgSubtle,
+                    color: theme.textSecondary,
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = temaOscuro ? '#334155' : '#e2e8f0'
+                    e.currentTarget.style.color = theme.textMain
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.bgSubtle
+                    e.currentTarget.style.color = theme.textSecondary
+                  }}
+                >
+                  + {sug}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Campo Selector de Archivo (Dropzone Minimalista) */}

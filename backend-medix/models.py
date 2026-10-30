@@ -5,6 +5,8 @@ class Paciente(db.Model):
     __tablename__ = 'paciente'
     id = db.Column(db.Integer, primary_key=True)
     dni = db.Column(db.String(20), unique=True, nullable=False)
+    nombre = db.Column(db.String(150), nullable=True)
+    alergias = db.Column(db.String(255), nullable=True)
     documentos = db.relationship('Documento_Escaneado', backref='paciente', cascade='all, delete-orphan', lazy=True)
     notas_medicas = db.relationship('NotaMedica', backref='paciente', cascade='all, delete-orphan', lazy=True, order_by='desc(NotaMedica.fecha)')
     signos_vitales = db.relationship('SignosVitales', backref='paciente', cascade='all, delete-orphan', lazy=True, order_by='desc(SignosVitales.fecha)')
@@ -13,6 +15,8 @@ class Paciente(db.Model):
         data = {
             'id': self.id,
             'dni': self.dni,
+            'nombre': self.nombre or '',
+            'alergias': self.alergias or '',
             'total_documentos': len(self.documentos) if self.documentos else 0,
             'total_notas': len(self.notas_medicas) if self.notas_medicas else 0,
             'total_signos': len(self.signos_vitales) if self.signos_vitales else 0
@@ -69,6 +73,7 @@ class Documento_Escaneado(db.Model):
     __tablename__ = 'documento_escaneado'
     id = db.Column(db.Integer, primary_key=True)
     ruta_minio = db.Column(db.String(255), nullable=False)
+    nombre_original = db.Column(db.String(255), nullable=True)
     fecha_subida = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Llaves foráneas que conectan este documento con el resto del sistema
@@ -78,13 +83,16 @@ class Documento_Escaneado(db.Model):
     enfermedad_id = db.Column(db.Integer, db.ForeignKey('enfermedad_cie.id'), nullable=True)
 
     def to_dict(self):
+        nombre_minio = self.ruta_minio.split('/')[-1] if '/' in self.ruta_minio else self.ruta_minio
         return {
             'id': self.id,
             'ruta_minio': self.ruta_minio,
-            'nombre_archivo': self.ruta_minio.split('/')[-1] if '/' in self.ruta_minio else self.ruta_minio,
+            'nombre_original': self.nombre_original or nombre_minio,
+            'nombre_archivo': self.nombre_original if self.nombre_original else nombre_minio,
             'fecha_subida': self.fecha_subida.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_subida else None,
             'paciente_id': self.paciente_id,
             'paciente_dni': self.paciente.dni if self.paciente else None,
+            'paciente_nombre': self.paciente.nombre if self.paciente and self.paciente.nombre else None,
             'medico_id': self.medico_id,
             'especialidad_id': self.especialidad_id,
             'enfermedad_id': self.enfermedad_id

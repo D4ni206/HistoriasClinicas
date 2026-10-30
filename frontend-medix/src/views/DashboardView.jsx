@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { obtenerIconoArchivo, esPdf, esDocx, esImagen, esTexto } from '../utils/fileHelpers'
@@ -46,6 +46,61 @@ export default function DashboardView({
   const navigate = useNavigate()
   const { temaOscuro, theme } = useTheme()
   const [pacienteParaNotas, setPacienteParaNotas] = useState(null)
+
+  // Paginación y Filtros Mejorados para Tarjetas
+  const [paginaCards, setPaginaCards] = useState(1)
+  const [porPaginaCards, setPorPaginaCards] = useState(12)
+  const [filtroCategoria, setFiltroCategoria] = useState('todos')
+
+  // Paginación para Tabla de Documentos
+  const [paginaTabla, setPaginaTabla] = useState(1)
+  const [porPaginaTabla, setPorPaginaTabla] = useState(10)
+
+  // Búsqueda Mejorada Omnidireccional (DNI, Nombre, Alergias, Documentos)
+  const pacientesFiltradosFinal = useMemo(() => {
+    let res = pacientes || []
+    const q = (busquedaDni || '').trim().toLowerCase()
+    if (q) {
+      res = res.filter(p => {
+        const matchDni = p.dni && p.dni.toLowerCase().includes(q)
+        const matchNombre = p.nombre && p.nombre.toLowerCase().includes(q)
+        const matchAlergias = p.alergias && p.alergias.toLowerCase().includes(q)
+        const matchDoc = p.documentos && p.documentos.some(d => (d.nombre_original || d.nombre_archivo || '').toLowerCase().includes(q))
+        return matchDni || matchNombre || matchAlergias || matchDoc
+      })
+    }
+
+    if (filtroCategoria === 'alergias') {
+      res = res.filter(p => p.alergias && p.alergias.trim() && !p.alergias.toLowerCase().includes('ninguna'))
+    } else if (filtroCategoria === 'con_docs') {
+      res = res.filter(p => (p.total_documentos || (p.documentos ? p.documentos.length : 0)) > 0)
+    } else if (filtroCategoria === 'con_notas') {
+      res = res.filter(p => (p.total_notas || (p.notas_medicas ? p.notas_medicas.length : 0)) > 0)
+    } else if (filtroCategoria === 'con_triaje') {
+      res = res.filter(p => (p.total_signos || (p.signos_vitales ? p.signos_vitales.length : 0)) > 0)
+    }
+
+    return res
+  }, [pacientes, busquedaDni, filtroCategoria])
+
+  // Reset de página al cambiar filtros
+  useEffect(() => {
+    setPaginaCards(1)
+  }, [busquedaDni, filtroCategoria, porPaginaCards])
+
+  useEffect(() => {
+    setPaginaTabla(1)
+  }, [busquedaDni, filtroTipoDoc, porPaginaTabla])
+
+  // Cálculo de Paginación para Tarjetas
+  const totalPaginasCards = Math.max(1, Math.ceil(pacientesFiltradosFinal.length / porPaginaCards))
+  const indiceInicioCards = (paginaCards - 1) * porPaginaCards
+  const pacientesPaginadosCards = pacientesFiltradosFinal.slice(indiceInicioCards, indiceInicioCards + porPaginaCards)
+
+  // Cálculo de Paginación para Tabla
+  const totalPaginasTabla = Math.max(1, Math.ceil(documentosFiltradosTabla.length / porPaginaTabla))
+  const indiceInicioTabla = (paginaTabla - 1) * porPaginaTabla
+  const docsPaginadosTabla = documentosFiltradosTabla.slice(indiceInicioTabla, indiceInicioTabla + porPaginaTabla)
 
   return (
     <>
@@ -246,49 +301,139 @@ export default function DashboardView({
       {/* =================================================================== */}
       {(vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula') && (
         <>
-          {/* Barra de Filtro Rápido */}
+          {/* Barra de Búsqueda Mejorada y Filtros Rápidos */}
           <div style={{
             backgroundColor: theme.bgCard,
             border: theme.border,
-            borderRadius: '12px',
-            padding: '12px 16px',
+            borderRadius: '14px',
+            padding: '14px 18px',
             marginBottom: '18px',
+            boxShadow: theme.shadowCard,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-            boxShadow: theme.shadowCard
+            flexDirection: 'column',
+            gap: '12px'
           }}>
-            <div style={{ flex: '1 1 280px', position: 'relative' }}>
-              <input
-                type="text"
-                placeholder="Buscar expediente por DNI..."
-                value={busquedaDni}
-                onChange={(e) => setBusquedaDni(e.target.value)}
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  padding: '9px 12px 9px 34px',
-                  borderRadius: '8px',
-                  border: `1px solid ${theme.borderInput}`,
-                  fontSize: '13px',
-                  backgroundColor: theme.bgInput,
-                  color: theme.textMain,
-                  outline: 'none'
-                }}
-              />
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '10px', top: '11px' }}>
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px'
+            }}>
+              <div style={{ flex: '1 1 320px', position: 'relative' }}>
+                <input
+                  type="text"
+                  placeholder="Buscar por DNI, Nombre del paciente, Alergias o Archivo..."
+                  value={busquedaDni}
+                  onChange={(e) => setBusquedaDni(e.target.value)}
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '10px 36px 10px 36px',
+                    borderRadius: '8px',
+                    border: `1px solid ${theme.borderInput}`,
+                    fontSize: '13px',
+                    backgroundColor: theme.bgInput,
+                    color: theme.textMain,
+                    outline: 'none',
+                    transition: 'border-color 0.15s ease'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#38bdf8'}
+                  onBlur={(e) => e.target.style.borderColor = theme.borderInput}
+                />
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+
+                {busquedaDni && (
+                  <button
+                    onClick={() => setBusquedaDni('')}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: theme.textMuted,
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      padding: '2px 6px'
+                    }}
+                    title="Limpiar búsqueda"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Selector de cantidad por página */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '12px', color: theme.textMuted, fontWeight: '600' }}>
+                  Mostrar:
+                </span>
+                {[6, 12, 24].map(cant => (
+                  <button
+                    key={cant}
+                    onClick={() => setPorPaginaCards(cant)}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '11.5px',
+                      fontWeight: porPaginaCards === cant ? '700' : '500',
+                      border: porPaginaCards === cant ? `1px solid ${theme.accentCool}` : theme.border,
+                      backgroundColor: porPaginaCards === cant ? (temaOscuro ? '#1e293b' : '#0f172a') : theme.bgSubtle,
+                      color: porPaginaCards === cant ? (temaOscuro ? '#38bdf8' : '#ffffff') : theme.textMuted,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {cant}
+                  </button>
+                ))}
+                <span style={{ fontSize: '12px', fontWeight: '700', color: theme.textSecondary, marginLeft: '6px' }}>
+                  {pacientesFiltradosFinal.length} coincidencia{pacientesFiltradosFinal.length !== 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
-            <span style={{ fontSize: '12px', fontWeight: '700', color: theme.textSecondary }}>
-              {pacientesFiltrados.length} expedientes clínicos registrados
-            </span>
+
+            {/* Chips de Categorías Rápidas */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ fontSize: '11.5px', fontWeight: '700', color: theme.textMuted, marginRight: '2px' }}>
+                Filtros:
+              </span>
+              {[
+                { id: 'todos', label: 'Todos' },
+                { id: 'alergias', label: 'Con Alergias ⚠️' },
+                { id: 'con_docs', label: 'Con Documentos 📄' },
+                { id: 'con_notas', label: 'Con Notas Médicas 🩺' },
+                { id: 'con_triaje', label: 'Con Triaje 💓' }
+              ].map(cat => {
+                const activo = filtroCategoria === cat.id
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setFiltroCategoria(cat.id)}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: '20px',
+                      fontSize: '11px',
+                      fontWeight: activo ? '700' : '600',
+                      border: activo ? `1.5px solid ${theme.accentCool}` : theme.border,
+                      backgroundColor: activo ? (temaOscuro ? '#1e293b' : '#0f172a') : theme.bgSubtle,
+                      color: activo ? (temaOscuro ? '#38bdf8' : '#ffffff') : theme.textSecondary,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {cat.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Grid de Registros con Componente PacienteCard */}
-          {pacientesFiltrados.length === 0 ? (
+          {pacientesFiltradosFinal.length === 0 ? (
             <div style={{
               padding: '48px 24px',
               textAlign: 'center',
@@ -297,59 +442,145 @@ export default function DashboardView({
               border: `1.5px dashed ${temaOscuro ? '#1e293b' : '#cbd5e1'}`,
               color: theme.textMuted
             }}>
-              No se encontraron expedientes coincidentes en la vista de tarjetas.
+              No se encontraron expedientes coincidentes con los criterios de búsqueda o filtro.
             </div>
           ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
-              gap: '20px',
-              paddingBottom: '30px'
-            }}>
-              {pacientesFiltrados.map((pac) => (
-                <PacienteCard
-                  key={pac.id}
-                  paciente={pac}
-                  onVerDocumento={(docConPaciente) => {
-                    const pacFinal = docConPaciente.paciente || pac
-                    setDocumentoEnVista({
-                      ...docConPaciente,
-                      paciente: pacFinal
-                    })
-                  }}
-                  onVerSilueta={(p) => {
-                    if (onVerSilueta) {
-                      onVerSilueta(p)
-                    } else {
+            <>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
+                gap: '20px',
+                paddingBottom: '20px'
+              }}>
+                {pacientesPaginadosCards.map((pac) => (
+                  <PacienteCard
+                    key={pac.id}
+                    paciente={pac}
+                    onVerDocumento={(docConPaciente) => {
+                      const pacFinal = docConPaciente.paciente || pac
+                      setDocumentoEnVista({
+                        ...docConPaciente,
+                        paciente: pacFinal
+                      })
+                    }}
+                    onVerSilueta={(p) => {
+                      if (onVerSilueta) {
+                        onVerSilueta(p)
+                      } else {
+                        const docPrincipal = (p.documentos && p.documentos.length > 0) ? p.documentos[0] : null
+                        setDocumentoEnVista({
+                          id: docPrincipal ? docPrincipal.id : null,
+                          nombre_archivo: docPrincipal ? (docPrincipal.nombre_original || docPrincipal.nombre_archivo) : `Historia Clínica Digital - DNI ${p.dni}`,
+                          paciente_id: p.id,
+                          paciente_dni: p.dni,
+                          paciente: p,
+                          fecha_subida: docPrincipal ? docPrincipal.fecha_subida : 'Expediente Activo'
+                        })
+                      }
+                    }}
+                    onAgregarArchivo={agregarArchivoACarpeta}
+                    onAbrirNotas={setPacienteParaNotas}
+                    onVerCarpeta={(p) => {
                       const docPrincipal = (p.documentos && p.documentos.length > 0) ? p.documentos[0] : null
                       setDocumentoEnVista({
                         id: docPrincipal ? docPrincipal.id : null,
-                        nombre_archivo: docPrincipal ? docPrincipal.nombre_archivo : `Historia Clínica Digital - DNI ${p.dni}`,
+                        nombre_archivo: docPrincipal ? (docPrincipal.nombre_original || docPrincipal.nombre_archivo) : `Historia Clínica Digital - DNI ${p.dni}`,
                         paciente_id: p.id,
                         paciente_dni: p.dni,
                         paciente: p,
                         fecha_subida: docPrincipal ? docPrincipal.fecha_subida : 'Expediente Activo'
                       })
-                    }
-                  }}
-                  onAgregarArchivo={agregarArchivoACarpeta}
-                  onAbrirNotas={setPacienteParaNotas}
-                  onVerCarpeta={(p) => {
-                    const docPrincipal = (p.documentos && p.documentos.length > 0) ? p.documentos[0] : null
-                    setDocumentoEnVista({
-                      id: docPrincipal ? docPrincipal.id : null,
-                      nombre_archivo: docPrincipal ? docPrincipal.nombre_archivo : `Historia Clínica Digital - DNI ${p.dni}`,
-                      paciente_id: p.id,
-                      paciente_dni: p.dni,
-                      paciente: p,
-                      fecha_subida: docPrincipal ? docPrincipal.fecha_subida : 'Expediente Activo'
-                    })
-                  }}
-                  onEliminar={handleEliminarPaciente}
-                  notificar={notificar}
-                />
-              ))}
-            </div>
+                    }}
+                    onEliminar={handleEliminarPaciente}
+                    notificar={notificar}
+                  />
+                ))}
+              </div>
+
+              {/* BARRA DE PAGINACIÓN DE TARJETAS */}
+              {totalPaginasCards > 1 && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  backgroundColor: theme.bgCard,
+                  border: theme.border,
+                  borderRadius: '12px',
+                  padding: '12px 18px',
+                  marginBottom: '26px',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  boxShadow: theme.shadowCard
+                }}>
+                  <span style={{ fontSize: '12.5px', color: theme.textMuted }}>
+                    Mostrando <strong>{indiceInicioCards + 1}</strong> a <strong>{Math.min(indiceInicioCards + porPaginaCards, pacientesFiltradosFinal.length)}</strong> de <strong>{pacientesFiltradosFinal.length}</strong> expedientes
+                  </span>
+
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <button
+                      onClick={() => setPaginaCards(prev => Math.max(1, prev - 1))}
+                      disabled={paginaCards === 1}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: theme.border,
+                        backgroundColor: theme.bgSubtle,
+                        color: paginaCards === 1 ? theme.textMuted : theme.textMain,
+                        cursor: paginaCards === 1 ? 'not-allowed' : 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      ‹ Anterior
+                    </button>
+
+                    {Array.from({ length: totalPaginasCards }, (_, i) => i + 1).map(num => {
+                      // Mostrar sólo páginas cercanas si son muchas
+                      if (totalPaginasCards > 7 && Math.abs(num - paginaCards) > 2 && num !== 1 && num !== totalPaginasCards) {
+                        return null
+                      }
+                      const esActiva = paginaCards === num
+                      return (
+                        <button
+                          key={num}
+                          onClick={() => setPaginaCards(num)}
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '6px',
+                            border: esActiva ? `1px solid ${theme.accentCool}` : theme.border,
+                            backgroundColor: esActiva ? (temaOscuro ? '#1e293b' : '#0f172a') : theme.bgSubtle,
+                            color: esActiva ? (temaOscuro ? '#38bdf8' : '#ffffff') : theme.textMain,
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            fontWeight: esActiva ? '800' : '600'
+                          }}
+                        >
+                          {num}
+                        </button>
+                      )
+                    })}
+
+                    <button
+                      onClick={() => setPaginaCards(prev => Math.min(totalPaginasCards, prev + 1))}
+                      disabled={paginaCards === totalPaginasCards}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: theme.border,
+                        backgroundColor: theme.bgSubtle,
+                        color: paginaCards === totalPaginasCards ? theme.textMuted : theme.textMain,
+                        cursor: paginaCards === totalPaginasCards ? 'not-allowed' : 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Siguiente ›
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
@@ -481,7 +712,7 @@ export default function DashboardView({
                     </tr>
                   </thead>
                   <tbody>
-                    {documentosFiltradosTabla.map((doc) => {
+                    {docsPaginadosTabla.map((doc) => {
                       const esActivo = documentoEnVista && documentoEnVista.id === doc.id
                       return (
                         <tr
@@ -496,25 +727,34 @@ export default function DashboardView({
                             {obtenerIconoArchivo(doc.nombre_archivo)}
                           </td>
                           <td style={{ padding: '11px 16px', fontWeight: '600', color: theme.textMain }}>
-                            {doc.nombre_archivo}
+                            {doc.nombre_original || doc.nombre_archivo}
                           </td>
                           <td style={{ padding: '11px 16px' }}>
-                            <span
-                              onClick={() => setBusquedaDni(doc.paciente_dni)}
-                              style={{
-                                backgroundColor: temaOscuro ? '#082f49' : '#f0f9ff',
-                                color: temaOscuro ? '#7dd3fc' : '#0369a1',
-                                border: `1px solid ${temaOscuro ? '#0284c7' : '#bae6fd'}`,
-                                padding: '3px 9px',
-                                borderRadius: '6px',
-                                fontSize: '11px',
-                                fontWeight: '700',
-                                cursor: 'pointer'
-                              }}
-                              title="Filtrar por este DNI"
-                            >
-                              DNI {doc.paciente_dni}
-                            </span>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                              {doc.paciente_nombre && (
+                                <strong style={{ fontSize: '12px', color: theme.textMain }}>
+                                  {doc.paciente_nombre}
+                                </strong>
+                              )}
+                              <span
+                                onClick={() => setBusquedaDni(doc.paciente_dni)}
+                                style={{
+                                  backgroundColor: temaOscuro ? '#082f49' : '#f0f9ff',
+                                  color: temaOscuro ? '#7dd3fc' : '#0369a1',
+                                  border: `1px solid ${temaOscuro ? '#0284c7' : '#bae6fd'}`,
+                                  padding: '2px 8px',
+                                  borderRadius: '5px',
+                                  fontSize: '11px',
+                                  fontWeight: '700',
+                                  cursor: 'pointer',
+                                  display: 'inline-block',
+                                  width: 'fit-content'
+                                }}
+                                title="Filtrar por este DNI"
+                              >
+                                DNI {doc.paciente_dni}
+                              </span>
+                            </div>
                           </td>
                           <td style={{ padding: '11px 16px', color: theme.textMuted, fontSize: '12px' }}>
                             #{doc.paciente_id}
@@ -586,6 +826,64 @@ export default function DashboardView({
                   </tbody>
                 </table>
               </div>
+
+              {/* BARRA DE PAGINACIÓN DE LA TABLA */}
+              {totalPaginasTabla > 1 && (
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '12px 18px',
+                  borderTop: theme.border,
+                  backgroundColor: theme.bgSubtle,
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}>
+                  <span style={{ fontSize: '12px', color: theme.textMuted }}>
+                    Mostrando <strong>{indiceInicioTabla + 1}</strong> a <strong>{Math.min(indiceInicioTabla + porPaginaTabla, documentosFiltradosTabla.length)}</strong> de <strong>{documentosFiltradosTabla.length}</strong> documentos
+                  </span>
+
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <button
+                      onClick={() => setPaginaTabla(prev => Math.max(1, prev - 1))}
+                      disabled={paginaTabla === 1}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        border: theme.border,
+                        backgroundColor: theme.bgCard,
+                        color: paginaTabla === 1 ? theme.textMuted : theme.textMain,
+                        cursor: paginaTabla === 1 ? 'not-allowed' : 'pointer',
+                        fontSize: '11.5px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      ‹ Anterior
+                    </button>
+
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: theme.textMain, padding: '0 6px' }}>
+                      Página {paginaTabla} de {totalPaginasTabla}
+                    </span>
+
+                    <button
+                      onClick={() => setPaginaTabla(prev => Math.min(totalPaginasTabla, prev + 1))}
+                      disabled={paginaTabla === totalPaginasTabla}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: '6px',
+                        border: theme.border,
+                        backgroundColor: theme.bgCard,
+                        color: paginaTabla === totalPaginasTabla ? theme.textMuted : theme.textMain,
+                        cursor: paginaTabla === totalPaginasTabla ? 'not-allowed' : 'pointer',
+                        fontSize: '11.5px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Siguiente ›
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>

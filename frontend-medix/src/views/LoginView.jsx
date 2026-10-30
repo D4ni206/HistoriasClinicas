@@ -94,8 +94,14 @@ export default function LoginView({ onLoginSuccess }) {
       })
       const data = await res.json()
       if (res.ok) {
+        localStorage.setItem('medix_token', data.token)
         localStorage.setItem('medix_usuario', JSON.stringify(data.usuario))
-        onLoginSuccess(data.usuario)
+        if (data.debe_cambiar_password) {
+          localStorage.setItem('medix_cambiar_pwd', 'true')
+        } else {
+          localStorage.removeItem('medix_cambiar_pwd')
+        }
+        onLoginSuccess(data.usuario, data)
       } else {
         setError(data.mensaje || 'The username or password is incorrect')
       }
