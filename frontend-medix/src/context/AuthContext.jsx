@@ -63,6 +63,31 @@ export function AuthProvider({ children }) {
   const esMedico = rolRaw.includes('medico')
   const esEnfermera = rolRaw.includes('enfermer')
 
+  // Iniciar Sesión con respuesta directa del servidor
+  const iniciarSesionConDatos = (data) => {
+    if (!data) return
+    const t = data.token
+    const u = data.usuario
+    const d = Boolean(data.debe_cambiar_password)
+
+    if (t) {
+      try { localStorage.setItem('medix_token', t) } catch (e) {}
+      setToken(t)
+    }
+    if (u) {
+      try { localStorage.setItem('medix_usuario', JSON.stringify(u)) } catch (e) {}
+      setUsuario(u)
+    }
+    setDebeCambiarPassword(d)
+    if (d) {
+      try { localStorage.setItem('medix_cambiar_pwd', 'true') } catch (e) {}
+      setModalPasswordAbierto(true)
+    } else {
+      try { localStorage.removeItem('medix_cambiar_pwd') } catch (e) {}
+      setModalPasswordAbierto(false)
+    }
+  }
+
   // Iniciar Sesión
   const login = async (username, password) => {
     const res = await fetch(`${API_BASE}/auth/login`, {
@@ -99,8 +124,9 @@ export function AuthProvider({ children }) {
       ...(options.headers || {})
     }
 
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
+    const activeToken = token || (typeof window !== 'undefined' ? localStorage.getItem('medix_token') : null)
+    if (activeToken) {
+      headers['Authorization'] = `Bearer ${activeToken}`
     }
 
     const res = await fetch(url, {
@@ -108,8 +134,8 @@ export function AuthProvider({ children }) {
       headers
     })
 
-    if (res.status === 401) {
-      // Si el backend indica token expirado, forzar logout
+    if (res.status === 401 && activeToken) {
+      // Si el backend indica token expirado/invalido habiendo enviado token, forzar logout
       logout()
     }
 
@@ -147,8 +173,10 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         token,
+        setToken,
         usuario,
         setUsuario,
+        iniciarSesionConDatos,
         esAdmin,
         esMedico,
         esEnfermera,

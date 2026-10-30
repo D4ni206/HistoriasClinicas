@@ -26,6 +26,7 @@ function AppContent() {
   const {
     usuario,
     setUsuario,
+    iniciarSesionConDatos,
     authFetch,
     logout,
     esAdmin,
@@ -484,8 +485,12 @@ function AppContent() {
     }
     return (
       <LoginView
-        onLoginSuccess={(u) => {
-          setUsuario(u)
+        onLoginSuccess={(u, data) => {
+          if (data && data.token) {
+            iniciarSesionConDatos(data)
+          } else {
+            setUsuario(u)
+          }
           const r = (u?.rol || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
           if (r.includes('enfermer')) {
             navigate('/signosvitales')

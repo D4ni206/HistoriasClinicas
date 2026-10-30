@@ -172,18 +172,27 @@ def inicio():
 # RUTAS DE AUTENTICACIÓN
 # ==========================================
 @app.route('/api/auth/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json() or {}
-    username = data.get('username', '').strip()
+    identificador = (data.get('username') or data.get('email') or data.get('correo') or data.get('identificador') or '').strip()
     password = data.get('password', '').strip()
 
-    if not username or not password:
-        return jsonify({"mensaje": "Por favor ingresa usuario y contraseña"}), 400
+    if not identificador or not password:
+        return jsonify({"mensaje": "Por favor ingresa usuario o correo y contraseña"}), 400
 
-    usuario = Usuario.query.filter_by(username=username).first()
+    # Permitir inicio de sesión flexible por nombre de usuario, correo electrónico o teléfono (insensible a mayúsculas)
+    identificador_limpio = identificador.strip().lower()
+    usuario = Usuario.query.filter(
+        db.or_(
+            db.func.lower(Usuario.username) == identificador_limpio,
+            db.func.lower(Usuario.correo) == identificador_limpio,
+            Usuario.telefono == identificador.strip()
+        )
+    ).first()
 
     # Si la tabla quedó vacía por algún motivo, crear el admin al vuelo
-    if not usuario and Usuario.query.count() == 0 and username == DEFAULT_ADMIN_USER and password == DEFAULT_ADMIN_PASS:
+    if not usuario and Usuario.query.count() == 0 and identificador == DEFAULT_ADMIN_USER and password == DEFAULT_ADMIN_PASS:
         usuario = Usuario(
             username=DEFAULT_ADMIN_USER,
             password_hash=generate_password_hash(DEFAULT_ADMIN_PASS),
@@ -310,11 +319,12 @@ def solicitar_recuperar_sms():
     if not identificador:
         return jsonify({"mensaje": "Por favor ingrese su usuario, teléfono o correo"}), 400
 
+    identificador_limpio = identificador.strip().lower()
     usuario = Usuario.query.filter(
         db.or_(
-            Usuario.username == identificador,
-            Usuario.telefono == identificador,
-            Usuario.correo == identificador
+            db.func.lower(Usuario.username) == identificador_limpio,
+            db.func.lower(Usuario.correo) == identificador_limpio,
+            Usuario.telefono == identificador.strip()
         )
     ).first()
 
