@@ -79,7 +79,7 @@ function AppContent() {
   const [cargandoDiagnostico, setCargandoDiagnostico] = useState(false)
 
   // Vistas Dashboard
-  const [vistaDashboard, setVistaDashboard] = useState('cards')
+  const [vistaDashboard, setVistaDashboard] = useState('tabla')
   const [filtroTipoDoc, setFiltroTipoDoc] = useState('todos')
 
   // Solicitudes de Eliminación y Modales

@@ -1,1196 +1,1157 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
-import { obtenerIconoArchivo, esPdf, esDocx, esImagen, esTexto } from '../utils/fileHelpers'
-import { API_BASE } from '../api/config'
 import NotasMedicasModal from '../components/NotasMedicasModal'
-import PacienteCard from '../components/PacienteCard'
 
 export default function DashboardView({
-  pacientes,
-  pacientesFiltrados,
-  todosLosDocumentos,
-  documentosFiltradosTabla,
-  totalPdfs,
-  totalDocx,
-  totalImagenes,
-  totalTextos,
-  totalArchivosSistema,
-  busquedaDni,
-  setBusquedaDni,
-  vistaDashboard,
-  setVistaDashboard,
-  filtroTipoDoc,
-  setFiltroTipoDoc,
-  carpetasAbiertas,
-  setCarpetasAbiertas,
-  toggleCarpeta,
-  expandirTodas,
-  colapsarTodas,
-  agregarArchivoACarpeta,
-  editandoPaciente,
-  setEditandoPaciente,
-  nuevoDni,
-  setNuevoDni,
-  handleGuardarDni,
-  handleEliminarPaciente,
-  handleEliminarDocumento,
-  documentoEnVista,
-  setDocumentoEnVista,
-  onVerSilueta,
-  notificar,
-  loading,
-  cargarDatos,
+  pacientes = [],
+  pacientesFiltrados: _pacientesFiltrados = [],
+  todosLosDocumentos = [],
+  documentosFiltradosTabla: _documentosFiltradosTabla = [],
+  totalPdfs = 0,
+  totalDocx = 0,
+  totalImagenes = 0,
+  totalTextos = 0,
+  totalArchivosSistema = 0,
+  busquedaDni = '',
+  setBusquedaDni = () => {},
+  vistaDashboard = 'tabla',
+  setVistaDashboard = () => {},
+  filtroTipoDoc = 'todos',
+  setFiltroTipoDoc = () => {},
+  carpetasAbiertas: _carpetasAbiertas,
+  setCarpetasAbiertas: _setCarpetasAbiertas,
+  toggleCarpeta: _toggleCarpeta,
+  expandirTodas: _expandirTodas,
+  colapsarTodas: _colapsarTodas,
+  agregarArchivoACarpeta = () => {},
+  editandoPaciente: _editandoPaciente,
+  setEditandoPaciente: _setEditandoPaciente,
+  nuevoDni: _nuevoDni,
+  setNuevoDni: _setNuevoDni,
+  handleGuardarDni: _handleGuardarDni,
+  handleEliminarPaciente = () => {},
+  handleEliminarDocumento: _handleEliminarDocumento = () => {},
+  documentoEnVista: _documentoEnVista,
+  setDocumentoEnVista = () => {},
+  onVerSilueta = () => {},
+  notificar = () => {},
+  loading = false,
+  cargarDatos = () => {},
   usuario
 }) {
   const navigate = useNavigate()
-  const { temaOscuro, theme } = useTheme()
+  const { temaOscuro } = useTheme()
   const [pacienteParaNotas, setPacienteParaNotas] = useState(null)
 
-  // Paginación y Filtros Mejorados para Tarjetas
-  const [paginaCards, setPaginaCards] = useState(1)
-  const [porPaginaCards, setPorPaginaCards] = useState(12)
-  const [filtroCategoria, setFiltroCategoria] = useState('todos')
+  // Filtros adicionales: rango de fecha
+  const [filtroFechaDesde, setFiltroFechaDesde] = useState('')
+  const [filtroFechaHasta, setFiltroFechaHasta] = useState('')
 
-  // Paginación para Tabla de Documentos
-  const [paginaTabla, setPaginaTabla] = useState(1)
-  const [porPaginaTabla, setPorPaginaTabla] = useState(10)
+  // Paginación de la tabla principal
+  const [pagina, setPagina] = useState(1)
+  const [porPagina, setPorPagina] = useState(10)
 
-  // Búsqueda Mejorada Omnidireccional (DNI, Nombre, Alergias, Documentos)
-  const pacientesFiltradosFinal = useMemo(() => {
+  const rolRaw = (usuario?.rol || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+  const esAdmin = rolRaw.includes('admin')
+
+  // Obtener fecha más reciente de un paciente
+  const obtenerUltimaAtencion = (p) => {
+    const fechas = []
+    if (p.documentos && p.documentos.length > 0) {
+      p.documentos.forEach(d => {
+        if (d.fecha_subida) fechas.push(new Date(d.fecha_subida))
+      })
+    }
+    if (p.notas_medicas && p.notas_medicas.length > 0) {
+      p.notas_medicas.forEach(n => {
+        if (n.fecha_creacion) fechas.push(new Date(n.fecha_creacion))
+      })
+    }
+    if (p.signos_vitales && p.signos_vitales.length > 0) {
+      p.signos_vitales.forEach(s => {
+        if (s.fecha_registro) fechas.push(new Date(s.fecha_registro))
+      })
+    }
+    if (p.fecha_creacion) {
+      fechas.push(new Date(p.fecha_creacion))
+    }
+    const validas = fechas.filter(f => !isNaN(f.getTime()))
+    if (validas.length === 0) return null
+    validas.sort((a, b) => b.getTime() - a.getTime())
+    return validas[0]
+  }
+
+  // Obtener iniciales para avatar sobrio
+  const obtenerIniciales = (nombre, dni) => {
+    if (nombre && nombre.trim()) {
+      const partes = nombre.trim().split(/\s+/).filter(Boolean)
+      if (partes.length >= 2) {
+        return (partes[0][0] + partes[1][0]).toUpperCase()
+      }
+      return partes[0].slice(0, 2).toUpperCase()
+    }
+    return (dni || 'HC').slice(0, 2).toUpperCase()
+  }
+
+  // Filtrado de pacientes
+  const pacientesFiltrados = useMemo(() => {
     let res = pacientes || []
     const q = (busquedaDni || '').trim().toLowerCase()
+
     if (q) {
       res = res.filter(p => {
         const matchDni = p.dni && p.dni.toLowerCase().includes(q)
         const matchNombre = p.nombre && p.nombre.toLowerCase().includes(q)
-        const matchAlergias = p.alergias && p.alergias.toLowerCase().includes(q)
-        const matchDoc = p.documentos && p.documentos.some(d => (d.nombre_original || d.nombre_archivo || '').toLowerCase().includes(q))
-        return matchDni || matchNombre || matchAlergias || matchDoc
+        const matchAlergia = p.alergias && p.alergias.toLowerCase().includes(q)
+        return matchDni || matchNombre || matchAlergia
       })
     }
 
-    if (filtroCategoria === 'alergias') {
-      res = res.filter(p => p.alergias && p.alergias.trim() && !p.alergias.toLowerCase().includes('ninguna'))
-    } else if (filtroCategoria === 'con_docs') {
-      res = res.filter(p => (p.total_documentos || (p.documentos ? p.documentos.length : 0)) > 0)
-    } else if (filtroCategoria === 'con_notas') {
-      res = res.filter(p => (p.total_notas || (p.notas_medicas ? p.notas_medicas.length : 0)) > 0)
-    } else if (filtroCategoria === 'con_triaje') {
-      res = res.filter(p => (p.total_signos || (p.signos_vitales ? p.signos_vitales.length : 0)) > 0)
+    // Filtro por tipo de documento
+    if (filtroTipoDoc && filtroTipoDoc !== 'todos') {
+      res = res.filter(p => {
+        const docs = p.documentos || []
+        return docs.some(d => {
+          const ext = (d.nombre_archivo || '').split('.').pop().toLowerCase()
+          if (filtroTipoDoc === 'pdf') return ext === 'pdf'
+          if (filtroTipoDoc === 'docx') return ext === 'docx' || ext === 'doc'
+          if (filtroTipoDoc === 'imagen') return ['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext)
+          if (filtroTipoDoc === 'texto') return ['txt', 'csv', 'rtf'].includes(ext)
+          return true
+        })
+      })
+    }
+
+    // Filtro por rango de fechas
+    if (filtroFechaDesde) {
+      const fDesde = new Date(filtroFechaDesde)
+      res = res.filter(p => {
+        const ultima = obtenerUltimaAtencion(p)
+        return ultima ? ultima >= fDesde : false
+      })
+    }
+
+    if (filtroFechaHasta) {
+      const fHasta = new Date(filtroFechaHasta)
+      fHasta.setHours(23, 59, 59, 999)
+      res = res.filter(p => {
+        const ultima = obtenerUltimaAtencion(p)
+        return ultima ? ultima <= fHasta : false
+      })
     }
 
     return res
-  }, [pacientes, busquedaDni, filtroCategoria])
+  }, [pacientes, busquedaDni, filtroTipoDoc, filtroFechaDesde, filtroFechaHasta])
 
   // Reset de página al cambiar filtros
   useEffect(() => {
-    setPaginaCards(1)
-  }, [busquedaDni, filtroCategoria, porPaginaCards])
+    setPagina(1)
+  }, [busquedaDni, filtroTipoDoc, filtroFechaDesde, filtroFechaHasta, porPagina])
 
-  useEffect(() => {
-    setPaginaTabla(1)
-  }, [busquedaDni, filtroTipoDoc, porPaginaTabla])
+  // Paginación
+  const totalPaginas = Math.max(1, Math.ceil(pacientesFiltrados.length / porPagina))
+  const indiceInicio = (pagina - 1) * porPagina
+  const pacientesPaginados = pacientesFiltrados.slice(indiceInicio, indiceInicio + porPagina)
 
-  // Cálculo de Paginación para Tarjetas
-  const totalPaginasCards = Math.max(1, Math.ceil(pacientesFiltradosFinal.length / porPaginaCards))
-  const indiceInicioCards = (paginaCards - 1) * porPaginaCards
-  const pacientesPaginadosCards = pacientesFiltradosFinal.slice(indiceInicioCards, indiceInicioCards + porPaginaCards)
+  const abrirVisorPaciente = (pacienteSel) => {
+    if (onVerSilueta) {
+      onVerSilueta(pacienteSel)
+    } else {
+      const primerDoc = (pacienteSel.documentos && pacienteSel.documentos.length > 0) ? pacienteSel.documentos[0] : null
+      setDocumentoEnVista({
+        id: primerDoc ? primerDoc.id : null,
+        nombre_archivo: primerDoc ? (primerDoc.nombre_original || primerDoc.nombre_archivo) : `Historia Clínica Digital - DNI ${pacienteSel.dni}`,
+        paciente_id: pacienteSel.id,
+        paciente_dni: pacienteSel.dni,
+        paciente: pacienteSel,
+        fecha_subida: primerDoc ? primerDoc.fecha_subida : 'Expediente Activo'
+      })
+    }
+  }
 
-  // Cálculo de Paginación para Tabla
-  const totalPaginasTabla = Math.max(1, Math.ceil(documentosFiltradosTabla.length / porPaginaTabla))
-  const indiceInicioTabla = (paginaTabla - 1) * porPaginaTabla
-  const docsPaginadosTabla = documentosFiltradosTabla.slice(indiceInicioTabla, indiceInicioTabla + porPaginaTabla)
+  const esVistaAnalitica = vistaDashboard === 'analitica'
 
   return (
-    <>
-      {/* Cabecera del Dashboard */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+      {/* 1. CABECERA SUPERIOR: TÍTULO, ACCIONES Y VISTAS */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: '12px'
+        }}
+      >
         <div>
-          <h2 style={{ fontSize: '22px', fontWeight: '800', color: theme.textMain, margin: 0, letterSpacing: '-0.3px' }}>
-            Expedientes Clínicos Digitales
-          </h2>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: theme.textMuted }}>
-            {(vistaDashboard === 'cards' || vistaDashboard === 'cuadricula') && (busquedaDni ? `Resultados para el DNI "${busquedaDni}": ${pacientesFiltrados.length} expedientes en tarjetas` : `Total: ${pacientesFiltrados.length} expedientes clínicos en tarjetas`)}
-            {vistaDashboard === 'carpetas' && (busquedaDni ? `Resultados para el DNI "${busquedaDni}": ${pacientesFiltrados.length} carpetas` : `Total: ${pacientes.length} carpetas registradas`)}
-            {vistaDashboard === 'tabla-documentos' && `Listado consolidado · ${documentosFiltradosTabla.length} de ${todosLosDocumentos.length} documentos clínicos`}
-            {vistaDashboard === 'analitica' && `Estadísticas globales, distribución documental y actividad reciente`}
+          <h1
+            style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: 'var(--medix-navy, #0B2545)',
+              margin: 0,
+              letterSpacing: '-0.3px',
+              lineHeight: 1.2
+            }}
+          >
+            Historias Clínicas
+          </h1>
+          <p
+            style={{
+              margin: '4px 0 0 0',
+              fontSize: '13px',
+              color: 'var(--medix-text-muted, #5B6675)'
+            }}
+          >
+            {esVistaAnalitica
+              ? 'Métricas institucionales y distribución documental'
+              : `${pacientesFiltrados.length} expedientes clínicos registrados en el sistema`}
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {/* Selector de 2 vistas: Tabla y Analítica */}
+          <div
+            role="tablist"
+            aria-label="Vistas del sistema"
+            style={{
+              display: 'flex',
+              backgroundColor: temaOscuro ? 'rgba(255, 255, 255, 0.05)' : '#E9ECEF',
+              padding: '3px',
+              borderRadius: '8px'
+            }}
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!esVistaAnalitica}
+              onClick={() => setVistaDashboard('tabla')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: !esVistaAnalitica ? '600' : '500',
+                backgroundColor: !esVistaAnalitica
+                  ? (temaOscuro ? '#1E293B' : '#FFFFFF')
+                  : 'transparent',
+                color: !esVistaAnalitica
+                  ? 'var(--medix-action, #1D5C96)'
+                  : 'var(--medix-text-muted, #5B6675)',
+                boxShadow: !esVistaAnalitica ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+              <span>Listado de Historias</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={esVistaAnalitica}
+              onClick={() => setVistaDashboard('analitica')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: esVistaAnalitica ? '600' : '500',
+                backgroundColor: esVistaAnalitica
+                  ? (temaOscuro ? '#1E293B' : '#FFFFFF')
+                  : 'transparent',
+                color: esVistaAnalitica
+                  ? 'var(--medix-action, #1D5C96)'
+                  : 'var(--medix-text-muted, #5B6675)',
+                boxShadow: esVistaAnalitica ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
+              <span>Analítica</span>
+            </button>
+          </div>
+
+          {/* Botón Primario: Nueva Historia */}
           <button
+            type="button"
             onClick={() => navigate('/agregarhistoria')}
             style={{
-              padding: '9px 16px',
-              backgroundColor: theme.primaryBtnBg,
-              color: theme.primaryBtnColor,
+              padding: '8px 16px',
+              backgroundColor: 'var(--medix-action, #1D5C96)',
+              color: '#FFFFFF',
               border: 'none',
               borderRadius: '8px',
-              fontSize: '12.5px',
-              fontWeight: '700',
+              fontSize: '13px',
+              fontWeight: '600',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '7px',
-              boxShadow: theme.shadowCard,
-              transition: 'all 0.15s ease'
+              gap: '6px',
+              transition: 'background-color 0.15s ease'
             }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--medix-action-hover, #164775)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--medix-action, #1D5C96)'}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            <span>Nueva Historia</span>
+            <span>Nueva historia</span>
           </button>
-
-          {documentoEnVista && (
-            <div style={{
-              backgroundColor: temaOscuro ? '#082f49' : '#f0f9ff',
-              color: temaOscuro ? '#38bdf8' : '#0369a1',
-              border: `1px solid ${temaOscuro ? '#0284c7' : '#bae6fd'}`,
-              borderRadius: '20px',
-              padding: '6px 14px',
-              fontSize: '12px',
-              fontWeight: '700',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}>
-              <span>Visor activo</span>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* BARRA SELECTORA DE VISTAS DISTINTAS DEL DASHBOARD */}
-      <div style={{
-        backgroundColor: theme.bgCard,
-        border: theme.border,
-        borderRadius: '12px',
-        padding: '6px 10px',
-        marginBottom: '18px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: '10px',
-        boxShadow: theme.shadowCard
-      }}>
-        {/* Botonera de Vistas */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          {/* 1. Vista Tarjetas / Cards */}
-          <button
-            onClick={() => setVistaDashboard('cards')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '7px',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              border: (vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula')
-                ? `1.5px solid ${theme.accentCool}`
-                : '1px solid transparent',
-              backgroundColor: (vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula')
-                ? (temaOscuro ? '#1e293b' : '#0f172a')
-                : 'transparent',
-              color: (vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula')
-                ? (temaOscuro ? '#38bdf8' : '#ffffff')
-                : theme.textMuted,
-              fontWeight: (vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula') ? '700' : '600',
-              fontSize: '12.5px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-            <span>Tarjetas Clínicas</span>
-          </button>
-
-          {/* 2. Vista Tabla General de Documentos */}
-          <button
-            onClick={() => setVistaDashboard('tabla-documentos')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '7px',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              border: vistaDashboard === 'tabla-documentos' ? `1.5px solid ${theme.accentCool}` : '1px solid transparent',
-              backgroundColor: vistaDashboard === 'tabla-documentos'
-                ? (temaOscuro ? '#1e293b' : '#0f172a')
-                : 'transparent',
-              color: vistaDashboard === 'tabla-documentos'
-                ? (temaOscuro ? '#38bdf8' : '#ffffff')
-                : theme.textMuted,
-              fontWeight: vistaDashboard === 'tabla-documentos' ? '700' : '600',
-              fontSize: '12.5px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="8" y1="6" x2="21" y2="6"></line>
-              <line x1="8" y1="12" x2="21" y2="12"></line>
-              <line x1="8" y1="18" x2="21" y2="18"></line>
-              <line x1="3" y1="6" x2="3.01" y2="6"></line>
-              <line x1="3" y1="12" x2="3.01" y2="12"></line>
-              <line x1="3" y1="18" x2="3.01" y2="18"></line>
-            </svg>
-            <span>Tabla General ({todosLosDocumentos.length})</span>
-          </button>
-
-          {/* 3. Vista Analítica */}
-          <button
-            onClick={() => setVistaDashboard('analitica')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '7px',
-              padding: '8px 14px',
-              borderRadius: '8px',
-              border: vistaDashboard === 'analitica' ? `1.5px solid ${theme.accentCool}` : '1px solid transparent',
-              backgroundColor: vistaDashboard === 'analitica'
-                ? (temaOscuro ? '#1e293b' : '#0f172a')
-                : 'transparent',
-              color: vistaDashboard === 'analitica'
-                ? (temaOscuro ? '#38bdf8' : '#ffffff')
-                : theme.textMuted,
-              fontWeight: vistaDashboard === 'analitica' ? '700' : '600',
-              fontSize: '12.5px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="20" x2="18" y2="10"></line>
-              <line x1="12" y1="20" x2="12" y2="4"></line>
-              <line x1="6" y1="20" x2="6" y2="14"></line>
-            </svg>
-            <span>Resumen Analítico</span>
-          </button>
-        </div>
-
-        {/* Botón rápido de actualización */}
-        <button
-          onClick={() => cargarDatos(false)}
-          style={{
-            padding: '7px 14px',
-            backgroundColor: theme.bgSubtle,
-            border: theme.border,
-            borderRadius: '8px',
-            fontSize: '11.5px',
-            fontWeight: '700',
-            color: theme.textSecondary,
-            cursor: 'pointer',
-            transition: 'all 0.15s ease'
-          }}
-          title="Sincronizar base de datos"
-        >
-          Actualizar
-        </button>
-      </div>
-
       {/* =================================================================== */}
-      {/* 1. VISTA PRINCIPAL: TARJETAS DE EXPEDIENTES */}
+      {/* 2. VISTA PRINCIPAL: TABLA CLÍNICA DE PACIENTES */}
       {/* =================================================================== */}
-      {(vistaDashboard === 'cards' || vistaDashboard === 'carpetas' || vistaDashboard === 'cuadricula') && (
+      {!esVistaAnalitica && (
         <>
-          {/* Barra de Búsqueda Mejorada y Filtros Rápidos */}
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: theme.border,
-            borderRadius: '14px',
-            padding: '14px 18px',
-            marginBottom: '18px',
-            boxShadow: theme.shadowCard,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px'
-          }}>
-            <div style={{
+          {/* BARRA DE FILTROS: Búsqueda, Tipo de Documento, Rango de Fechas */}
+          <div
+            style={{
+              backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+              border: '1px solid var(--medix-border, #D9DEE5)',
+              borderRadius: '8px',
+              padding: '12px 16px',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
               flexWrap: 'wrap',
-              gap: '12px'
-            }}>
-              <div style={{ flex: '1 1 320px', position: 'relative' }}>
-                <input
-                  type="text"
-                  placeholder="Buscar por DNI, Nombre del paciente, Alergias o Archivo..."
-                  value={busquedaDni}
-                  onChange={(e) => setBusquedaDni(e.target.value)}
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '10px 36px 10px 36px',
-                    borderRadius: '8px',
-                    border: `1px solid ${theme.borderInput}`,
-                    fontSize: '13px',
-                    backgroundColor: theme.bgInput,
-                    color: theme.textMain,
-                    outline: 'none',
-                    transition: 'border-color 0.15s ease'
-                  }}
-                  onFocus={(e) => e.target.style.borderColor = '#38bdf8'}
-                  onBlur={(e) => e.target.style.borderColor = theme.borderInput}
-                />
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}>
-                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
-
-                {busquedaDni && (
-                  <button
-                    onClick={() => setBusquedaDni('')}
-                    style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: theme.textMuted,
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      padding: '2px 6px'
-                    }}
-                    title="Limpiar búsqueda"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-
-              {/* Selector de cantidad por página */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px', color: theme.textMuted, fontWeight: '600' }}>
-                  Mostrar:
-                </span>
-                {[6, 12, 24].map(cant => (
-                  <button
-                    key={cant}
-                    onClick={() => setPorPaginaCards(cant)}
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: '6px',
-                      fontSize: '11.5px',
-                      fontWeight: porPaginaCards === cant ? '700' : '500',
-                      border: porPaginaCards === cant ? `1px solid ${theme.accentCool}` : theme.border,
-                      backgroundColor: porPaginaCards === cant ? (temaOscuro ? '#1e293b' : '#0f172a') : theme.bgSubtle,
-                      color: porPaginaCards === cant ? (temaOscuro ? '#38bdf8' : '#ffffff') : theme.textMuted,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {cant}
-                  </button>
-                ))}
-                <span style={{ fontSize: '12px', fontWeight: '700', color: theme.textSecondary, marginLeft: '6px' }}>
-                  {pacientesFiltradosFinal.length} coincidencia{pacientesFiltradosFinal.length !== 1 ? 's' : ''}
-                </span>
-              </div>
-            </div>
-
-            {/* Chips de Categorías Rápidas */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontSize: '11.5px', fontWeight: '700', color: theme.textMuted, marginRight: '2px' }}>
-                Filtros:
-              </span>
-              {[
-                { id: 'todos', label: 'Todos' },
-                { id: 'alergias', label: 'Con Alergias ⚠️' },
-                { id: 'con_docs', label: 'Con Documentos 📄' },
-                { id: 'con_notas', label: 'Con Notas Médicas 🩺' },
-                { id: 'con_triaje', label: 'Con Triaje 💓' }
-              ].map(cat => {
-                const activo = filtroCategoria === cat.id
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => setFiltroCategoria(cat.id)}
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: '20px',
-                      fontSize: '11px',
-                      fontWeight: activo ? '700' : '600',
-                      border: activo ? `1.5px solid ${theme.accentCool}` : theme.border,
-                      backgroundColor: activo ? (temaOscuro ? '#1e293b' : '#0f172a') : theme.bgSubtle,
-                      color: activo ? (temaOscuro ? '#38bdf8' : '#ffffff') : theme.textSecondary,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {cat.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Grid de Registros con Componente PacienteCard */}
-          {pacientesFiltradosFinal.length === 0 ? (
-            <div style={{
-              padding: '48px 24px',
-              textAlign: 'center',
-              backgroundColor: theme.bgCard,
-              borderRadius: '12px',
-              border: `1.5px dashed ${temaOscuro ? '#1e293b' : '#cbd5e1'}`,
-              color: theme.textMuted
-            }}>
-              No se encontraron expedientes coincidentes con los criterios de búsqueda o filtro.
-            </div>
-          ) : (
-            <>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
-                gap: '20px',
-                paddingBottom: '20px'
-              }}>
-                {pacientesPaginadosCards.map((pac) => (
-                  <PacienteCard
-                    key={pac.id}
-                    paciente={pac}
-                    onVerDocumento={(docConPaciente) => {
-                      const pacFinal = docConPaciente.paciente || pac
-                      setDocumentoEnVista({
-                        ...docConPaciente,
-                        paciente: pacFinal
-                      })
-                    }}
-                    onVerSilueta={(p) => {
-                      if (onVerSilueta) {
-                        onVerSilueta(p)
-                      } else {
-                        const docPrincipal = (p.documentos && p.documentos.length > 0) ? p.documentos[0] : null
-                        setDocumentoEnVista({
-                          id: docPrincipal ? docPrincipal.id : null,
-                          nombre_archivo: docPrincipal ? (docPrincipal.nombre_original || docPrincipal.nombre_archivo) : `Historia Clínica Digital - DNI ${p.dni}`,
-                          paciente_id: p.id,
-                          paciente_dni: p.dni,
-                          paciente: p,
-                          fecha_subida: docPrincipal ? docPrincipal.fecha_subida : 'Expediente Activo'
-                        })
-                      }
-                    }}
-                    onAgregarArchivo={agregarArchivoACarpeta}
-                    onAbrirNotas={setPacienteParaNotas}
-                    onVerCarpeta={(p) => {
-                      const docPrincipal = (p.documentos && p.documentos.length > 0) ? p.documentos[0] : null
-                      setDocumentoEnVista({
-                        id: docPrincipal ? docPrincipal.id : null,
-                        nombre_archivo: docPrincipal ? (docPrincipal.nombre_original || docPrincipal.nombre_archivo) : `Historia Clínica Digital - DNI ${p.dni}`,
-                        paciente_id: p.id,
-                        paciente_dni: p.dni,
-                        paciente: p,
-                        fecha_subida: docPrincipal ? docPrincipal.fecha_subida : 'Expediente Activo'
-                      })
-                    }}
-                    onEliminar={handleEliminarPaciente}
-                    notificar={notificar}
-                  />
-                ))}
-              </div>
-
-              {/* BARRA DE PAGINACIÓN DE TARJETAS */}
-              {totalPaginasCards > 1 && (
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  backgroundColor: theme.bgCard,
-                  border: theme.border,
-                  borderRadius: '12px',
-                  padding: '12px 18px',
-                  marginBottom: '26px',
-                  flexWrap: 'wrap',
-                  gap: '12px',
-                  boxShadow: theme.shadowCard
-                }}>
-                  <span style={{ fontSize: '12.5px', color: theme.textMuted }}>
-                    Mostrando <strong>{indiceInicioCards + 1}</strong> a <strong>{Math.min(indiceInicioCards + porPaginaCards, pacientesFiltradosFinal.length)}</strong> de <strong>{pacientesFiltradosFinal.length}</strong> expedientes
-                  </span>
-
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <button
-                      onClick={() => setPaginaCards(prev => Math.max(1, prev - 1))}
-                      disabled={paginaCards === 1}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        border: theme.border,
-                        backgroundColor: theme.bgSubtle,
-                        color: paginaCards === 1 ? theme.textMuted : theme.textMain,
-                        cursor: paginaCards === 1 ? 'not-allowed' : 'pointer',
-                        fontSize: '12px',
-                        fontWeight: '600'
-                      }}
-                    >
-                      ‹ Anterior
-                    </button>
-
-                    {Array.from({ length: totalPaginasCards }, (_, i) => i + 1).map(num => {
-                      // Mostrar sólo páginas cercanas si son muchas
-                      if (totalPaginasCards > 7 && Math.abs(num - paginaCards) > 2 && num !== 1 && num !== totalPaginasCards) {
-                        return null
-                      }
-                      const esActiva = paginaCards === num
-                      return (
-                        <button
-                          key={num}
-                          onClick={() => setPaginaCards(num)}
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '6px',
-                            border: esActiva ? `1px solid ${theme.accentCool}` : theme.border,
-                            backgroundColor: esActiva ? (temaOscuro ? '#1e293b' : '#0f172a') : theme.bgSubtle,
-                            color: esActiva ? (temaOscuro ? '#38bdf8' : '#ffffff') : theme.textMain,
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                            fontWeight: esActiva ? '800' : '600'
-                          }}
-                        >
-                          {num}
-                        </button>
-                      )
-                    })}
-
-                    <button
-                      onClick={() => setPaginaCards(prev => Math.min(totalPaginasCards, prev + 1))}
-                      disabled={paginaCards === totalPaginasCards}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        border: theme.border,
-                        backgroundColor: theme.bgSubtle,
-                        color: paginaCards === totalPaginasCards ? theme.textMuted : theme.textMain,
-                        cursor: paginaCards === totalPaginasCards ? 'not-allowed' : 'pointer',
-                        fontSize: '12px',
-                        fontWeight: '600'
-                      }}
-                    >
-                      Siguiente ›
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </>
-      )}
-
-      {/* =================================================================== */}
-      {/* 2. VISTA TABLA GENERAL (LISTADO UNIFICADO DE TODOS LOS DOCUMENTOS) */}
-      {/* =================================================================== */}
-      {vistaDashboard === 'tabla-documentos' && (
-        <>
-          {/* Barra de Filtros por Formato y Búsqueda */}
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: theme.border,
-            borderRadius: '12px',
-            padding: '12px 16px',
-            marginBottom: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
-            boxShadow: theme.shadowCard
-          }}>
-            {/* Buscador de Documentos o DNI */}
-            <div style={{ flex: '1 1 260px', position: 'relative' }}>
+              gap: '12px',
+              alignItems: 'center'
+            }}
+          >
+            {/* Buscador por DNI o Nombre */}
+            <div style={{ flex: '1 1 240px', position: 'relative' }}>
+              <label htmlFor="input-busqueda-paciente" style={{ display: 'none' }}>
+                Buscar paciente por DNI o nombre
+              </label>
               <input
+                id="input-busqueda-paciente"
                 type="text"
-                placeholder="Buscar por nombre de archivo o DNI..."
+                placeholder="Buscar por DNI o nombre del paciente..."
                 value={busquedaDni}
                 onChange={(e) => setBusquedaDni(e.target.value)}
                 style={{
                   width: '100%',
                   boxSizing: 'border-box',
-                  padding: '9px 12px 9px 34px',
-                  borderRadius: '8px',
-                  border: `1px solid ${theme.borderInput}`,
+                  padding: '8px 32px 8px 34px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--medix-border, #D9DEE5)',
                   fontSize: '13px',
-                  backgroundColor: theme.bgInput,
-                  color: theme.textMain,
+                  backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+                  color: 'var(--medix-text-main, #1F2937)',
                   outline: 'none'
                 }}
               />
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={theme.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '10px', top: '11px' }}>
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--medix-text-muted, #5B6675)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }}
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
+              {busquedaDni && (
+                <button
+                  type="button"
+                  aria-label="Limpiar búsqueda"
+                  onClick={() => setBusquedaDni('')}
+                  style={{
+                    position: 'absolute',
+                    right: '8px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--medix-text-muted, #5B6675)',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    padding: '2px 4px'
+                  }}
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
-            {/* Pastillas de filtro por formato */}
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {[
-                { id: 'todos', label: `Todos (${todosLosDocumentos.length})` },
-                { id: 'pdf', label: `PDF (${totalPdfs})` },
-                { id: 'docx', label: `Word DOCX (${totalDocx})` },
-                { id: 'imagen', label: `Imágenes (${totalImagenes})` },
-                { id: 'texto', label: `Texto (${totalTextos})` }
-              ].map(f => {
-                const activo = filtroTipoDoc === f.id
-                return (
-                  <button
-                    key={f.id}
-                    onClick={() => setFiltroTipoDoc(f.id)}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '8px',
-                      fontSize: '11.5px',
-                      fontWeight: activo ? '700' : '600',
-                      cursor: 'pointer',
-                      border: activo ? `1px solid ${theme.accentCool}` : theme.border,
-                      backgroundColor: activo ? (temaOscuro ? '#1e293b' : '#0f172a') : theme.bgSubtle,
-                      color: activo ? (temaOscuro ? '#38bdf8' : '#ffffff') : theme.textSecondary,
-                      transition: 'all 0.12s ease'
-                    }}
-                  >
-                    {f.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Tabla de Todos los Documentos */}
-          {documentosFiltradosTabla.length === 0 ? (
-            <div style={{
-              padding: '48px 24px',
-              textAlign: 'center',
-              backgroundColor: theme.bgCard,
-              borderRadius: '12px',
-              border: `1.5px dashed ${temaOscuro ? '#1e293b' : '#cbd5e1'}`,
-              color: theme.textMuted
-            }}>
-              <p style={{ fontSize: '15px', fontWeight: '700', margin: '0 0 8px 0', color: theme.textMain }}>
-                No se encontraron documentos con los filtros seleccionados.
-              </p>
-              <button
-                onClick={() => { setBusquedaDni(''); setFiltroTipoDoc('todos'); }}
+            {/* Filtro: Tipo de Documento */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label htmlFor="filtro-tipo-doc" style={{ fontSize: '12px', fontWeight: '500', color: 'var(--medix-text-muted, #5B6675)' }}>
+                Tipo:
+              </label>
+              <select
+                id="filtro-tipo-doc"
+                value={filtroTipoDoc}
+                onChange={(e) => setFiltroTipoDoc(e.target.value)}
                 style={{
-                  padding: '7px 16px',
-                  backgroundColor: theme.primaryBtnBg,
-                  color: theme.primaryBtnColor,
-                  border: 'none',
+                  padding: '7px 10px',
                   borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: '700',
-                  cursor: 'pointer'
+                  border: '1px solid var(--medix-border, #D9DEE5)',
+                  fontSize: '13px',
+                  backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+                  color: 'var(--medix-text-main, #1F2937)',
+                  outline: 'none'
                 }}
               >
-                Restablecer Filtros
-              </button>
+                <option value="todos">Todos los formatos</option>
+                <option value="pdf">PDF (.pdf)</option>
+                <option value="docx">Word (.docx)</option>
+                <option value="imagen">Imágenes</option>
+                <option value="texto">Texto plano</option>
+              </select>
             </div>
-          ) : (
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: theme.border,
-              borderRadius: '12px',
+
+            {/* Filtro: Rango de Fechas */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <label htmlFor="filtro-fecha-desde" style={{ fontSize: '12px', fontWeight: '500', color: 'var(--medix-text-muted, #5B6675)' }}>
+                Desde:
+              </label>
+              <input
+                id="filtro-fecha-desde"
+                type="date"
+                value={filtroFechaDesde}
+                onChange={(e) => setFiltroFechaDesde(e.target.value)}
+                style={{
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--medix-border, #D9DEE5)',
+                  fontSize: '12px',
+                  backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+                  color: 'var(--medix-text-main, #1F2937)',
+                  outline: 'none'
+                }}
+              />
+
+              <label htmlFor="filtro-fecha-hasta" style={{ fontSize: '12px', fontWeight: '500', color: 'var(--medix-text-muted, #5B6675)' }}>
+                Hasta:
+              </label>
+              <input
+                id="filtro-fecha-hasta"
+                type="date"
+                value={filtroFechaHasta}
+                onChange={(e) => setFiltroFechaHasta(e.target.value)}
+                style={{
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--medix-border, #D9DEE5)',
+                  fontSize: '12px',
+                  backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+                  color: 'var(--medix-text-main, #1F2937)',
+                  outline: 'none'
+                }}
+              />
+
+              {(filtroFechaDesde || filtroFechaHasta) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFiltroFechaDesde('')
+                    setFiltroFechaHasta('')
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--medix-action, #1D5C96)',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    padding: '4px'
+                  }}
+                >
+                  Limpiar fechas
+                </button>
+              )}
+            </div>
+
+            {/* Botón Actualizar */}
+            <button
+              type="button"
+              onClick={() => cargarDatos(false)}
+              aria-label="Actualizar datos"
+              title="Sincronizar base de datos"
+              style={{
+                marginLeft: 'auto',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: '1px solid var(--medix-border, #D9DEE5)',
+                backgroundColor: 'transparent',
+                color: 'var(--medix-text-muted, #5B6675)',
+                fontSize: '12px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              <span>Actualizar</span>
+            </button>
+          </div>
+
+          {/* TABLA PRINCIPAL DE HISTORIAS */}
+          <div
+            style={{
+              backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+              border: '1px solid var(--medix-border, #D9DEE5)',
+              borderRadius: '8px',
               overflow: 'hidden',
-              boxShadow: theme.shadowCard,
-              marginBottom: '30px'
-            }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: theme.tableHeaderBg, borderBottom: theme.border, color: theme.textSecondary }}>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '700' }}>Formato</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '700' }}>Nombre del Documento</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '700' }}>Paciente (DNI)</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '700' }}>Expediente</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: '700' }}>Fecha de Registro</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: '700' }}>Acciones</th>
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+            }}
+          >
+            <div style={{ overflowX: 'auto' }}>
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  textAlign: 'left',
+                  fontSize: '14px'
+                }}
+              >
+                <thead>
+                  <tr
+                    style={{
+                      borderBottom: '1px solid var(--medix-border, #D9DEE5)',
+                      backgroundColor: temaOscuro ? 'rgba(255, 255, 255, 0.02)' : '#F8F9FA'
+                    }}
+                  >
+                    <th style={{ padding: '12px 16px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                      Paciente
+                    </th>
+                    <th style={{ padding: '12px 16px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                      Documentos
+                    </th>
+                    <th style={{ padding: '12px 16px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                      Notas
+                    </th>
+                    <th style={{ padding: '12px 16px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                      Última atención
+                    </th>
+                    <th style={{ padding: '12px 16px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                      Estado
+                    </th>
+                    <th style={{ padding: '12px 16px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pacientesPaginados.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--medix-text-muted, #5B6675)' }}>
+                        {loading ? 'Cargando historias clínicas...' : 'No se encontraron expedientes que coincidan con la búsqueda.'}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {docsPaginadosTabla.map((doc) => {
-                      const esActivo = documentoEnVista && documentoEnVista.id === doc.id
+                  ) : (
+                    pacientesPaginados.map((p) => {
+                      const numDocs = (p.documentos || []).length
+                      const numNotas = (p.notas_medicas || []).length
+                      const ultimaAtencionDate = obtenerUltimaAtencion(p)
+                      const ultimaAtencionStr = ultimaAtencionDate
+                        ? ultimaAtencionDate.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                        : '—'
+                      const tieneAlergia = p.alergias && p.alergias.trim() && !p.alergias.toLowerCase().includes('ninguna')
+                      const iniciales = obtenerIniciales(p.nombre, p.dni)
+
                       return (
                         <tr
-                          key={doc.id}
+                          key={p.id}
                           style={{
-                            borderBottom: theme.borderSubtle,
-                            backgroundColor: esActivo ? (temaOscuro ? '#131e33' : '#f1f5f9') : 'transparent',
+                            borderBottom: '1px solid var(--medix-border, #D9DEE5)',
                             transition: 'background-color 0.12s ease'
                           }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = temaOscuro ? 'rgba(255, 255, 255, 0.03)' : '#F9FAFB'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent'
+                          }}
                         >
-                          <td style={{ padding: '11px 16px' }}>
-                            {obtenerIconoArchivo(doc.nombre_archivo)}
-                          </td>
-                          <td style={{ padding: '11px 16px', fontWeight: '600', color: theme.textMain }}>
-                            {doc.nombre_original || doc.nombre_archivo}
-                          </td>
-                          <td style={{ padding: '11px 16px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                              {doc.paciente_nombre && (
-                                <strong style={{ fontSize: '12px', color: theme.textMain }}>
-                                  {doc.paciente_nombre}
-                                </strong>
-                              )}
-                              <span
-                                onClick={() => setBusquedaDni(doc.paciente_dni)}
+                          {/* 1. PACIENTE (Avatar en círculo con iniciales + Nombre + DNI + Alergia badge) */}
+                          <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div
                                 style={{
-                                  backgroundColor: temaOscuro ? '#082f49' : '#f0f9ff',
-                                  color: temaOscuro ? '#7dd3fc' : '#0369a1',
-                                  border: `1px solid ${temaOscuro ? '#0284c7' : '#bae6fd'}`,
-                                  padding: '2px 8px',
-                                  borderRadius: '5px',
-                                  fontSize: '11px',
+                                  width: '36px',
+                                  height: '36px',
+                                  borderRadius: '50%',
+                                  backgroundColor: '#EBF3FA',
+                                  color: 'var(--medix-action, #1D5C96)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
                                   fontWeight: '700',
-                                  cursor: 'pointer',
-                                  display: 'inline-block',
-                                  width: 'fit-content'
+                                  fontSize: '13px',
+                                  flexShrink: 0
                                 }}
-                                title="Filtrar por este DNI"
                               >
-                                DNI {doc.paciente_dni}
-                              </span>
+                                {iniciales}
+                              </div>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <span
+                                    style={{
+                                      fontWeight: '600',
+                                      color: 'var(--medix-text-main, #1F2937)',
+                                      fontSize: '14px'
+                                    }}
+                                  >
+                                    {p.nombre || `Paciente DNI ${p.dni}`}
+                                  </span>
+
+                                  {tieneAlergia && (
+                                    <span
+                                      title={`Alergias: ${p.alergias}`}
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        backgroundColor: 'var(--medix-alert-bg, #FEF3F2)',
+                                        color: 'var(--medix-alert-red, #B42318)',
+                                        border: '1px solid var(--medix-alert-border, #FECDCA)',
+                                        padding: '1px 6px',
+                                        borderRadius: '4px',
+                                        fontSize: '11px',
+                                        fontWeight: '600'
+                                      }}
+                                    >
+                                      Alergia
+                                    </span>
+                                  )}
+                                </div>
+                                <span style={{ fontSize: '12px', color: 'var(--medix-text-muted, #5B6675)', display: 'block', marginTop: '2px' }}>
+                                  DNI: {p.dni}
+                                </span>
+                              </div>
                             </div>
                           </td>
-                          <td style={{ padding: '11px 16px', color: theme.textMuted, fontSize: '12px' }}>
-                            #{doc.paciente_id}
+
+                          {/* 2. DOCUMENTOS (Contador + Link para abrir visor) */}
+                          <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
+                            <button
+                              type="button"
+                              onClick={() => abrirVisorPaciente(p)}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: numDocs > 0 ? 'var(--medix-action, #1D5C96)' : 'var(--medix-text-muted, #5B6675)',
+                                fontWeight: '600',
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                padding: 0,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                textDecoration: 'none'
+                              }}
+                              onMouseEnter={(e) => {
+                                if (numDocs > 0) e.currentTarget.style.textDecoration = 'underline'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none'
+                              }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                              </svg>
+                              <span>{numDocs} {numDocs === 1 ? 'doc' : 'docs'}</span>
+                            </button>
                           </td>
-                          <td style={{ padding: '11px 16px', color: theme.textMuted, fontSize: '12px' }}>
-                            {doc.fecha_subida || '—'}
+
+                          {/* 3. NOTAS (Contador + Abrir modal) */}
+                          <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
+                            <button
+                              type="button"
+                              onClick={() => setPacienteParaNotas(p)}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: numNotas > 0 ? 'var(--medix-action, #1D5C96)' : 'var(--medix-text-muted, #5B6675)',
+                                fontWeight: '600',
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                padding: 0,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                textDecoration: 'none'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.textDecoration = 'underline'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.textDecoration = 'none'
+                              }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                              </svg>
+                              <span>{numNotas} {numNotas === 1 ? 'nota' : 'notas'}</span>
+                            </button>
                           </td>
-                          <td style={{ padding: '11px 16px', textAlign: 'center' }}>
-                            <div style={{ display: 'inline-flex', gap: '6px' }}>
-                              <button
-                                onClick={() => {
-                                  const pac = pacientes.find(p => p.id === doc.paciente_id || String(p.dni) === String(doc.paciente_dni))
-                                  setDocumentoEnVista({ ...doc, paciente: pac })
-                                }}
+
+                          {/* 4. ÚLTIMA ATENCIÓN */}
+                          <td style={{ padding: '12px 16px', verticalAlign: 'middle', fontSize: '13px', color: 'var(--medix-text-main, #1F2937)' }}>
+                            {ultimaAtencionStr}
+                          </td>
+
+                          {/* 5. ESTADO (Badge 'Activo' en verde) */}
+                          <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                backgroundColor: 'var(--medix-status-bg, #ECFDF3)',
+                                color: 'var(--medix-status-green, #067647)',
+                                border: '1px solid var(--medix-status-border, #ABEFC6)'
+                              }}
+                            >
+                              <span
                                 style={{
-                                  padding: '5px 12px',
-                                  backgroundColor: esActivo ? (temaOscuro ? '#0284c7' : '#0f172a') : theme.bgSubtle,
-                                  color: esActivo ? '#ffffff' : theme.textMain,
-                                  border: theme.border,
+                                  width: '6px',
+                                  height: '6px',
+                                  borderRadius: '50%',
+                                  backgroundColor: 'var(--medix-status-green, #067647)'
+                                }}
+                              />
+                              Activo
+                            </span>
+                          </td>
+
+                          {/* 6. ACCIONES (Ver expediente, Anexar doc, Eliminar si admin) */}
+                          <td style={{ padding: '12px 16px', verticalAlign: 'middle', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                              {/* Ver expediente */}
+                              <button
+                                type="button"
+                                onClick={() => abrirVisorPaciente(p)}
+                                aria-label={`Ver expediente clínico de ${p.nombre || p.dni}`}
+                                title="Ver expediente clínico"
+                                style={{
+                                  padding: '5px 9px',
                                   borderRadius: '6px',
-                                  fontSize: '11.5px',
-                                  fontWeight: '700',
+                                  border: '1px solid var(--medix-border, #D9DEE5)',
+                                  backgroundColor: 'transparent',
+                                  color: 'var(--medix-action, #1D5C96)',
+                                  fontSize: '12px',
+                                  fontWeight: '600',
                                   cursor: 'pointer',
-                                  transition: 'all 0.12s ease'
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
                                 }}
-                                title="Previsualizar en el visor lateral derecho"
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F0F5FA'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                               >
-                                {esActivo ? 'Viendo' : 'Ver'}
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                  <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <span>Ver</span>
                               </button>
-                              <a
-                                href={`${API_BASE}/documentos/${doc.id}/archivo`}
-                                style={{
-                                  padding: '5px 12px',
-                                  backgroundColor: theme.bgSubtle,
-                                  color: theme.accentCool,
-                                  border: theme.border,
-                                  borderRadius: '6px',
-                                  textDecoration: 'none',
-                                  fontSize: '11.5px',
-                                  fontWeight: '700',
-                                  display: 'inline-flex',
-                                  alignItems: 'center'
-                                }}
-                                title="Descargar archivo físico"
-                              >
-                                Descargar
-                              </a>
+
+                              {/* Anexar documento */}
                               <button
-                                onClick={() => handleEliminarDocumento(doc.id, doc.nombre_archivo, doc.paciente_id)}
+                                type="button"
+                                onClick={() => agregarArchivoACarpeta(p.dni, p.id)}
+                                aria-label={`Anexar documento al expediente ${p.dni}`}
+                                title="Anexar documento a esta historia"
                                 style={{
-                                  padding: '5px 12px',
-                                  backgroundColor: temaOscuro ? '#3b121e' : '#fef2f2',
-                                  color: temaOscuro ? '#fca5a5' : '#dc2626',
-                                  border: `1px solid ${temaOscuro ? '#881337' : '#fecaca'}`,
+                                  padding: '5px 9px',
                                   borderRadius: '6px',
-                                  fontSize: '11.5px',
-                                  fontWeight: '700',
-                                  cursor: 'pointer'
+                                  border: '1px solid var(--medix-border, #D9DEE5)',
+                                  backgroundColor: 'transparent',
+                                  color: 'var(--medix-text-main, #1F2937)',
+                                  fontSize: '12px',
+                                  fontWeight: '500',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
                                 }}
-                                title="Eliminar este archivo"
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4F6F9'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                               >
-                                Eliminar
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>Anexar</span>
                               </button>
+
+                              {/* Eliminar (solo si es Admin) */}
+                              {esAdmin && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleEliminarPaciente(p.id, p.dni)}
+                                  aria-label={`Eliminar historia clínica de ${p.nombre || p.dni}`}
+                                  title="Eliminar expediente"
+                                  style={{
+                                    padding: '5px 7px',
+                                    borderRadius: '6px',
+                                    border: '1px solid rgba(180, 35, 24, 0.2)',
+                                    backgroundColor: 'transparent',
+                                    color: 'var(--medix-alert-red, #B42318)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--medix-alert-bg, #FEF3F2)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                  </svg>
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
                       )
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-              {/* BARRA DE PAGINACIÓN DE LA TABLA */}
-              {totalPaginasTabla > 1 && (
-                <div style={{
+            {/* BARRA DE PAGINACIÓN */}
+            {pacientesFiltrados.length > 0 && (
+              <div
+                style={{
                   display: 'flex',
-                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  padding: '12px 18px',
-                  borderTop: theme.border,
-                  backgroundColor: theme.bgSubtle,
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  borderTop: '1px solid var(--medix-border, #D9DEE5)',
                   flexWrap: 'wrap',
-                  gap: '12px'
-                }}>
-                  <span style={{ fontSize: '12px', color: theme.textMuted }}>
-                    Mostrando <strong>{indiceInicioTabla + 1}</strong> a <strong>{Math.min(indiceInicioTabla + porPaginaTabla, documentosFiltradosTabla.length)}</strong> de <strong>{documentosFiltradosTabla.length}</strong> documentos
-                  </span>
+                  gap: '10px'
+                }}
+              >
+                <div style={{ fontSize: '13px', color: 'var(--medix-text-muted, #5B6675)' }}>
+                  Mostrando{' '}
+                  <strong style={{ color: 'var(--medix-text-main, #1F2937)' }}>
+                    {indiceInicio + 1}
+                  </strong>{' '}
+                  a{' '}
+                  <strong style={{ color: 'var(--medix-text-main, #1F2937)' }}>
+                    {Math.min(indiceInicio + porPagina, pacientesFiltrados.length)}
+                  </strong>{' '}
+                  de{' '}
+                  <strong style={{ color: 'var(--medix-text-main, #1F2937)' }}>
+                    {pacientesFiltrados.length}
+                  </strong>{' '}
+                  historias
+                </div>
 
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label htmlFor="select-por-pagina" style={{ fontSize: '12px', color: 'var(--medix-text-muted, #5B6675)' }}>
+                    Por página:
+                  </label>
+                  <select
+                    id="select-por-pagina"
+                    value={porPagina}
+                    onChange={(e) => setPorPagina(Number(e.target.value))}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--medix-border, #D9DEE5)',
+                      fontSize: '12px',
+                      backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+                      color: 'var(--medix-text-main, #1F2937)',
+                      outline: 'none'
+                    }}
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
                     <button
-                      onClick={() => setPaginaTabla(prev => Math.max(1, prev - 1))}
-                      disabled={paginaTabla === 1}
+                      type="button"
+                      disabled={pagina <= 1}
+                      onClick={() => setPagina(p => Math.max(1, p - 1))}
+                      aria-label="Página anterior"
                       style={{
                         padding: '5px 10px',
                         borderRadius: '6px',
-                        border: theme.border,
-                        backgroundColor: theme.bgCard,
-                        color: paginaTabla === 1 ? theme.textMuted : theme.textMain,
-                        cursor: paginaTabla === 1 ? 'not-allowed' : 'pointer',
-                        fontSize: '11.5px',
-                        fontWeight: '600'
+                        border: '1px solid var(--medix-border, #D9DEE5)',
+                        backgroundColor: 'transparent',
+                        color: pagina <= 1 ? 'var(--medix-border, #D9DEE5)' : 'var(--medix-text-main, #1F2937)',
+                        cursor: pagina <= 1 ? 'not-allowed' : 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '500'
                       }}
                     >
-                      ‹ Anterior
+                      Anterior
                     </button>
-
-                    <span style={{ fontSize: '12px', fontWeight: '700', color: theme.textMain, padding: '0 6px' }}>
-                      Página {paginaTabla} de {totalPaginasTabla}
+                    <span style={{ fontSize: '12px', padding: '0 6px', color: 'var(--medix-text-muted, #5B6675)' }}>
+                      {pagina} / {totalPaginas}
                     </span>
-
                     <button
-                      onClick={() => setPaginaTabla(prev => Math.min(totalPaginasTabla, prev + 1))}
-                      disabled={paginaTabla === totalPaginasTabla}
+                      type="button"
+                      disabled={pagina >= totalPaginas}
+                      onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}
+                      aria-label="Página siguiente"
                       style={{
                         padding: '5px 10px',
                         borderRadius: '6px',
-                        border: theme.border,
-                        backgroundColor: theme.bgCard,
-                        color: paginaTabla === totalPaginasTabla ? theme.textMuted : theme.textMain,
-                        cursor: paginaTabla === totalPaginasTabla ? 'not-allowed' : 'pointer',
-                        fontSize: '11.5px',
-                        fontWeight: '600'
+                        border: '1px solid var(--medix-border, #D9DEE5)',
+                        backgroundColor: 'transparent',
+                        color: pagina >= totalPaginas ? 'var(--medix-border, #D9DEE5)' : 'var(--medix-text-main, #1F2937)',
+                        cursor: pagina >= totalPaginas ? 'not-allowed' : 'pointer',
+                        fontSize: '12px',
+                        fontWeight: '500'
                       }}
                     >
-                      Siguiente ›
+                      Siguiente
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </>
       )}
 
       {/* =================================================================== */}
-      {/* 3. VISTA RESUMEN / ANALÍTICA (ESTADÍSTICAS Y ACTIVIDAD RECIENTE) */}
+      {/* 3. VISTA ANALÍTICA INSTITUCIONAL */}
       {/* =================================================================== */}
-      {vistaDashboard === 'analitica' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '30px' }}>
-          {/* 4 Métricas Clave */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-            {/* Tarjeta 1: Carpetas */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: theme.border,
-              borderRadius: '12px',
-              padding: '18px 20px',
-              boxShadow: theme.shadowCard
-            }}>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                Carpetas Clínicas
+      {esVistaAnalitica && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Métricas clave */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+            <div
+              style={{
+                backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+                border: '1px solid var(--medix-border, #D9DEE5)',
+                borderRadius: '8px',
+                padding: '16px 18px'
+              }}
+            >
+              <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                Total de Historias
               </span>
-              <strong style={{ display: 'block', fontSize: '28px', color: theme.textMain, margin: '6px 0 2px 0', letterSpacing: '-0.5px' }}>
+              <strong style={{ display: 'block', fontSize: '26px', color: 'var(--medix-navy, #0B2545)', margin: '6px 0 2px 0' }}>
                 {pacientes.length}
               </strong>
-              <span style={{ fontSize: '12px', color: theme.textMuted }}>Expedientes únicos por DNI</span>
+              <span style={{ fontSize: '12px', color: 'var(--medix-text-muted, #5B6675)' }}>Expedientes clínicos registrados</span>
             </div>
 
-            {/* Tarjeta 2: Documentos */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: theme.border,
-              borderRadius: '12px',
-              padding: '18px 20px',
-              boxShadow: theme.shadowCard
-            }}>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+            <div
+              style={{
+                backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+                border: '1px solid var(--medix-border, #D9DEE5)',
+                borderRadius: '8px',
+                padding: '16px 18px'
+              }}
+            >
+              <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
                 Documentos Totales
               </span>
-              <strong style={{ display: 'block', fontSize: '28px', color: theme.accentCool, margin: '6px 0 2px 0', letterSpacing: '-0.5px' }}>
+              <strong style={{ display: 'block', fontSize: '26px', color: 'var(--medix-action, #1D5C96)', margin: '6px 0 2px 0' }}>
                 {totalArchivosSistema}
               </strong>
-              <span style={{ fontSize: '12px', color: theme.textMuted }}>Almacenados en MinIO S3</span>
+              <span style={{ fontSize: '12px', color: 'var(--medix-text-muted, #5B6675)' }}>Almacenados en repositorio clínico</span>
             </div>
 
-            {/* Tarjeta 3: Promedio */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: theme.border,
-              borderRadius: '12px',
-              padding: '18px 20px',
-              boxShadow: theme.shadowCard
-            }}>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                Promedio por Carpeta
+            <div
+              style={{
+                backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+                border: '1px solid var(--medix-border, #D9DEE5)',
+                borderRadius: '8px',
+                padding: '16px 18px'
+              }}
+            >
+              <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                Promedio por Historia
               </span>
-              <strong style={{ display: 'block', fontSize: '28px', color: theme.textMain, margin: '6px 0 2px 0', letterSpacing: '-0.5px' }}>
+              <strong style={{ display: 'block', fontSize: '26px', color: 'var(--medix-navy, #0B2545)', margin: '6px 0 2px 0' }}>
                 {pacientes.length > 0 ? (totalArchivosSistema / pacientes.length).toFixed(1) : 0}
               </strong>
-              <span style={{ fontSize: '12px', color: theme.textMuted }}>Documentos por paciente</span>
+              <span style={{ fontSize: '12px', color: 'var(--medix-text-muted, #5B6675)' }}>Documentos por paciente</span>
             </div>
 
-            {/* Tarjeta 4: Formato Predominante */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: theme.border,
-              borderRadius: '12px',
-              padding: '18px 20px',
-              boxShadow: theme.shadowCard
-            }}>
-              <span style={{ fontSize: '11px', fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                Formato Principal
+            <div
+              style={{
+                backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+                border: '1px solid var(--medix-border, #D9DEE5)',
+                borderRadius: '8px',
+                padding: '16px 18px'
+              }}
+            >
+              <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                Formato Predominante
               </span>
-              <strong style={{ display: 'block', fontSize: '22px', color: theme.accentCool, margin: '10px 0 2px 0' }}>
+              <strong style={{ display: 'block', fontSize: '20px', color: 'var(--medix-action, #1D5C96)', margin: '10px 0 2px 0' }}>
                 {totalDocx >= totalPdfs ? 'Word (.docx)' : 'PDF (.pdf)'}
               </strong>
-              <span style={{ fontSize: '12px', color: theme.textMuted }}>{Math.max(totalDocx, totalPdfs)} archivos registrados</span>
+              <span style={{ fontSize: '12px', color: 'var(--medix-text-muted, #5B6675)' }}>
+                {Math.max(totalDocx, totalPdfs)} archivos registrados
+              </span>
             </div>
           </div>
 
-          {/* Tarjeta de Distribución Documental */}
-          <div style={{
-            backgroundColor: theme.bgCard,
-            border: theme.border,
-            borderRadius: '12px',
-            padding: '20px 22px',
-            boxShadow: theme.shadowCard
-          }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '800', color: theme.textMain, margin: '0 0 14px 0' }}>
+          {/* Distribución Documental */}
+          <div
+            style={{
+              backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+              border: '1px solid var(--medix-border, #D9DEE5)',
+              borderRadius: '8px',
+              padding: '18px 20px'
+            }}
+          >
+            <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--medix-navy, #0B2545)', margin: '0 0 14px 0' }}>
               Distribución de Documentos por Formato
             </h3>
 
-            {/* Barra de Progreso Segmentada */}
             {totalArchivosSistema > 0 ? (
               <div>
-                <div style={{ display: 'flex', height: '16px', borderRadius: '8px', overflow: 'hidden', backgroundColor: theme.bgSubtle, marginBottom: '16px' }}>
+                <div style={{ display: 'flex', height: '14px', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#E9ECEF', marginBottom: '14px' }}>
                   {totalDocx > 0 && (
-                    <div style={{ width: `${(totalDocx / totalArchivosSistema) * 100}%`, backgroundColor: '#2563eb' }} title={`Word: ${totalDocx}`} />
+                    <div style={{ width: `${(totalDocx / totalArchivosSistema) * 100}%`, backgroundColor: '#1D5C96' }} title={`Word: ${totalDocx}`} />
                   )}
                   {totalPdfs > 0 && (
-                    <div style={{ width: `${(totalPdfs / totalArchivosSistema) * 100}%`, backgroundColor: '#38bdf8' }} title={`PDF: ${totalPdfs}`} />
+                    <div style={{ width: `${(totalPdfs / totalArchivosSistema) * 100}%`, backgroundColor: '#3B82F6' }} title={`PDF: ${totalPdfs}`} />
                   )}
                   {totalImagenes > 0 && (
-                    <div style={{ width: `${(totalImagenes / totalArchivosSistema) * 100}%`, backgroundColor: '#64748b' }} title={`Imágenes: ${totalImagenes}`} />
+                    <div style={{ width: `${(totalImagenes / totalArchivosSistema) * 100}%`, backgroundColor: '#64748B' }} title={`Imágenes: ${totalImagenes}`} />
                   )}
                   {totalTextos > 0 && (
-                    <div style={{ width: `${(totalTextos / totalArchivosSistema) * 100}%`, backgroundColor: '#94a3b8' }} title={`Texto: ${totalTextos}`} />
+                    <div style={{ width: `${(totalTextos / totalArchivosSistema) * 100}%`, backgroundColor: '#94A3B8' }} title={`Texto: ${totalTextos}`} />
                   )}
                 </div>
 
-                {/* Leyenda */}
-                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', fontSize: '12px', color: theme.textSecondary }}>
+                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', fontSize: '13px', color: 'var(--medix-text-muted, #5B6675)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#2563eb', display: 'inline-block' }} />
-                    <span>Word (.docx): <strong>{totalDocx}</strong> ({((totalDocx / totalArchivosSistema) * 100).toFixed(0)}%)</span>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: '#1D5C96', display: 'inline-block' }} />
+                    <span>Word (.docx): <strong>{totalDocx}</strong></span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#38bdf8', display: 'inline-block' }} />
-                    <span>PDF: <strong>{totalPdfs}</strong> ({((totalPdfs / totalArchivosSistema) * 100).toFixed(0)}%)</span>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: '#3B82F6', display: 'inline-block' }} />
+                    <span>PDF: <strong>{totalPdfs}</strong></span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#64748b', display: 'inline-block' }} />
-                    <span>Imágenes: <strong>{totalImagenes}</strong> ({((totalImagenes / totalArchivosSistema) * 100).toFixed(0)}%)</span>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: '#64748B', display: 'inline-block' }} />
+                    <span>Imágenes: <strong>{totalImagenes}</strong></span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#94a3b8', display: 'inline-block' }} />
-                    <span>Texto: <strong>{totalTextos}</strong> ({((totalTextos / totalArchivosSistema) * 100).toFixed(0)}%)</span>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: '#94A3B8', display: 'inline-block' }} />
+                    <span>Texto: <strong>{totalTextos}</strong></span>
                   </div>
                 </div>
               </div>
             ) : (
-              <p style={{ color: theme.textMuted, fontSize: '13px', margin: 0 }}>No hay documentos registrados para generar el gráfico de distribución.</p>
+              <p style={{ color: 'var(--medix-text-muted, #5B6675)', fontSize: '13px', margin: 0 }}>
+                No hay documentos registrados para generar la distribución.
+              </p>
             )}
           </div>
 
-          {/* Dos Columnas: Últimos Documentos y Carpetas Principales */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '16px' }}>
-            {/* Columna 1: Últimos Documentos Subidos */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: theme.border,
-              borderRadius: '12px',
-              padding: '18px 20px',
-              boxShadow: theme.shadowCard
-            }}>
-              <h3 style={{ fontSize: '15px', fontWeight: '800', color: theme.textMain, margin: '0 0 14px 0' }}>
-                Últimos Documentos Subidos
-              </h3>
-              {todosLosDocumentos.length === 0 ? (
-                <p style={{ color: theme.textMuted, fontSize: '13px' }}>No hay actividad reciente.</p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[...todosLosDocumentos].reverse().slice(0, 6).map((d) => (
-                    <div
-                      key={d.id}
+          {/* Últimos Documentos Subidos */}
+          <div
+            style={{
+              backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+              border: '1px solid var(--medix-border, #D9DEE5)',
+              borderRadius: '8px',
+              padding: '18px 20px'
+            }}
+          >
+            <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--medix-navy, #0B2545)', margin: '0 0 14px 0' }}>
+              Actividad Reciente en Repositorio
+            </h3>
+            {todosLosDocumentos.length === 0 ? (
+              <p style={{ color: 'var(--medix-text-muted, #5B6675)', fontSize: '13px', margin: 0 }}>No hay actividad reciente registrada.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {[...todosLosDocumentos].reverse().slice(0, 6).map((d) => (
+                  <div
+                    key={d.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: '6px',
+                      backgroundColor: temaOscuro ? 'rgba(255, 255, 255, 0.03)' : '#F8F9FA',
+                      border: '1px solid var(--medix-border, #D9DEE5)'
+                    }}
+                  >
+                    <div>
+                      <strong style={{ fontSize: '13px', color: 'var(--medix-text-main, #1F2937)', display: 'block' }}>
+                        {d.nombre_original || d.nombre_archivo}
+                      </strong>
+                      <span style={{ fontSize: '12px', color: 'var(--medix-text-muted, #5B6675)' }}>
+                        Paciente DNI {d.paciente_dni || '—'} · {d.fecha_subida ? new Date(d.fecha_subida).toLocaleDateString('es-PE') : 'Fecha no reg.'}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDocumentoEnVista(d)
+                      }}
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        backgroundColor: theme.bgSubtle,
-                        border: theme.borderSubtle,
-                        gap: '8px'
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid var(--medix-border, #D9DEE5)',
+                        backgroundColor: 'transparent',
+                        color: 'var(--medix-action, #1D5C96)',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                        {obtenerIconoArchivo(d.nombre_archivo)}
-                        <div style={{ overflow: 'hidden' }}>
-                          <span style={{ fontSize: '12.5px', fontWeight: '700', color: theme.textMain, display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {d.nombre_archivo}
-                          </span>
-                          <span style={{ fontSize: '11px', color: theme.textMuted }}>
-                            DNI {d.paciente_dni} · {d.fecha_subida || 'Reciente'}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const pac = pacientes.find(p => p.id === d.paciente_id || String(p.dni) === String(d.paciente_dni)) || null
-                          setDocumentoEnVista({ ...d, paciente: pac })
-                        }}
-                        style={{
-                          padding: '4px 10px',
-                          backgroundColor: theme.bgCard,
-                          color: theme.accentCool,
-                          border: theme.border,
-                          borderRadius: '6px',
-                          fontSize: '11.5px',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        Ver
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Columna 2: Expedientes con Mayor Documentación */}
-            <div style={{
-              backgroundColor: theme.bgCard,
-              border: theme.border,
-              borderRadius: '12px',
-              padding: '18px 20px',
-              boxShadow: theme.shadowCard
-            }}>
-              <h3 style={{ fontSize: '15px', fontWeight: '800', color: theme.textMain, margin: '0 0 14px 0' }}>
-                Expedientes con Mayor Documentación
-              </h3>
-              {pacientes.length === 0 ? (
-                <p style={{ color: theme.textMuted, fontSize: '13px' }}>No hay expedientes registrados.</p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[...pacientes]
-                    .sort((a, b) => ((b.documentos || []).length) - ((a.documentos || []).length))
-                    .slice(0, 6)
-                    .map((p, idx) => (
-                      <div
-                        key={p.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '10px 12px',
-                          borderRadius: '8px',
-                          backgroundColor: theme.bgSubtle,
-                          border: theme.borderSubtle
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{
-                            width: '22px',
-                            height: '22px',
-                            borderRadius: '50%',
-                            backgroundColor: idx === 0 ? (temaOscuro ? '#1e3a8a' : '#dbeafe') : (temaOscuro ? '#1e293b' : '#e2e8f0'),
-                            color: idx === 0 ? (temaOscuro ? '#93c5fd' : '#1e40af') : theme.textSecondary,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '11px',
-                            fontWeight: '800'
-                          }}>
-                            {idx + 1}
-                          </span>
-                          <div>
-                            <strong style={{ fontSize: '13px', color: theme.textMain, display: 'block' }}>
-                              DNI {p.dni}
-                            </strong>
-                            <span style={{ fontSize: '11px', color: theme.textMuted }}>
-                              Expediente #{p.id}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{
-                            padding: '3px 9px',
-                            borderRadius: '12px',
-                            backgroundColor: temaOscuro ? '#082f49' : '#f0f9ff',
-                            color: temaOscuro ? '#7dd3fc' : '#0369a1',
-                            border: `1px solid ${temaOscuro ? '#0284c7' : '#bae6fd'}`,
-                            fontSize: '11px',
-                            fontWeight: '700'
-                          }}>
-                            {(p.documentos || []).length} archivos
-                          </span>
-                          <button
-                            onClick={() => {
-                              const docPrincipal = (p.documentos && p.documentos.length > 0) ? p.documentos[0] : null
-                              setDocumentoEnVista({
-                                id: docPrincipal ? docPrincipal.id : null,
-                                nombre_archivo: docPrincipal ? docPrincipal.nombre_archivo : `Historia Clínica Digital - DNI ${p.dni}`,
-                                paciente_id: p.id,
-                                paciente_dni: p.dni,
-                                paciente: p,
-                                fecha_subida: docPrincipal ? docPrincipal.fecha_subida : 'Expediente Activo'
-                              })
-                            }}
-                            style={{
-                              padding: '4px 10px',
-                              backgroundColor: theme.bgCard,
-                              color: theme.accentCool,
-                              border: theme.border,
-                              borderRadius: '6px',
-                              fontSize: '11.5px',
-                              fontWeight: '700',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Abrir
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
+                      Abrir
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* MODAL DE NOTAS MÉDICAS (MÉDICO / ADMIN) */}
+      {/* MODAL DE NOTAS MÉDICAS */}
       {pacienteParaNotas && (
         <NotasMedicasModal
           paciente={pacienteParaNotas}
@@ -1202,6 +1163,6 @@ export default function DashboardView({
           }}
         />
       )}
-    </>
+    </div>
   )
 }
