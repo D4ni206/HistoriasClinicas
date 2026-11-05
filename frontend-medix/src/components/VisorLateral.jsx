@@ -4,12 +4,38 @@ import { useAuth } from '../context/AuthContext'
 import DocxViewer from './DocxViewer'
 import TextViewer from './TextViewer'
 import ManiquiAnatomico from './ManiquiAnatomico'
-import { esPdf, esDocx, esImagen, esTexto, obtenerIconoArchivo } from '../utils/fileHelpers'
+import { esPdf, esDocx, esImagen, esTexto } from '../utils/fileHelpers'
 import { API_BASE } from '../api/config'
 
-export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onSeleccionarDocumento }) {
-  const { temaOscuro, theme } = useTheme()
+export default function VisorLateral({
+  documentoEnVista,
+  paciente,
+  onCerrar,
+  onSeleccionarDocumento
+}) {
+  const { temaOscuro } = useTheme()
   const { token } = useAuth()
+
+  // Pestaña activa en la columna derecha de previsualización: 'documento' | 'notas' | 'anatomia'
+  const [pestanaActiva, setPestanaActiva] = useState('documento')
+  const [docActivo, setDocActivo] = useState(documentoEnVista)
+  const [imgError, setImgError] = useState(false)
+  const [esPantallaPequena, setEsPantallaPequena] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 960 : false
+  )
+
+  useEffect(() => {
+    setDocActivo(documentoEnVista)
+    setImgError(false)
+  }, [documentoEnVista])
+
+  useEffect(() => {
+    const handleResize = () => {
+      setEsPantallaPequena(window.innerWidth < 960)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const obtenerUrlArchivo = (id, view = false) => {
     let url = `${API_BASE}/documentos/${id}/archivo`
@@ -20,38 +46,26 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
     return url
   }
 
-  const [imgError, setImgError] = useState(false)
-  // 'dividida' | 'documento' | 'maniqui' | 'timeline'
-  const [modoVista, setModoVista] = useState('dividida')
-  const [esPantallaPequena, setEsPantallaPequena] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 960 : false)
+  const pacienteFinal = useMemo(() => {
+    return paciente || documentoEnVista?.paciente || null
+  }, [paciente, documentoEnVista])
 
-  useEffect(() => {
-    const handleResize = () => {
-      setEsPantallaPequena(window.innerWidth < 960)
+  const notas = useMemo(() => {
+    return pacienteFinal?.notas_medicas || []
+  }, [pacienteFinal])
+
+  const signos = useMemo(() => {
+    return pacienteFinal?.signos_vitales || []
+  }, [pacienteFinal])
+
+  const documentos = useMemo(() => {
+    if (pacienteFinal?.documentos && pacienteFinal.documentos.length > 0) {
+      return pacienteFinal.documentos
     }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+    return documentoEnVista?.id ? [documentoEnVista] : []
+  }, [pacienteFinal, documentoEnVista])
 
-  useEffect(() => {
-    setImgError(false)
-  }, [documentoEnVista?.id])
-
-  const esModoDividido = modoVista === 'dividida'
-  const mostrarDoc = modoVista === 'dividida' || modoVista === 'documento'
-  const mostrarManiqui = modoVista === 'dividida' || modoVista === 'maniqui'
-  const mostrarTimeline = modoVista === 'timeline'
-
-  // Ancho dinámico del panel visor adaptable a cualquier resolución
-  const anchoVisor = esPantallaPequena
-    ? '100vw'
-    : (modoVista === 'timeline' ? '70%' : (esModoDividido ? '84%' : (modoVista === 'maniqui' ? '65%' : '52%')))
-  const minAncho = esPantallaPequena ? '0' : (esModoDividido ? '680px' : '450px')
-
-  const pacienteFinal = paciente || documentoEnVista.paciente || null
-  const notas = pacienteFinal?.notas_medicas || []
-  const signos = pacienteFinal?.signos_vitales || []
-  const documentos = pacienteFinal?.documentos || (documentoEnVista.id ? [documentoEnVista] : [])
+  // Último registro de signos vitales (triaje)
   const ultimoSigno = signos.length > 0 ? signos[0] : null
 
   // Construcción de la Línea de Tiempo Cronológica Unificada
@@ -64,11 +78,11 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
         tipo: 'documento',
         id: `doc-${doc.id}`,
         fechaRaw: doc.fecha_subida ? new Date(doc.fecha_subida).getTime() : 0,
-        fecha: doc.fecha_subida || 'Fecha no registrada',
+        fecha: doc.fecha_subida
+          ? new Date(doc.fecha_subida).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+          : 'Fecha no registrada',
         titulo: doc.nombre_original || doc.nombre_archivo || 'Documento Clínico',
-        subtitulo: 'Archivo Digital Adjunto',
-        icono: '📄',
-        color: '#2563eb',
+        subtitulo: 'Archivo Adjunto',
         doc: doc
       })
     })
@@ -78,649 +92,635 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
       lista.push({
         tipo: 'nota',
         id: `nota-${nota.id}`,
-        fechaRaw: nota.fecha ? new Date(nota.fecha).getTime() : 0,
-        fecha: nota.fecha || 'Fecha reciente',
-        titulo: nota.diagnostico || 'Nota Médica de Evolución',
+        fechaRaw: (nota.fecha || nota.fecha_creacion) ? new Date(nota.fecha || nota.fecha_creacion).getTime() : 0,
+        fecha: (nota.fecha || nota.fecha_creacion)
+          ? new Date(nota.fecha || nota.fecha_creacion).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+          : 'Fecha reciente',
+        titulo: nota.diagnostico || 'Evolución Médica',
         subtitulo: `Dr(a). ${nota.medico_nombre || 'Médico Tratante'}`,
-        contenido: nota.contenido,
-        icono: '🩺',
-        color: '#8b5cf6'
+        contenido: nota.contenido
       })
     })
 
-    // 3. Controles de Signos Vitales / Triaje
+    // 3. Controles de Signos Vitales
     signos.forEach(signo => {
       lista.push({
         tipo: 'signo',
         id: `signo-${signo.id}`,
-        fechaRaw: signo.fecha ? new Date(signo.fecha).getTime() : 0,
-        fecha: signo.fecha || 'Fecha de toma',
-        titulo: 'Control de Signos Vitales (Triaje)',
-        subtitulo: `Enf. ${signo.enfermera_nombre || 'Personal de Enfermería'}`,
-        signoData: signo,
-        icono: '💓',
-        color: '#10b981'
+        fechaRaw: (signo.fecha || signo.fecha_registro) ? new Date(signo.fecha || signo.fecha_registro).getTime() : 0,
+        fecha: (signo.fecha || signo.fecha_registro)
+          ? new Date(signo.fecha || signo.fecha_registro).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+          : 'Fecha de toma',
+        titulo: 'Control de Signos Vitales',
+        subtitulo: `Enf. ${signo.enfermera_nombre || 'Enfermería'}`,
+        signoData: signo
       })
     })
 
-    // 4. Alergias permanentes registradas
-    if (pacienteFinal?.alergias && !pacienteFinal.alergias.toLowerCase().includes('ninguna')) {
-      lista.push({
-        tipo: 'alergia',
-        id: 'alerta-alergia',
-        fechaRaw: Number.MAX_SAFE_INTEGER, // Siempre fijado en primer lugar de la línea de tiempo
-        fecha: 'Condición Médica Permanente',
-        titulo: `Alerta: Paciente Alérgico`,
-        subtitulo: 'Registro Clínico Oficial',
-        contenido: pacienteFinal.alergias,
-        icono: '⚠️',
-        color: '#f59e0b',
-        esAlertaFija: true
-      })
-    }
-
-    // Ordenar cronológicamente descendente (lo más reciente primero)
+    // Ordenar cronológicamente descendente
     return lista.sort((a, b) => b.fechaRaw - a.fechaRaw)
-  }, [pacienteFinal, documentos, notas, signos])
+  }, [documentos, notas, signos])
 
   if (!documentoEnVista) return null
 
-  const nombreArchivoMostrado = documentoEnVista.nombre_original || documentoEnVista.nombre_archivo
+  const nombreArchivoMostrado = docActivo?.nombre_original || docActivo?.nombre_archivo || ''
+  const tieneAlergia = pacienteFinal?.alergias && pacienteFinal.alergias.trim() && !pacienteFinal.alergias.toLowerCase().includes('ninguna')
+
+  // Manejador al hacer clic en documento del timeline
+  const handleSeleccionarDoc = (doc) => {
+    setDocActivo(doc)
+    setPestanaActiva('documento')
+    if (onSeleccionarDocumento) {
+      onSeleccionarDocumento(doc)
+    }
+  }
 
   return (
-    <aside style={{
-      width: anchoVisor,
-      minWidth: minAncho,
-      maxWidth: esPantallaPequena ? '100vw' : '1650px',
-      flexShrink: 0,
-      height: '100vh',
-      backgroundColor: theme.bgCard,
-      borderLeft: esPantallaPequena ? 'none' : theme.border,
-      display: 'flex',
-      flexDirection: 'column',
-      boxShadow: theme.shadowCard,
-      zIndex: esPantallaPequena ? 120 : 35,
-      position: esPantallaPequena ? 'fixed' : 'relative',
-      top: 0,
-      right: 0,
-      bottom: 0,
-      left: esPantallaPequena ? 0 : undefined,
-      boxSizing: 'border-box',
-      transition: 'width 0.22s ease',
-      overflow: 'hidden'
-    }}>
-      {/* ================================================================= */}
-      {/* 1. CABECERA FIJA Y PERSISTENTE DEL VISOR (STICKY HEADER) */}
-      {/* ================================================================= */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        padding: '14px 20px',
-        borderBottom: theme.border,
+    <aside
+      aria-label="Expediente Clínico y Visor"
+      style={{
+        width: esPantallaPequena ? '100vw' : '82%',
+        maxWidth: esPantallaPequena ? '100vw' : '1350px',
+        flexShrink: 0,
+        height: '100vh',
+        backgroundColor: 'var(--medix-bg-app, #F4F6F9)',
+        borderLeft: esPantallaPequena ? 'none' : '1px solid var(--medix-border, #D9DEE5)',
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: temaOscuro ? 'rgba(15, 23, 42, 0.96)' : 'rgba(255, 255, 255, 0.96)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        flexWrap: 'wrap',
-        gap: '12px',
-        flexShrink: 0
-      }}>
-        {/* Información del Paciente y Archivo */}
-        <div style={{ flex: '1 1 240px', minWidth: '220px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {obtenerIconoArchivo(nombreArchivoMostrado)}
-            <h3 style={{
-              margin: 0,
-              fontSize: '15px',
-              color: theme.textMain,
-              fontWeight: '800',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              maxWidth: '320px'
-            }} title={nombreArchivoMostrado}>
-              {pacienteFinal?.nombre ? pacienteFinal.nombre : nombreArchivoMostrado}
-            </h3>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '12px', color: theme.textMuted }}>
-              DNI: <strong style={{
-                color: temaOscuro ? '#7dd3fc' : '#0369a1',
-                backgroundColor: temaOscuro ? '#082f49' : '#f0f9ff',
-                padding: '1px 7px',
-                borderRadius: '5px',
-                border: `1px solid ${temaOscuro ? '#0284c7' : '#bae6fd'}`
-              }}>
-                {documentoEnVista.paciente_dni || pacienteFinal?.dni || 'Sin DNI'}
-              </strong>
-            </span>
-
-            {/* Badge permanente de Alergias en la cabecera fija */}
-            {pacienteFinal?.alergias && !pacienteFinal.alergias.toLowerCase().includes('ninguna') && (
-              <span style={{
-                backgroundColor: temaOscuro ? '#451a03' : '#fffbeb',
-                color: temaOscuro ? '#fcd34d' : '#b45309',
-                border: temaOscuro ? '1px solid #78350f' : '1px solid #fde68a',
-                padding: '1px 8px',
-                borderRadius: '5px',
-                fontSize: '11px',
-                fontWeight: '700',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px'
-              }} title={`Alergias detectadas: ${pacienteFinal.alergias}`}>
-                <span>⚠️ {pacienteFinal.alergias}</span>
-              </span>
-            )}
-
-            <span style={{ fontSize: '11.5px', color: theme.textMuted }}>
-              · {documentoEnVista.fecha_subida || 'Expediente Activo'}
-            </span>
-          </div>
-        </div>
-
-        {/* SELECTOR DE MODO: LÍNEA DE TIEMPO / VISTA DIVIDIDA / DOCUMENTO / MANIQUÍ */}
-        <div style={{
+        flexDirection: 'column',
+        zIndex: esPantallaPequena ? 120 : 35,
+        position: esPantallaPequena ? 'fixed' : 'relative',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: esPantallaPequena ? 0 : undefined,
+        boxSizing: 'border-box',
+        overflow: 'hidden'
+      }}
+    >
+      {/* =================================================================== */}
+      {/* 1. CABECERA FIJA CON DATOS CLAVE (STICKY HEADER) */}
+      {/* =================================================================== */}
+      <div
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 50,
+          padding: '12px 18px',
+          borderBottom: '1px solid var(--medix-border, #D9DEE5)',
           display: 'flex',
-          backgroundColor: theme.bgCard,
-          borderRadius: '8px',
-          padding: '3px',
-          border: theme.border,
-          gap: '3px'
-        }}>
-          {[
-            { id: 'timeline', label: 'Línea de Tiempo', icon: '⏱️', desc: 'Historial cronológico completo del paciente' },
-            { id: 'dividida', label: 'Vista Dividida', icon: '🪟', desc: 'Ver documento y silueta anatómica simultáneamente' },
-            { id: 'documento', label: 'Solo Documento', icon: '📄', desc: 'Ver exclusivamente el documento clínico' },
-            { id: 'maniqui', label: 'Solo Maniquí', icon: '🧍', desc: 'Ver exclusivamente la silueta anatómica' }
-          ].map(m => {
-            const activo = modoVista === m.id
-            return (
-              <button
-                key={m.id}
-                onClick={() => setModoVista(m.id)}
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+          flexWrap: 'wrap',
+          gap: '12px',
+          flexShrink: 0
+        }}
+      >
+        {/* Datos clave del paciente */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <h2
                 style={{
-                  padding: '5px 11px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  backgroundColor: activo ? (temaOscuro ? '#1e293b' : '#0f172a') : 'transparent',
-                  color: activo ? (temaOscuro ? '#38bdf8' : '#ffffff') : theme.textMuted,
-                  fontWeight: activo ? '700' : '500',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  transition: 'all 0.15s ease'
+                  margin: 0,
+                  fontSize: '16px',
+                  fontWeight: '700',
+                  color: 'var(--medix-navy, #0B2545)',
+                  letterSpacing: '-0.2px'
                 }}
-                title={m.desc}
               >
-                <span>{m.icon}</span>
-                <span>{m.label}</span>
-              </button>
-            )
-          })}
+                {pacienteFinal?.nombre || `Paciente DNI ${pacienteFinal?.dni || documentoEnVista.paciente_dni}`}
+              </h2>
+
+              {tieneAlergia && (
+                <span
+                  style={{
+                    backgroundColor: 'var(--medix-alert-bg, #FEF3F2)',
+                    color: 'var(--medix-alert-red, #B42318)',
+                    border: '1px solid var(--medix-alert-border, #FECDCA)',
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    fontWeight: '600'
+                  }}
+                  title={`Alergias registradas: ${pacienteFinal.alergias}`}
+                >
+                  Alergias: {pacienteFinal.alergias}
+                </span>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '3px', fontSize: '12px', color: 'var(--medix-text-muted, #5B6675)' }}>
+              <span>
+                DNI: <strong style={{ color: 'var(--medix-text-main, #1F2937)' }}>{pacienteFinal?.dni || documentoEnVista.paciente_dni || '—'}</strong>
+              </span>
+              <span>·</span>
+              <span>
+                Edad: <strong style={{ color: 'var(--medix-text-main, #1F2937)' }}>{pacienteFinal?.edad || '—'}</strong>
+              </span>
+              <span>·</span>
+              <span>
+                Expediente: <strong style={{ color: 'var(--medix-text-main, #1F2937)' }}>#{pacienteFinal?.id || documentoEnVista.paciente_id || '—'}</strong>
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Botones de Descargar y Cerrar */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {documentoEnVista.id && (
+        {/* Botones de acción accesibles */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {docActivo?.id && (
             <a
-              href={obtenerUrlArchivo(documentoEnVista.id)}
+              href={obtenerUrlArchivo(docActivo.id)}
               download={nombreArchivoMostrado}
+              aria-label="Descargar archivo original"
+              title="Descargar archivo original"
               style={{
-                padding: '6px 13px',
-                backgroundColor: theme.bgCard,
-                color: theme.accentCool,
-                border: theme.border,
+                padding: '6px 12px',
+                backgroundColor: 'transparent',
+                color: 'var(--medix-action, #1D5C96)',
+                border: '1px solid var(--medix-border, #D9DEE5)',
                 borderRadius: '6px',
                 textDecoration: 'none',
-                fontSize: '11.5px',
-                fontWeight: '700',
+                fontSize: '12px',
+                fontWeight: '600',
                 display: 'inline-flex',
-                alignItems: 'center'
+                alignItems: 'center',
+                gap: '5px'
               }}
-              title="Descargar archivo físico original"
             >
-              Descargar
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Descargar</span>
             </a>
           )}
+
           <button
+            type="button"
             onClick={onCerrar}
+            aria-label="Cerrar visor"
+            title="Cerrar expediente"
             style={{
-              padding: '6px 13px',
-              backgroundColor: temaOscuro ? '#3b121e' : '#fef2f2',
-              color: temaOscuro ? '#fca5a5' : '#dc2626',
-              border: `1px solid ${temaOscuro ? '#881337' : '#fecaca'}`,
+              padding: '6px 12px',
+              backgroundColor: 'transparent',
+              color: 'var(--medix-text-main, #1F2937)',
+              border: '1px solid var(--medix-border, #D9DEE5)',
               borderRadius: '6px',
               cursor: 'pointer',
-              fontSize: '11.5px',
-              fontWeight: '700',
+              fontSize: '12px',
+              fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
               gap: '4px'
             }}
-            title="Cerrar panel visor"
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4F6F9'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
-            Cerrar ✕
+            <span>Cerrar</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
       </div>
 
-      {/* ================================================================= */}
-      {/* 2. CONTENIDO PRINCIPAL SCROLLEABLE SEGÚN MODO SELECCIONADO */}
-      {/* ================================================================= */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: (esModoDividido && esPantallaPequena) ? 'column' : 'row',
-        overflow: 'auto',
-        backgroundColor: theme.bgApp,
-        position: 'relative'
-      }}>
+      {/* =================================================================== */}
+      {/* 2. TARJETAS MÉTRICAS DE SIGNOS VITALES (P.A., F.C., Temp, SpO2) */}
+      {/* =================================================================== */}
+      <div
+        style={{
+          padding: '10px 18px',
+          backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+          borderBottom: '1px solid var(--medix-border, #D9DEE5)',
+          display: 'grid',
+          gridTemplateColumns: esPantallaPequena ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+          gap: '10px',
+          flexShrink: 0
+        }}
+      >
+        {/* Métrica 1: Presión Arterial */}
+        <div
+          style={{
+            padding: '8px 12px',
+            borderRadius: '6px',
+            backgroundColor: temaOscuro ? 'rgba(255, 255, 255, 0.03)' : '#F8F9FA',
+            border: '1px solid var(--medix-border, #D9DEE5)'
+          }}
+        >
+          <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+            P.A.
+          </span>
+          <strong style={{ display: 'block', fontSize: '15px', color: 'var(--medix-navy, #0B2545)', marginTop: '2px' }}>
+            {ultimoSigno?.presion_arterial || (ultimoSigno?.pa_sistolica ? `${ultimoSigno.pa_sistolica}/${ultimoSigno.pa_diastolica} mmHg` : '—')}
+          </strong>
+          <span style={{ fontSize: '10px', color: 'var(--medix-text-muted, #5B6675)' }}>
+            Presión arterial
+          </span>
+        </div>
 
-        {/* =============================================================== */}
-        {/* MODO A: LÍNEA DE TIEMPO CLÍNICA CRONOLÓGICA (TIMELINE) */}
-        {/* =============================================================== */}
-        {mostrarTimeline && (
-          <div style={{
-            width: '100%',
-            height: '100%',
+        {/* Métrica 2: Frecuencia Cardíaca */}
+        <div
+          style={{
+            padding: '8px 12px',
+            borderRadius: '6px',
+            backgroundColor: temaOscuro ? 'rgba(255, 255, 255, 0.03)' : '#F8F9FA',
+            border: '1px solid var(--medix-border, #D9DEE5)'
+          }}
+        >
+          <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+            F.C.
+          </span>
+          <strong style={{ display: 'block', fontSize: '15px', color: 'var(--medix-navy, #0B2545)', marginTop: '2px' }}>
+            {ultimoSigno?.frecuencia_cardiaca ? `${ultimoSigno.frecuencia_cardiaca} lpm` : '—'}
+          </strong>
+          <span style={{ fontSize: '10px', color: 'var(--medix-text-muted, #5B6675)' }}>
+            Frecuencia cardíaca
+          </span>
+        </div>
+
+        {/* Métrica 3: Temperatura */}
+        <div
+          style={{
+            padding: '8px 12px',
+            borderRadius: '6px',
+            backgroundColor: temaOscuro ? 'rgba(255, 255, 255, 0.03)' : '#F8F9FA',
+            border: '1px solid var(--medix-border, #D9DEE5)'
+          }}
+        >
+          <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+            Temp
+          </span>
+          <strong style={{ display: 'block', fontSize: '15px', color: 'var(--medix-navy, #0B2545)', marginTop: '2px' }}>
+            {ultimoSigno?.temperatura ? `${ultimoSigno.temperatura} °C` : '—'}
+          </strong>
+          <span style={{ fontSize: '10px', color: 'var(--medix-text-muted, #5B6675)' }}>
+            Temperatura corporal
+          </span>
+        </div>
+
+        {/* Métrica 4: SpO2 */}
+        <div
+          style={{
+            padding: '8px 12px',
+            borderRadius: '6px',
+            backgroundColor: temaOscuro ? 'rgba(255, 255, 255, 0.03)' : '#F8F9FA',
+            border: '1px solid var(--medix-border, #D9DEE5)'
+          }}
+        >
+          <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--medix-text-muted, #5B6675)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+            SpO2
+          </span>
+          <strong style={{ display: 'block', fontSize: '15px', color: 'var(--medix-navy, #0B2545)', marginTop: '2px' }}>
+            {ultimoSigno?.saturacion_oxigeno || ultimoSigno?.spo2 ? `${ultimoSigno.saturacion_oxigeno || ultimoSigno.spo2}%` : '—'}
+          </strong>
+          <span style={{ fontSize: '10px', color: 'var(--medix-text-muted, #5B6675)' }}>
+            Saturación oxígeno
+          </span>
+        </div>
+      </div>
+
+      {/* =================================================================== */}
+      {/* 3. ZONA PRINCIPAL EN 2 COLUMNAS (TIMELINE IZQ / PREVIEW DER) */}
+      {/* =================================================================== */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: esPantallaPequena ? 'column' : 'row',
+          overflow: 'hidden',
+          backgroundColor: 'var(--medix-bg-app, #F4F6F9)'
+        }}
+      >
+        {/* ----------------------------------------------------------------- */}
+        {/* COLUMNA IZQUIERDA: LÍNEA DE TIEMPO CRONOLÓGICA (FEED VERTICAL) */}
+        {/* ----------------------------------------------------------------- */}
+        <div
+          style={{
+            width: esPantallaPequena ? '100%' : '360px',
+            flex: esPantallaPequena ? 'none' : '0 0 360px',
+            height: esPantallaPequena ? '40vh' : '100%',
             overflowY: 'auto',
-            padding: '24px 28px',
+            borderRight: esPantallaPequena ? 'none' : '1px solid var(--medix-border, #D9DEE5)',
+            borderBottom: esPantallaPequena ? '1px solid var(--medix-border, #D9DEE5)' : 'none',
+            backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+            padding: '16px',
             boxSizing: 'border-box'
-          }}>
-            <div style={{ maxWidth: '850px', margin: '0 auto' }}>
-              <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: '800', color: theme.textMain }}>
-                  Línea de Tiempo del Expediente Clínico
-                </h3>
-                <p style={{ margin: 0, fontSize: '12.5px', color: theme.textMuted }}>
-                  Registro histórico secuencial de documentos escaneados, diagnósticos, notas de evolución y signos vitales.
-                </p>
-              </div>
-
-              {eventosLineaTiempo.length === 0 ? (
-                <div style={{
-                  padding: '36px',
-                  textAlign: 'center',
-                  backgroundColor: theme.bgCard,
-                  borderRadius: '12px',
-                  border: theme.border,
-                  color: theme.textMuted
-                }}>
-                  No se registran eventos clínicos ni documentos en la carpeta de este paciente.
-                </div>
-              ) : (
-                <div style={{ position: 'relative', paddingLeft: '32px' }}>
-                  {/* Línea vertical conectora continua */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    bottom: '24px',
-                    left: '11px',
-                    width: '2px',
-                    backgroundColor: temaOscuro ? '#1e293b' : '#e2e8f0'
-                  }} />
-
-                  {eventosLineaTiempo.map((ev) => (
-                    <div key={ev.id} style={{
-                      position: 'relative',
-                      marginBottom: '20px'
-                    }}>
-                      {/* Nodo circular indicador en la línea vertical */}
-                      <div style={{
-                        position: 'absolute',
-                        left: '-32px',
-                        top: '4px',
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        backgroundColor: theme.bgCard,
-                        border: `2px solid ${ev.color}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '12px',
-                        zIndex: 2,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                      }}>
-                        {ev.icono}
-                      </div>
-
-                      {/* Tarjeta de evento clínico */}
-                      <div style={{
-                        backgroundColor: theme.bgCard,
-                        border: theme.border,
-                        borderRadius: '12px',
-                        padding: '14px 16px',
-                        boxShadow: theme.shadowCard,
-                        transition: 'transform 0.15s ease'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
-                          <div>
-                            <span style={{
-                              fontSize: '10.5px',
-                              fontWeight: '700',
-                              padding: '2px 7px',
-                              borderRadius: '4px',
-                              backgroundColor: `${ev.color}15`,
-                              color: ev.color,
-                              marginRight: '6px'
-                            }}>
-                              {ev.tipo.toUpperCase()}
-                            </span>
-                            <strong style={{ fontSize: '13.5px', color: theme.textMain }}>
-                              {ev.titulo}
-                            </strong>
-                          </div>
-
-                          <span style={{ fontSize: '11.5px', color: theme.textMuted, fontWeight: '500' }}>
-                            {ev.fecha}
-                          </span>
-                        </div>
-
-                        <div style={{ fontSize: '12px', color: theme.textSecondary, marginBottom: '4px' }}>
-                          {ev.subtitulo}
-                        </div>
-
-                        {ev.contenido && (
-                          <p style={{
-                            margin: '8px 0 0 0',
-                            fontSize: '13px',
-                            color: theme.textMain,
-                            lineHeight: '1.45',
-                            backgroundColor: theme.bgSubtle,
-                            padding: '10px 12px',
-                            borderRadius: '8px',
-                            border: theme.borderSubtle
-                          }}>
-                            {ev.contenido}
-                          </p>
-                        )}
-
-                        {ev.signoData && (
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                            gap: '8px',
-                            marginTop: '8px',
-                            backgroundColor: theme.bgSubtle,
-                            padding: '10px 12px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            color: theme.textMain
-                          }}>
-                            <div><strong>P.A.:</strong> {ev.signoData.presion_arterial || '—'} mmHg</div>
-                            <div><strong>F.C.:</strong> {ev.signoData.frecuencia_cardiaca || '—'} lpm</div>
-                            <div><strong>Temp:</strong> {ev.signoData.temperatura || '—'} °C</div>
-                            <div><strong>SpO2:</strong> {ev.signoData.saturacion_oxigeno || '—'}</div>
-                            <div><strong>Peso:</strong> {ev.signoData.peso || '—'}</div>
-                            <div><strong>Talla:</strong> {ev.signoData.talla || '—'}</div>
-                            {ev.signoData.observaciones && (
-                              <div style={{ gridColumn: '1 / -1', marginTop: '4px', color: theme.textMuted }}>
-                                <em>Obs: {ev.signoData.observaciones}</em>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {ev.tipo === 'documento' && ev.doc && (
-                          <div style={{ marginTop: '10px', display: 'flex', gap: '8px' }}>
-                            <button
-                              onClick={() => {
-                                if (onSeleccionarDocumento) {
-                                  onSeleccionarDocumento(ev.doc)
-                                }
-                                setModoVista('documento')
-                              }}
-                              style={{
-                                padding: '5px 12px',
-                                backgroundColor: temaOscuro ? '#1e293b' : '#eff6ff',
-                                color: temaOscuro ? '#38bdf8' : '#2563eb',
-                                border: `1px solid ${temaOscuro ? '#0284c7' : '#bfdbfe'}`,
-                                borderRadius: '6px',
-                                fontSize: '11.5px',
-                                fontWeight: '700',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px'
-                              }}
-                            >
-                              <span>Visualizar este archivo ↗</span>
-                            </button>
-                            <a
-                              href={`${API_BASE}/documentos/${ev.doc.id}/archivo`}
-                              style={{
-                                padding: '5px 12px',
-                                backgroundColor: theme.bgSubtle,
-                                color: theme.textSecondary,
-                                border: theme.border,
-                                borderRadius: '6px',
-                                fontSize: '11.5px',
-                                fontWeight: '600',
-                                textDecoration: 'none'
-                              }}
-                            >
-                              Descargar
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          }}
+        >
+          <div style={{ marginBottom: '12px' }}>
+            <h3 style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: 'var(--medix-navy, #0B2545)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+              Historial Cronológico
+            </h3>
+            <span style={{ fontSize: '12px', color: 'var(--medix-text-muted, #5B6675)' }}>
+              {eventosLineaTiempo.length} registros (notas, signos y documentos)
+            </span>
           </div>
-        )}
 
-        {/* =============================================================== */}
-        {/* MODO B: SECTOR DOCUMENTO O RESUMEN CLÍNICO */}
-        {/* =============================================================== */}
-        {mostrarDoc && !mostrarTimeline && (
-          <div style={{
-            flex: esModoDividido ? (esPantallaPequena ? 'none' : '1 1 50%') : '1 1 100%',
-            height: esModoDividido && esPantallaPequena ? '50vh' : '100%',
-            minHeight: esModoDividido && esPantallaPequena ? '360px' : undefined,
-            backgroundColor: documentoEnVista.id ? (temaOscuro ? '#0b111e' : '#1e293b') : theme.bgApp,
-            padding: documentoEnVista.id ? '10px' : '16px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            overflow: 'auto',
-            boxSizing: 'border-box',
-            borderRight: (esModoDividido && !esPantallaPequena) ? theme.border : 'none',
-            borderBottom: (esModoDividido && esPantallaPequena) ? theme.border : 'none'
-          }}>
-            {documentoEnVista.id ? (
-              esPdf(nombreArchivoMostrado) ? (
-                <iframe
-                  src={obtenerUrlArchivo(documentoEnVista.id, true)}
-                  title={`Visor PDF - ${nombreArchivoMostrado}`}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    border: 'none',
-                    borderRadius: '8px',
-                    backgroundColor: '#ffffff'
-                  }}
-                />
-              ) : esDocx(nombreArchivoMostrado) ? (
-                <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>
-                  <DocxViewer url={obtenerUrlArchivo(documentoEnVista.id, true)} />
-                </div>
-              ) : esImagen(nombreArchivoMostrado) ? (
-                <div style={{ textAlign: 'center', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: '16px', boxSizing: 'border-box' }}>
-                  {imgError ? (
-                    <div style={{ textAlign: 'center', color: theme.textMuted, padding: '24px', backgroundColor: theme.bgCard, borderRadius: '10px', border: theme.border }}>
-                      <p style={{ fontSize: '15px', color: '#ef4444', fontWeight: 'bold', margin: '0 0 8px 0' }}>
-                        No se pudo cargar la vista previa de la imagen.
-                      </p>
-                      <p style={{ fontSize: '13px', margin: 0 }}>
-                        Puedes usar el botón "Descargar" arriba.
-                      </p>
-                    </div>
-                  ) : (
-                    <img
-                      src={obtenerUrlArchivo(documentoEnVista.id, true)}
-                      alt="Vista previa de documento"
-                      onError={() => setImgError(true)}
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        objectFit: 'contain',
-                        borderRadius: '6px',
-                        boxShadow: theme.shadowCard
-                      }}
-                    />
-                  )}
-                </div>
-              ) : esTexto(nombreArchivoMostrado) ? (
-                <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>
-                  <TextViewer url={obtenerUrlArchivo(documentoEnVista.id, true)} />
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', color: theme.textSecondary, padding: '30px' }}>
-                  <p style={{ fontSize: '15px', marginBottom: '14px' }}>
-                    Este tipo de archivo no admite previsualización directa en el navegador.
-                  </p>
-                  <a
-                    href={obtenerUrlArchivo(documentoEnVista.id)}
-                    download={nombreArchivoMostrado}
+          {eventosLineaTiempo.length === 0 ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--medix-text-muted, #5B6675)', fontSize: '13px' }}>
+              Sin registros en el historial clínico.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {eventosLineaTiempo.map((evento) => {
+                const esDocSeleccionado = evento.tipo === 'documento' && docActivo?.id === evento.doc?.id
+
+                return (
+                  <div
+                    key={evento.id}
+                    onClick={() => {
+                      if (evento.tipo === 'documento') {
+                        handleSeleccionarDoc(evento.doc)
+                      } else if (evento.tipo === 'nota') {
+                        setPestanaActiva('notas')
+                      }
+                    }}
                     style={{
-                      display: 'inline-block',
-                      padding: '8px 18px',
-                      backgroundColor: theme.primaryBtnBg,
-                      color: theme.primaryBtnColor,
-                      border: 'none',
-                      borderRadius: '8px',
-                      textDecoration: 'none',
-                      fontWeight: '700',
-                      fontSize: '13px'
+                      padding: '10px 12px',
+                      borderRadius: '6px',
+                      border: esDocSeleccionado
+                        ? '1px solid var(--medix-action, #1D5C96)'
+                        : '1px solid var(--medix-border, #D9DEE5)',
+                      backgroundColor: esDocSeleccionado
+                        ? '#F0F5FA'
+                        : (temaOscuro ? 'rgba(255, 255, 255, 0.02)' : '#FFFFFF'),
+                      cursor: evento.tipo === 'documento' || evento.tipo === 'nota' ? 'pointer' : 'default',
+                      transition: 'border-color 0.15s ease'
                     }}
                   >
-                    Descargar archivo
-                  </a>
-                </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <span
+                        style={{
+                          fontSize: '10.5px',
+                          fontWeight: '700',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          textTransform: 'uppercase',
+                          backgroundColor:
+                            evento.tipo === 'documento'
+                              ? '#EBF3FA'
+                              : evento.tipo === 'nota'
+                              ? '#F3E8FF'
+                              : '#ECFDF3',
+                          color:
+                            evento.tipo === 'documento'
+                              ? 'var(--medix-action, #1D5C96)'
+                              : evento.tipo === 'nota'
+                              ? '#7E22CE'
+                              : 'var(--medix-status-green, #067647)'
+                        }}
+                      >
+                        {evento.tipo === 'documento' ? 'Documento' : evento.tipo === 'nota' ? 'Nota Médica' : 'Triaje'}
+                      </span>
+
+                      <span style={{ fontSize: '11px', color: 'var(--medix-text-muted, #5B6675)' }}>
+                        {evento.fecha}
+                      </span>
+                    </div>
+
+                    <strong style={{ display: 'block', fontSize: '13px', color: 'var(--medix-text-main, #1F2937)' }}>
+                      {evento.titulo}
+                    </strong>
+
+                    <span style={{ fontSize: '11.5px', color: 'var(--medix-text-muted, #5B6675)', display: 'block', marginTop: '2px' }}>
+                      {evento.subtitulo}
+                    </span>
+
+                    {/* Contenido de nota */}
+                    {evento.contenido && (
+                      <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: 'var(--medix-text-main, #1F2937)', lineHeight: 1.35 }}>
+                        {evento.contenido}
+                      </p>
+                    )}
+
+                    {/* Datos de signos en el evento */}
+                    {evento.signoData && (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '6px', fontSize: '11.5px', color: 'var(--medix-text-main, #1F2937)' }}>
+                        {evento.signoData.presion_arterial && <span>PA: <strong>{evento.signoData.presion_arterial}</strong></span>}
+                        {evento.signoData.frecuencia_cardiaca && <span>FC: <strong>{evento.signoData.frecuencia_cardiaca} lpm</strong></span>}
+                        {evento.signoData.temperatura && <span>Temp: <strong>{evento.signoData.temperatura} °C</strong></span>}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ----------------------------------------------------------------- */}
+        {/* COLUMNA DERECHA: PESTAÑAS Y PREVISUALIZACIÓN */}
+        {/* ----------------------------------------------------------------- */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            backgroundColor: 'var(--medix-bg-app, #F4F6F9)'
+          }}
+        >
+          {/* Pestañas: Documento / Notas / Anatomía */}
+          <div
+            role="tablist"
+            aria-label="Pestañas de visualización"
+            style={{
+              padding: '8px 16px',
+              backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+              borderBottom: '1px solid var(--medix-border, #D9DEE5)',
+              display: 'flex',
+              gap: '6px',
+              alignItems: 'center',
+              flexShrink: 0
+            }}
+          >
+            {[
+              { id: 'documento', label: 'Documento' },
+              { id: 'notas', label: `Notas (${notas.length})` },
+              { id: 'anatomia', label: 'Anatomía' }
+            ].map(tab => {
+              const activo = pestanaActiva === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activo}
+                  onClick={() => setPestanaActiva(tab.id)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: activo ? 'var(--medix-action, #1D5C96)' : 'transparent',
+                    color: activo ? '#FFFFFF' : 'var(--medix-text-muted, #5B6675)',
+                    fontWeight: activo ? '600' : '500',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    transition: 'all 0.12s ease'
+                  }}
+                >
+                  {tab.label}
+                </button>
               )
-            ) : (
-              /* Paciente sin archivo cargado: Ficha Digital */
-              <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: '14px', color: theme.textMain }}>
-                <div style={{
-                  backgroundColor: theme.bgCard,
-                  borderRadius: '12px',
-                  padding: '18px 20px',
-                  border: theme.border,
-                  boxShadow: theme.shadowCard
-                }}>
-                  <span style={{ fontSize: '11px', fontWeight: '800', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                    Expediente Clínico Digital
-                  </span>
-                  <h3 style={{ margin: '4px 0 2px 0', fontSize: '18px', fontWeight: '900', color: theme.textMain, letterSpacing: '-0.3px' }}>
-                    {pacienteFinal?.nombre || `Historia Clínica - DNI ${documentoEnVista.paciente_dni || pacienteFinal?.dni}`}
-                  </h3>
-                  <p style={{ margin: 0, fontSize: '12px', color: theme.textMuted }}>
-                    Hospital San Juan de Dios de Pisco · Registro Digital Centralizado
-                  </p>
-                </div>
+            })}
 
-                <div style={{
-                  flex: 1,
-                  backgroundColor: theme.bgCard,
-                  borderRadius: '12px',
-                  padding: '18px 20px',
-                  border: theme.border,
-                  boxShadow: theme.shadowCard,
-                  overflowY: 'auto'
-                }}>
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '800', color: theme.textMain }}>
-                    Notas Médicas Registradas ({notas.length})
-                  </h4>
-                  {notas.length === 0 ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: theme.textMuted, fontSize: '12.5px', backgroundColor: theme.bgSubtle, borderRadius: '8px' }}>
-                      No hay notas clínicas registradas todavía para este paciente.
+            {docActivo?.id && pestanaActiva === 'documento' && (
+              <span
+                style={{
+                  marginLeft: 'auto',
+                  fontSize: '12px',
+                  color: 'var(--medix-text-muted, #5B6675)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '300px'
+                }}
+                title={nombreArchivoMostrado}
+              >
+                {nombreArchivoMostrado}
+              </span>
+            )}
+          </div>
+
+          {/* Contenido de la pestaña activa */}
+          <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+            {/* PESTAÑA 1: DOCUMENTO */}
+            {pestanaActiva === 'documento' && (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {docActivo?.id ? (
+                  esPdf(nombreArchivoMostrado) ? (
+                    <iframe
+                      src={obtenerUrlArchivo(docActivo.id, true)}
+                      title={`Visor PDF - ${nombreArchivoMostrado}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                        backgroundColor: '#FFFFFF'
+                      }}
+                    />
+                  ) : esDocx(nombreArchivoMostrado) ? (
+                    <div style={{ width: '100%', height: '100%', overflow: 'auto', padding: '16px', boxSizing: 'border-box' }}>
+                      <DocxViewer url={obtenerUrlArchivo(docActivo.id, true)} />
                     </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {notas.map((n) => (
-                        <div key={n.id} style={{
-                          padding: '12px 14px',
-                          backgroundColor: theme.bgSubtle,
-                          border: theme.borderSubtle,
-                          borderRadius: '8px'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', fontWeight: '700', color: theme.accentCool, marginBottom: '4px' }}>
-                            <span>{n.diagnostico || 'Diagnóstico General'}</span>
-                            <span style={{ color: theme.textMuted }}>{n.fecha || 'Reciente'}</span>
-                          </div>
-                          <p style={{ margin: 0, fontSize: '12.5px', color: theme.textMain, lineHeight: '1.4' }}>
-                            {n.contenido}
+                  ) : esImagen(nombreArchivoMostrado) ? (
+                    <div style={{ textAlign: 'center', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', boxSizing: 'border-box' }}>
+                      {imgError ? (
+                        <div style={{ padding: '24px', backgroundColor: 'var(--medix-bg-card, #FFFFFF)', borderRadius: '8px', border: '1px solid var(--medix-border, #D9DEE5)' }}>
+                          <p style={{ fontSize: '14px', color: 'var(--medix-alert-red, #B42318)', fontWeight: '600', margin: '0 0 6px 0' }}>
+                            No se pudo cargar la vista previa de la imagen.
                           </p>
-                          <div style={{ fontSize: '11px', color: theme.textMuted, marginTop: '6px', textAlign: 'right' }}>
-                            Dr(a). {n.medico_nombre || 'Médico de Turno'}
-                          </div>
+                          <a href={obtenerUrlArchivo(docActivo.id)} download={nombreArchivoMostrado} style={{ color: 'var(--medix-action, #1D5C96)', fontSize: '13px' }}>
+                            Descargar imagen
+                          </a>
                         </div>
-                      ))}
+                      ) : (
+                        <img
+                          src={obtenerUrlArchivo(docActivo.id, true)}
+                          alt="Vista previa de documento"
+                          onError={() => setImgError(true)}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '100%',
+                            objectFit: 'contain',
+                            borderRadius: '4px'
+                          }}
+                        />
+                      )}
                     </div>
-                  )}
-
-                  <h4 style={{ margin: '20px 0 10px 0', fontSize: '14px', fontWeight: '800', color: theme.textMain }}>
-                    Último Registro de Triaje
-                  </h4>
-                  {ultimoSigno ? (
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(2, 1fr)',
-                      gap: '8px',
-                      backgroundColor: theme.bgSubtle,
-                      padding: '12px 14px',
-                      borderRadius: '8px',
-                      border: theme.borderSubtle,
-                      fontSize: '12px',
-                      color: theme.textMain
-                    }}>
-                      <div><strong>PA:</strong> {ultimoSigno.presion_arterial || '—'} mmHg</div>
-                      <div><strong>FC:</strong> {ultimoSigno.frecuencia_cardiaca || '—'} lpm</div>
-                      <div><strong>SpO2:</strong> {ultimoSigno.saturacion_oxigeno || '—'}</div>
-                      <div><strong>Temp:</strong> {ultimoSigno.temperatura || '—'} °C</div>
+                  ) : esTexto(nombreArchivoMostrado) ? (
+                    <div style={{ width: '100%', height: '100%', overflow: 'auto', padding: '16px', boxSizing: 'border-box' }}>
+                      <TextViewer url={obtenerUrlArchivo(docActivo.id, true)} />
                     </div>
                   ) : (
-                    <div style={{ padding: '14px', textAlign: 'center', color: theme.textMuted, fontSize: '12px', backgroundColor: theme.bgSubtle, borderRadius: '8px' }}>
-                      Sin tomas de signos vitales recientes.
+                    <div style={{ textAlign: 'center', padding: '30px', color: 'var(--medix-text-muted, #5B6675)' }}>
+                      <p style={{ fontSize: '14px', marginBottom: '12px' }}>
+                        Este formato no admite previsualización en el navegador.
+                      </p>
+                      <a
+                        href={obtenerUrlArchivo(docActivo.id)}
+                        download={nombreArchivoMostrado}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: 'var(--medix-action, #1D5C96)',
+                          color: '#FFFFFF',
+                          borderRadius: '6px',
+                          textDecoration: 'none',
+                          fontWeight: '600',
+                          fontSize: '13px'
+                        }}
+                      >
+                        Descargar archivo
+                      </a>
                     </div>
-                  )}
-                </div>
+                  )
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '40px', color: 'var(--medix-text-muted, #5B6675)' }}>
+                    <p style={{ fontSize: '14px', margin: '0 0 8px 0' }}>No hay documento seleccionado para previsualizar.</p>
+                    <span style={{ fontSize: '12px' }}>Seleccione un documento del historial o use las pestañas de Notas / Anatomía.</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* PESTAÑA 2: NOTAS MÉDICAS */}
+            {pestanaActiva === 'notas' && (
+              <div style={{ padding: '20px', height: '100%', overflowY: 'auto', boxSizing: 'border-box' }}>
+                <h3 style={{ margin: '0 0 14px 0', fontSize: '15px', fontWeight: '700', color: 'var(--medix-navy, #0B2545)' }}>
+                  Notas Médicas de Evolución
+                </h3>
+                {notas.length === 0 ? (
+                  <div style={{ padding: '30px', textAlign: 'center', backgroundColor: 'var(--medix-bg-card, #FFFFFF)', borderRadius: '8px', border: '1px solid var(--medix-border, #D9DEE5)', color: 'var(--medix-text-muted, #5B6675)' }}>
+                    No hay notas médicas registradas para este paciente.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {notas.map(n => (
+                      <div
+                        key={n.id}
+                        style={{
+                          backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+                          border: '1px solid var(--medix-border, #D9DEE5)',
+                          borderRadius: '8px',
+                          padding: '14px 16px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <strong style={{ fontSize: '14px', color: 'var(--medix-action, #1D5C96)' }}>
+                            {n.diagnostico || 'Nota Clínica'}
+                          </strong>
+                          <span style={{ fontSize: '12px', color: 'var(--medix-text-muted, #5B6675)' }}>
+                            {n.fecha || (n.fecha_creacion ? new Date(n.fecha_creacion).toLocaleDateString('es-PE') : 'Reciente')}
+                          </span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '13px', color: 'var(--medix-text-main, #1F2937)', lineHeight: 1.45 }}>
+                          {n.contenido}
+                        </p>
+                        <div style={{ fontSize: '11px', color: 'var(--medix-text-muted, #5B6675)', marginTop: '8px', textAlign: 'right' }}>
+                          Dr(a). {n.medico_nombre || 'Médico Tratante'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* PESTAÑA 3: ANATOMÍA */}
+            {pestanaActiva === 'anatomia' && (
+              <div style={{ height: '100%', overflowY: 'auto', padding: '16px', boxSizing: 'border-box' }}>
+                <ManiquiAnatomico
+                  paciente={pacienteFinal}
+                  documentoActual={docActivo}
+                  modoCompacto={false}
+                />
               </div>
             )}
           </div>
-        )}
-
-        {/* =============================================================== */}
-        {/* MODO C: SECTOR DERECHO: MANIQUÍ ANATÓMICO */}
-        {/* =============================================================== */}
-        {mostrarManiqui && !mostrarTimeline && (
-          <div style={{
-            flex: esModoDividido ? '1 1 50%' : '1 1 100%',
-            height: '100%',
-            overflowY: 'auto',
-            padding: '10px',
-            boxSizing: 'border-box',
-            backgroundColor: theme.bgApp
-          }}>
-            <ManiquiAnatomico
-              paciente={pacienteFinal}
-              documentoActual={documentoEnVista}
-              modoCompacto={esModoDividido}
-            />
-          </div>
-        )}
-
+        </div>
       </div>
     </aside>
   )
