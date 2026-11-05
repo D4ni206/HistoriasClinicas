@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
-import logoHospital from '../assets/logo-login.png'
 
 export default function Sidebar({
   usuario,
   onLogout,
   onCambiarPassword,
-  totalPacientes = 0,
-  totalDocumentos = 0,
+  totalPacientes: _totalPacientes = 0,
+  totalDocumentos: _totalDocumentos = 0,
   totalSolicitudesPendientes = 0,
-  busquedaDni = '',
-  setBusquedaDni = () => {},
+  busquedaDni: _busquedaDni = '',
+  setBusquedaDni: _setBusquedaDni = () => {},
   isMobile = false,
   sidebarMobileAbierto = false,
   onCloseMobile = () => {}
@@ -43,68 +42,31 @@ export default function Sidebar({
   const esSolicitudes = currentPath === '/solicitudes'
   const esConfiguracion = currentPath === '/configuracion'
 
-  // Paleta formal y seria con tonos fríos
-  const theme = temaOscuro ? {
-    bg: '#0b0f19',
-    border: '1px solid #1e293b',
-    textMain: '#f8fafc',
-    textMuted: '#94a3b8',
-    itemHoverBg: '#162032',
-    itemHoverText: '#ffffff',
-    activeBg: '#2563eb',
-    activeColor: '#ffffff',
-    toggleBoxBg: '#162032',
-    headerBtnBg: '#162032',
-    headerBtnHover: '#1e293b',
-    headerBtnColor: '#94a3b8',
-    shadow: '0 12px 32px rgba(0, 0, 0, 0.55)',
-    userCardBg: '#0f172a',
-    userCardBorder: '1px solid #1e293b',
-  } : {
-    bg: '#ffffff',
-    border: '1px solid #e2e8f0',
-    textMain: '#0f172a',
-    textMuted: '#64748b',
-    itemHoverBg: '#f1f5f9',
-    itemHoverText: '#0f172a',
-    activeBg: '#0f172a',
-    activeColor: '#ffffff',
-    toggleBoxBg: '#f1f5f9',
-    headerBtnBg: '#f1f5f9',
-    headerBtnHover: '#e2e8f0',
-    headerBtnColor: '#64748b',
-    shadow: '0 4px 16px rgba(15, 23, 42, 0.05)',
-    userCardBg: '#f8fafc',
-    userCardBorder: '1px solid #e2e8f0'
-  }
-
-  // Lista de items de navegación configurados según permisos de rol
+  // Items de menú institucionales
   const menuItems = [
     {
       id: 'dashboard',
-      nombre: 'Dashboard',
-      subtitulo: 'Expedientes y notas',
+      nombre: 'Expedientes',
       ruta: '/dashboard',
       activo: esDashboard,
       visible: esAdmin || esMedico || !esEnfermera,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1"></rect>
         </svg>
       )
     },
     {
       id: 'nueva_historia',
       nombre: 'Nueva Historia',
-      subtitulo: 'Subir documentos',
       ruta: '/agregarhistoria',
       activo: esNuevaHistoria,
       visible: esAdmin || esMedico,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
           <polyline points="14 2 14 8 20 8"></polyline>
           <line x1="12" y1="18" x2="12" y2="12"></line>
@@ -115,30 +77,24 @@ export default function Sidebar({
     {
       id: 'signos_vitales',
       nombre: 'Signos Vitales',
-      subtitulo: 'Presión y triaje',
       ruta: '/signosvitales',
       activo: esSignosVitales,
-      badge: 'Triaje',
       visible: esAdmin || esEnfermera,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="3"></rect>
-          <line x1="8" y1="17" x2="8" y2="12"></line>
-          <line x1="12" y1="17" x2="12" y2="8"></line>
-          <line x1="16" y1="17" x2="16" y2="14"></line>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
         </svg>
       )
     },
     {
       id: 'solicitudes',
       nombre: 'Solicitudes',
-      subtitulo: 'Bandeja de eliminación',
       ruta: '/solicitudes',
       activo: esSolicitudes,
       contador: totalSolicitudesPendientes,
       visible: esAdmin,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
           <polyline points="22,6 12,13 2,6"></polyline>
         </svg>
@@ -147,12 +103,11 @@ export default function Sidebar({
     {
       id: 'usuarios',
       nombre: 'Usuarios',
-      subtitulo: 'Personal y roles',
       ruta: '/usuarios',
       activo: esUsuarios,
       visible: esAdmin,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
           <circle cx="9" cy="7" r="4"></circle>
           <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -163,12 +118,11 @@ export default function Sidebar({
     {
       id: 'configuracion',
       nombre: 'Configuración',
-      subtitulo: 'Diagnóstico y servicios',
       ruta: '/configuracion',
       activo: esConfiguracion,
       visible: esAdmin,
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
@@ -177,95 +131,118 @@ export default function Sidebar({
   ]
 
   const itemsVisibles = menuItems.filter(item => item.visible)
+  const isColapsado = colapsado && !isMobile
+  const sidebarWidth = isMobile ? '224px' : (isColapsado ? '64px' : '224px')
 
   return (
     <aside
+      aria-label="Navegación principal"
       style={{
-        width: isMobile ? '264px' : (colapsado ? '74px' : '256px'),
-        flex: isMobile ? 'none' : (colapsado ? '0 0 74px' : '0 0 256px'),
-        height: isMobile ? '100vh' : 'calc(100vh - 24px)',
-        margin: isMobile ? 0 : '12px 0 12px 12px',
-        borderRadius: isMobile ? '0 24px 24px 0' : '24px',
-        backgroundColor: theme.bg,
-        border: theme.border,
-        boxShadow: isMobile && !sidebarMobileAbierto ? 'none' : theme.shadow,
+        width: sidebarWidth,
+        flex: isMobile ? 'none' : `0 0 ${sidebarWidth}`,
+        height: '100%',
+        backgroundColor: 'var(--medix-navy, #0B2545)',
+        borderRight: '1px solid rgba(255, 255, 255, 0.08)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         boxSizing: 'border-box',
         zIndex: isMobile ? 100 : 30,
         position: isMobile ? 'fixed' : 'relative',
-        top: isMobile ? 0 : undefined,
-        left: isMobile ? (sidebarMobileAbierto ? '0px' : '-320px') : undefined,
-        bottom: isMobile ? 0 : undefined,
+        top: 0,
+        bottom: 0,
+        left: isMobile ? (sidebarMobileAbierto ? '0px' : '-240px') : undefined,
         transition: isMobile
-          ? 'left 0.28s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease'
-          : 'width 0.26s cubic-bezier(0.4, 0, 0.2, 1), flex 0.26s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease, border-color 0.25s ease',
+          ? 'left 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
+          : 'width 0.2s cubic-bezier(0.4, 0, 0.2, 1), flex 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        color: '#FFFFFF',
         overflow: 'hidden'
       }}
     >
-      {/* SECCIÓN SUPERIOR: HEADER Y MENÚ */}
+      {/* SECCIÓN SUPERIOR: LOGO Y MENÚ */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          padding: (colapsado && !isMobile) ? '16px 10px 8px 10px' : '18px 14px 10px 14px',
+          padding: isColapsado ? '16px 8px' : '16px 12px',
           overflowY: 'auto',
           overflowX: 'hidden',
           flex: 1
         }}
       >
-        {/* CABECERA (Logo circular + Botón de colapso o Cerrar en móvil) */}
+        {/* CABECERA (Logo Medix + Nombre Hospital + Botón colapso/cierre) */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: (colapsado && !isMobile) ? 'center' : 'space-between',
-            marginBottom: '16px',
-            position: 'relative'
+            justifyContent: isColapsado ? 'center' : 'space-between',
+            paddingBottom: '16px',
+            marginBottom: '12px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
           }}
         >
-          {/* Logo Circular */}
+          {/* Logo y Nombre */}
           <div
             onClick={() => {
-              if (colapsado && !isMobile) setColapsado(false)
+              if (isColapsado) setColapsado(false)
             }}
-            title={(colapsado && !isMobile) ? "Click para desplegar menú" : "Medix - Hospital San Juan de Dios"}
+            title={isColapsado ? 'Expandir barra lateral' : 'Medix - Hospital San Juan de Dios de Pisco'}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              cursor: (colapsado && !isMobile) ? 'pointer' : 'default',
-              userSelect: 'none'
+              cursor: isColapsado ? 'pointer' : 'default',
+              userSelect: 'none',
+              minWidth: 0
             }}
           >
+            {/* Emblema Clínico Cruz */}
             <div
               style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                backgroundColor: 'var(--medix-action, #1D5C96)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#ffffff',
-                boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)',
+                color: '#FFFFFF',
                 flexShrink: 0
               }}
             >
-              {/* Símbolo vectorial moderno */}
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2v20M2 12h20M7 7l10 10M17 7L7 17"></path>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
             </div>
 
-            {(!colapsado || isMobile) && (
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '16px', fontWeight: '800', color: theme.textMain, letterSpacing: '-0.3px', lineHeight: 1.1 }}>
+            {!isColapsado && (
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <span
+                  style={{
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: '#FFFFFF',
+                    letterSpacing: '-0.3px',
+                    lineHeight: 1.15
+                  }}
+                >
                   Medix
                 </span>
-                <span style={{ fontSize: '9px', fontWeight: '700', color: theme.textMuted, letterSpacing: '0.4px', textTransform: 'uppercase' }}>
-                  HOSPITAL PISCO
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: '500',
+                    color: 'rgba(255, 255, 255, 0.65)',
+                    lineHeight: 1.2,
+                    marginTop: '2px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}
+                  title="Hospital San Juan de Dios de Pisco"
+                >
+                  Hosp. San Juan de Dios
                 </span>
               </div>
             )}
@@ -274,14 +251,15 @@ export default function Sidebar({
           {/* Botón de alternar colapso o Cerrar en móvil */}
           {isMobile ? (
             <button
+              type="button"
               onClick={onCloseMobile}
-              title="Cerrar menú lateral"
+              aria-label="Cerrar menú lateral"
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '10px',
-                backgroundColor: theme.headerBtnBg,
-                color: theme.headerBtnColor,
+                width: '30px',
+                height: '30px',
+                borderRadius: '6px',
+                backgroundColor: 'transparent',
+                color: 'rgba(255, 255, 255, 0.7)',
                 border: 'none',
                 display: 'flex',
                 alignItems: 'center',
@@ -290,45 +268,59 @@ export default function Sidebar({
                 transition: 'background-color 0.15s ease',
                 flexShrink: 0
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.headerBtnHover}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.headerBtnBg}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+                e.currentTarget.style.color = '#FFFFFF'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)'
+              }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
           ) : (
             <button
+              type="button"
               onClick={() => setColapsado(!colapsado)}
-              title={colapsado ? "Expandir barra lateral" : "Colapsar barra lateral"}
+              aria-label={colapsado ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
+              title={colapsado ? 'Expandir barra lateral' : 'Colapsar barra lateral'}
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '10px',
-                backgroundColor: theme.headerBtnBg,
-                color: theme.headerBtnColor,
+                width: '28px',
+                height: '28px',
+                borderRadius: '6px',
+                backgroundColor: 'transparent',
+                color: 'rgba(255, 255, 255, 0.65)',
                 border: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                transition: 'background-color 0.15s ease, transform 0.15s ease',
-                flexShrink: 0,
-                ...(colapsado ? { marginTop: '8px' } : {})
+                transition: 'background-color 0.15s ease, color 0.15s ease',
+                flexShrink: 0
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.headerBtnHover}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.headerBtnBg}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+                e.currentTarget.style.color = '#FFFFFF'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.65)'
+              }}
             >
               <svg
-                width="16"
-                height="16"
+                width="15"
+                height="15"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2.5"
+                strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                aria-hidden="true"
                 style={{
                   transform: colapsado ? 'rotate(180deg)' : 'none',
                   transition: 'transform 0.2s ease'
@@ -340,116 +332,101 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* LISTA DE FUNCIONALIDADES (NAV ITEMS) */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        {/* NAVEGACIÓN PRINCIPAL */}
+        <nav aria-label="Secciones" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {itemsVisibles.map((item) => {
             const isActivo = item.activo
 
             return (
               <button
+                type="button"
                 key={item.id}
                 onClick={() => {
                   navigate(item.ruta)
                   if (isMobile && onCloseMobile) onCloseMobile()
                 }}
-                title={(colapsado && !isMobile) ? `${item.nombre}${item.contador ? ` (${item.contador} pendientes)` : ''}` : undefined}
+                aria-label={item.nombre}
+                aria-current={isActivo ? 'page' : undefined}
+                title={isColapsado ? `${item.nombre}${item.contador ? ` (${item.contador})` : ''}` : undefined}
                 style={{
                   position: 'relative',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: (colapsado && !isMobile) ? 'center' : 'space-between',
-                  padding: (colapsado && !isMobile) ? '0' : '10px 12px',
-                  height: (colapsado && !isMobile) ? '44px' : '44px',
-                  width: (colapsado && !isMobile) ? '44px' : '100%',
-                  margin: (colapsado && !isMobile) ? '0 auto' : '0',
-                  borderRadius: '13px',
+                  justifyContent: isColapsado ? 'center' : 'space-between',
+                  padding: isColapsado ? '0' : '8px 12px',
+                  height: '40px',
+                  width: isColapsado ? '40px' : '100%',
+                  margin: isColapsado ? '0 auto' : '0',
+                  borderRadius: '8px',
                   border: 'none',
                   cursor: 'pointer',
-                  backgroundColor: isActivo ? theme.activeBg : 'transparent',
-                  color: isActivo ? theme.activeColor : theme.textMuted,
+                  backgroundColor: isActivo ? 'var(--medix-action, #1D5C96)' : 'transparent',
+                  color: isActivo ? '#FFFFFF' : 'rgba(255, 255, 255, 0.75)',
                   fontWeight: isActivo ? '600' : '500',
-                  fontSize: '13.5px',
-                  transition: 'all 0.18s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: isActivo ? '0 4px 14px rgba(88, 85, 242, 0.38)' : 'none',
-                  outline: 'none'
+                  fontSize: '13px',
+                  transition: 'background-color 0.15s ease, color 0.15s ease',
+                  outline: 'none',
+                  textAlign: 'left'
                 }}
                 onMouseEnter={(e) => {
                   if (!isActivo) {
-                    e.currentTarget.style.backgroundColor = theme.itemHoverBg
-                    e.currentTarget.style.color = theme.itemHoverText
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)'
+                    e.currentTarget.style.color = '#FFFFFF'
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActivo) {
                     e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.color = theme.textMuted
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.75)'
                   }
                 }}
               >
-                {/* Lado izquierdo: Icono + Texto si está expandido */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {item.icon}
                   </div>
 
-                  {!colapsado && (
+                  {!isColapsado && (
                     <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {item.nombre}
                     </span>
                   )}
                 </div>
 
-                {/* Insignias / Contadores */}
-                {!colapsado && item.contador !== undefined && item.contador > 0 && (
+                {/* Contador de solicitudes */}
+                {!isColapsado && item.contador !== undefined && item.contador > 0 && (
                   <span
                     style={{
-                      backgroundColor: '#ef4444',
-                      color: '#ffffff',
+                      backgroundColor: 'var(--medix-alert-red, #B42318)',
+                      color: '#FFFFFF',
                       fontSize: '11px',
-                      fontWeight: '800',
-                      padding: '1px 7px',
+                      fontWeight: '700',
+                      padding: '1px 6px',
                       borderRadius: '10px',
-                      lineHeight: '16px',
-                      boxShadow: '0 2px 5px rgba(239, 68, 68, 0.4)'
+                      lineHeight: '16px'
                     }}
                   >
                     {item.contador}
                   </span>
                 )}
 
-                {!colapsado && item.badge && !isActivo && (
-                  <span
-                    style={{
-                      backgroundColor: temaOscuro ? '#5855f2' : '#e0e7ff',
-                      color: temaOscuro ? '#ffffff' : '#4338ca',
-                      fontSize: '10px',
-                      fontWeight: '700',
-                      padding: '2px 6px',
-                      borderRadius: '6px'
-                    }}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-
-                {/* Contador en modo colapsado (Badge en esquina superior) */}
-                {colapsado && item.contador !== undefined && item.contador > 0 && (
+                {/* Badge en modo colapsado */}
+                {isColapsado && item.contador !== undefined && item.contador > 0 && (
                   <span
                     style={{
                       position: 'absolute',
                       top: '4px',
                       right: '4px',
-                      backgroundColor: '#ef4444',
-                      color: '#ffffff',
+                      backgroundColor: 'var(--medix-alert-red, #B42318)',
+                      color: '#FFFFFF',
                       fontSize: '9px',
-                      fontWeight: '800',
+                      fontWeight: '700',
                       width: '16px',
                       height: '16px',
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                      justifyContent: 'center'
                     }}
                   >
                     {item.contador}
@@ -461,70 +438,78 @@ export default function Sidebar({
         </nav>
       </div>
 
-      {/* SECCIÓN INFERIOR: SESIÓN DE USUARIO Y TOGGLE DE TEMA */}
+      {/* SECCIÓN INFERIOR: USUARIO Y TEMA */}
       <div
         style={{
-          padding: colapsado ? '10px 10px 14px 10px' : '10px 14px 14px 14px',
+          padding: isColapsado ? '12px 8px' : '12px',
+          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '10px'
+          gap: '8px'
         }}
       >
-        {/* Tarjeta de Sesión de Usuario */}
-        {colapsado ? (
-          <div
-            title={`Usuario: ${usuario?.username || 'admin'} (${usuario?.rol || 'Personal'}) - Click para cerrar sesión`}
+        {/* Información del usuario */}
+        {isColapsado ? (
+          <button
+            type="button"
+            aria-label={`Usuario: ${usuario?.username || 'admin'}. Click para cerrar sesión.`}
+            title={`Usuario: ${usuario?.username || 'admin'} (${usuario?.rol || 'Personal'}) - Cerrar sesión`}
             onClick={onLogout}
             style={{
-              width: '44px',
-              height: '44px',
+              width: '40px',
+              height: '40px',
               margin: '0 auto',
-              borderRadius: '12px',
-              backgroundColor: theme.userCardBg,
-              border: theme.userCardBorder,
+              borderRadius: '8px',
+              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: '#ef4444',
+              color: 'rgba(255, 255, 255, 0.8)',
               transition: 'all 0.15s ease'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.15)'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = theme.userCardBg}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(180, 35, 24, 0.25)'
+              e.currentTarget.style.color = '#FFFFFF'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)'
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)'
+            }}
           >
-            {/* Icono de Salida / Logout */}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
               <line x1="21" y1="12" x2="9" y2="12"></line>
             </svg>
-          </div>
+          </button>
         ) : (
           <div
             style={{
-              backgroundColor: theme.userCardBg,
-              border: theme.userCardBorder,
-              borderRadius: '14px',
-              padding: '9px 12px',
+              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '8px',
+              padding: '8px 10px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '8px'
+              gap: '6px'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
               <div
                 style={{
-                  width: '30px',
-                  height: '30px',
-                  borderRadius: '50%',
-                  backgroundColor: esAdmin ? '#FFD6E8' : esMedico ? '#7FD6FF' : '#6FE3B4',
-                  color: esAdmin ? '#802048' : esMedico ? '#104060' : '#0a5438',
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--medix-action, #1D5C96)',
+                  color: '#FFFFFF',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '12px',
-                  fontWeight: '800',
+                  fontWeight: '700',
                   flexShrink: 0
                 }}
               >
@@ -534,9 +519,9 @@ export default function Sidebar({
                 <span
                   style={{
                     display: 'block',
-                    fontSize: '12.5px',
-                    fontWeight: '700',
-                    color: theme.textMain,
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    color: '#FFFFFF',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
@@ -546,9 +531,9 @@ export default function Sidebar({
                 </span>
                 <span
                   style={{
+                    display: 'block',
                     fontSize: '10px',
-                    fontWeight: '600',
-                    color: theme.textMuted,
+                    color: 'rgba(255, 255, 255, 0.6)',
                     textTransform: 'capitalize'
                   }}
                 >
@@ -557,33 +542,35 @@ export default function Sidebar({
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
               {onCambiarPassword && (
                 <button
+                  type="button"
                   onClick={onCambiarPassword}
+                  aria-label="Cambiar Contraseña"
                   title="Cambiar Contraseña"
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: theme.textMuted,
+                    color: 'rgba(255, 255, 255, 0.7)',
                     cursor: 'pointer',
                     padding: '5px',
-                    borderRadius: '8px',
+                    borderRadius: '6px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     transition: 'all 0.15s ease'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = theme.textMain
-                    e.currentTarget.style.backgroundColor = theme.itemHoverBg
+                    e.currentTarget.style.color = '#FFFFFF'
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = theme.textMuted
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)'
                     e.currentTarget.style.backgroundColor = 'transparent'
                   }}
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
@@ -591,27 +578,35 @@ export default function Sidebar({
               )}
 
               <button
+                type="button"
                 onClick={() => {
                   onLogout()
                   if (isMobile && onCloseMobile) onCloseMobile()
                 }}
+                aria-label="Cerrar Sesión"
                 title="Cerrar Sesión"
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#ef4444',
+                  color: 'rgba(255, 255, 255, 0.7)',
                   cursor: 'pointer',
                   padding: '5px',
-                  borderRadius: '8px',
+                  borderRadius: '6px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  transition: 'background-color 0.15s ease'
+                  transition: 'background-color 0.15s ease, color 0.15s ease'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.12)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(180, 35, 24, 0.25)'
+                  e.currentTarget.style.color = '#FECDCA'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)'
+                }}
               >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                   <polyline points="16 17 21 12 16 7"></polyline>
                   <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -621,37 +616,39 @@ export default function Sidebar({
           </div>
         )}
 
-        {/* TOGGLE MODO OSCURO / MODO CLARO */}
-        {colapsado ? (
-          <button
-            onClick={toggleTema}
-            title={temaOscuro ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
-            style={{
-              width: '44px',
-              height: '42px',
-              margin: '0 auto',
-              borderRadius: '12px',
-              backgroundColor: theme.toggleBoxBg,
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: theme.textMuted,
-              transition: 'all 0.15s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = theme.textMain
-              e.currentTarget.style.backgroundColor = theme.headerBtnHover
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = theme.textMuted
-              e.currentTarget.style.backgroundColor = theme.toggleBoxBg
-            }}
-          >
+        {/* Toggle Tema Claro / Oscuro */}
+        <button
+          type="button"
+          onClick={toggleTema}
+          aria-label={temaOscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          title={temaOscuro ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          style={{
+            height: '36px',
+            borderRadius: '8px',
+            backgroundColor: 'transparent',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: isColapsado ? 'center' : 'space-between',
+            padding: isColapsado ? '0' : '0 10px',
+            cursor: 'pointer',
+            color: 'rgba(255, 255, 255, 0.75)',
+            fontSize: '12px',
+            fontWeight: '500',
+            transition: 'background-color 0.15s ease, color 0.15s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)'
+            e.currentTarget.style.color = '#FFFFFF'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent'
+            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.75)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {temaOscuro ? (
-              // Icono Sol en modo oscuro colapsado
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="5"></circle>
                 <line x1="12" y1="1" x2="12" y2="3"></line>
                 <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -663,68 +660,22 @@ export default function Sidebar({
                 <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
               </svg>
             ) : (
-              // Icono Luna en modo claro colapsado
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
               </svg>
             )}
-          </button>
-        ) : (
-          <div
-            onClick={toggleTema}
-            title="Alternar entre modo oscuro y claro"
-            style={{
-              height: '42px',
-              borderRadius: '14px',
-              backgroundColor: theme.toggleBoxBg,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0 12px',
-              cursor: 'pointer',
-              userSelect: 'none',
-              transition: 'background-color 0.15s ease'
-            }}
-          >
-            {/* Lado izquierdo: Icono de Luna y texto "Dark mode" */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={theme.textMuted} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-              </svg>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: theme.textMain }}>
-                Modo Oscuro
-              </span>
-            </div>
 
-            {/* Lado derecho: Switch Toggle interactivo */}
-            <div
-              style={{
-                width: '38px',
-                height: '22px',
-                borderRadius: '11px',
-                backgroundColor: temaOscuro ? '#2563eb' : '#cbd5e1',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '2px',
-                transition: 'background-color 0.22s ease',
-                boxSizing: 'border-box'
-              }}
-            >
-              <div
-                style={{
-                  width: '18px',
-                  height: '18px',
-                  borderRadius: '50%',
-                  backgroundColor: '#ffffff',
-                  boxShadow: '0 1px 4px rgba(0, 0, 0, 0.3)',
-                  transform: temaOscuro ? 'translateX(16px)' : 'translateX(0px)',
-                  transition: 'transform 0.22s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}
-              />
-            </div>
+            {!isColapsado && (
+              <span>{temaOscuro ? 'Modo claro' : 'Modo oscuro'}</span>
+            )}
           </div>
-        )}
+
+          {!isColapsado && (
+            <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.45)' }}>
+              {temaOscuro ? 'Oscuro' : 'Claro'}
+            </span>
+          )}
+        </button>
       </div>
     </aside>
   )
