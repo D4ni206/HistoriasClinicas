@@ -9,12 +9,12 @@ export default function PacienteCard({
   onVerSilueta,
   onAgregarArchivo,
   onAbrirNotas,
-  onVerCarpeta,
+  onVerCarpeta: _onVerCarpeta,
   onEliminar,
   notificar
 }) {
   const [hovered, setHovered] = useState(false)
-  const { temaOscuro, theme } = useTheme()
+  const { temaOscuro } = useTheme()
 
   const docs = paciente?.documentos || []
   const totalNotas = paciente?.total_notas ?? (paciente?.notas_medicas ? paciente.notas_medicas.length : 0)
@@ -28,9 +28,9 @@ export default function PacienteCard({
     }
   }, [paciente])
 
-  // 3: Descripción clínica del paciente
+  // Descripción clínica del paciente
   const descripcionClinica = useMemo(() => {
-    const notas = paciente.notas_medicas || []
+    const notas = paciente?.notas_medicas || []
     if (notas.length > 0) {
       const n = notas[0]
       if (n.diagnostico && n.contenido) {
@@ -40,7 +40,7 @@ export default function PacienteCard({
       if (n.contenido) return n.contenido
     }
 
-    const signos = paciente.signos_vitales || []
+    const signos = paciente?.signos_vitales || []
     if (signos.length > 0 && signos[0].observaciones) {
       return signos[0].observaciones
     }
@@ -75,6 +75,7 @@ export default function PacienteCard({
 
   // Detección de Alergias o Contenido Sensible en el paciente
   const tieneAlergia = useMemo(() => {
+    if (!paciente) return false
     if (paciente.alergias && paciente.alergias.trim() && !paciente.alergias.toLowerCase().includes('ninguna')) {
       return true
     }
@@ -87,121 +88,158 @@ export default function PacienteCard({
     return /alerg|penicilina|latex|intoleran|sensib|reacci[oó]n|asma|anafilax|cuidado especial/.test(texto)
   }, [paciente])
 
+  // Obtener iniciales para el avatar institucional
+  const iniciales = useMemo(() => {
+    if (paciente?.nombre && paciente.nombre.trim()) {
+      const partes = paciente.nombre.trim().split(/\s+/).filter(Boolean)
+      if (partes.length >= 2) {
+        return (partes[0][0] + partes[1][0]).toUpperCase()
+      }
+      return partes[0].slice(0, 2).toUpperCase()
+    }
+    return (paciente?.dni || 'HC').slice(0, 2).toUpperCase()
+  }, [paciente])
+
   if (!paciente) return null
 
   return (
     <Card
       className="w-full"
       style={{
-        backgroundColor: theme.bgCard,
-        color: theme.textMain,
-        border: theme.border,
-        borderRadius: '18px',
+        backgroundColor: 'var(--medix-bg-card, #FFFFFF)',
+        color: 'var(--medix-text-main, #1F2937)',
+        border: '1px solid var(--medix-border, #D9DEE5)',
+        borderRadius: '10px',
         padding: '16px',
         boxShadow: hovered
-          ? (temaOscuro ? '0 16px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px #38bdf8' : '0 16px 30px rgba(15, 23, 42, 0.08), 0 0 0 1px #cbd5e1')
-          : theme.shadowCard,
+          ? '0 4px 12px rgba(11, 37, 69, 0.08)'
+          : '0 1px 3px rgba(0, 0, 0, 0.04)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        transition: 'transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease',
-        transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
-        boxSizing: 'border-box',
-        overflow: 'hidden'
+        transition: 'box-shadow 0.15s ease, border-color 0.15s ease',
+        boxSizing: 'border-box'
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* ================================================================= */}
-        {/* 1. FOTO DEL PACIENTE (BANNER CLÍNICO FORMAL CON TONOS FRÍOS) */}
+        {/* 1. CABECERA: AVATAR CON INICIALES + DATOS + BOTONES DE ACCIÓN */}
         {/* ================================================================= */}
-        <div
-          onClick={abrirHistoriaClinica}
-          style={{
-            width: '100%',
-            height: '160px',
-            background: theme.bannerGrad,
-            borderRadius: '14px',
-            border: theme.border,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'relative',
-            cursor: 'pointer',
-            overflow: 'hidden'
-          }}
-          title="Ver historia clínica del paciente"
-        >
-          {/* Insignia superior izquierda: Expediente # y Total de Documentos */}
-          <div style={{
-            position: 'absolute',
-            top: '10px',
-            left: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            zIndex: 2
-          }}>
-            <span style={{
-              backgroundColor: temaOscuro ? 'rgba(15, 23, 42, 0.88)' : 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(4px)',
-              color: theme.textMain,
-              fontSize: '11px',
-              fontWeight: '700',
-              padding: '2px 8px',
-              borderRadius: '6px',
-              border: theme.border
-            }}>
-              Exp. #{paciente.id}
-            </span>
-            <span style={{
-              backgroundColor: temaOscuro ? 'rgba(15, 23, 42, 0.88)' : 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(4px)',
-              color: theme.textSecondary,
-              fontSize: '11px',
-              fontWeight: '600',
-              padding: '2px 8px',
-              borderRadius: '6px',
-              border: theme.border
-            }}>
-              {docs.length} doc{docs.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-
-          {/* Botones de acción rápida en la esquina superior derecha */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              zIndex: 3
-            }}
-          >
-            {/* + Archivo */}
-            <button
-              onClick={() => onAgregarArchivo && onAgregarArchivo(paciente.dni, paciente.id)}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+            {/* Avatar sobrio con iniciales */}
+            <div
+              onClick={abrirHistoriaClinica}
+              title="Ver historia clínica"
               style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '8px',
-                backgroundColor: temaOscuro ? '#1e293b' : '#ffffff',
-                border: theme.border,
-                color: theme.textMain,
+                width: '46px',
+                height: '46px',
+                borderRadius: '50%',
+                backgroundColor: '#EBF3FA',
+                color: 'var(--medix-action, #1D5C96)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                fontSize: '16px',
+                fontWeight: '700',
                 cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                flexShrink: 0,
+                border: '1px solid #D1E3F5'
               }}
-              title="Subir nuevo documento al expediente"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              {iniciales}
+            </div>
+
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <h3
+                  onClick={abrirHistoriaClinica}
+                  style={{
+                    margin: 0,
+                    fontSize: '14.5px',
+                    fontWeight: '700',
+                    color: 'var(--medix-text-main, #1F2937)',
+                    lineHeight: 1.25,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}
+                  title={paciente.nombre || `DNI: ${paciente.dni}`}
+                >
+                  {paciente.nombre || `Paciente DNI ${paciente.dni}`}
+                </h3>
+
+                {tieneAlergia && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (notificar) {
+                        notificar({
+                          tipo: 'alergia',
+                          titulo: 'Alergias / Advertencia',
+                          texto: `Atención: El paciente ${paciente.nombre || `DNI ${paciente.dni}`} registra alergias: ${paciente.alergias || 'condición sensible registrada'}.`,
+                          contador: '2',
+                          actionLabel: 'Entendido'
+                        })
+                      }
+                    }}
+                    title={paciente.alergias ? `Alergia: ${paciente.alergias}` : 'Alerta de alergia registrada'}
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      backgroundColor: 'var(--medix-alert-bg, #FEF3F2)',
+                      color: 'var(--medix-alert-red, #B42318)',
+                      border: '1px solid var(--medix-alert-border, #FECDCA)',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    Alergia
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
+                <span style={{ fontSize: '12px', color: 'var(--medix-text-muted, #5B6675)' }}>
+                  DNI: <strong>{paciente.dni}</strong>
+                </span>
+                <span style={{ fontSize: '11px', color: 'var(--medix-text-muted, #5B6675)' }}>
+                  · {docs.length} doc{docs.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Botones de acción rápida superiores */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+            {/* + Archivo */}
+            <button
+              type="button"
+              onClick={() => onAgregarArchivo && onAgregarArchivo(paciente.dni, paciente.id)}
+              aria-label={`Anexar documento al expediente ${paciente.dni}`}
+              title="Anexar documento"
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '6px',
+                backgroundColor: 'transparent',
+                border: '1px solid var(--medix-border, #D9DEE5)',
+                color: 'var(--medix-text-main, #1F2937)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4F6F9'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -209,246 +247,145 @@ export default function PacienteCard({
 
             {/* Notas Médicas */}
             <button
+              type="button"
               onClick={() => onAbrirNotas && onAbrirNotas(paciente)}
+              aria-label={`Ver notas médicas de ${paciente.dni}`}
+              title="Ver notas médicas"
               style={{
-                height: '30px',
-                padding: '0 8px',
-                borderRadius: '8px',
-                backgroundColor: temaOscuro ? '#1e293b' : '#ffffff',
-                border: theme.border,
-                color: theme.textMain,
+                height: '28px',
+                padding: '0 7px',
+                borderRadius: '6px',
+                backgroundColor: 'transparent',
+                border: '1px solid var(--medix-border, #D9DEE5)',
+                color: 'var(--medix-text-main, #1F2937)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
                 fontSize: '11px',
-                fontWeight: '700',
-                cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                fontWeight: '600',
+                cursor: 'pointer'
               }}
-              title="Ver y redactar notas médicas"
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F4F6F9'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
               <span>{totalNotas}</span>
             </button>
 
-            {/* Eliminar (Tacho de basura) */}
-            <button
-              onClick={() => onEliminar && onEliminar(paciente.id, paciente.dni)}
-              style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '8px',
-                backgroundColor: temaOscuro ? '#1e293b' : '#ffffff',
-                border: theme.border,
-                color: '#ef4444',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-              }}
-              title="Eliminar expediente clínico"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Figura Central: Placeholder clínico de imagen del paciente */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: temaOscuro ? '#38bdf8' : '#2563eb',
-            opacity: 0.85
-          }}>
-            <svg
-              width="54"
-              height="54"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="3" width="18" height="18" rx="4" ry="4" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <polyline points="21 15 16 10 5 21" />
-            </svg>
+            {/* Eliminar (si hay handler) */}
+            {onEliminar && (
+              <button
+                type="button"
+                onClick={() => onEliminar(paciente.id, paciente.dni)}
+                aria-label={`Eliminar expediente ${paciente.dni}`}
+                title="Eliminar expediente"
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '6px',
+                  backgroundColor: 'transparent',
+                  border: '1px solid rgba(180, 35, 24, 0.2)',
+                  color: 'var(--medix-alert-red, #B42318)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--medix-alert-bg, #FEF3F2)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 
         {/* ================================================================= */}
-        {/* 2. NOMBRE Y DNI DEL PACIENTE (HEADING) */}
+        {/* 2. ESTADO CLÍNICO */}
         {/* ================================================================= */}
-        <div style={{ marginTop: '2px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              {paciente.nombre ? (
-                <>
-                  <h3 style={{
-                    margin: 0,
-                    fontSize: '15.5px',
-                    fontWeight: '800',
-                    color: theme.textMain,
-                    letterSpacing: '-0.02em',
-                    lineHeight: '1.25',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }} title={paciente.nombre}>
-                    {paciente.nombre}
-                  </h3>
-                  <p style={{ margin: '3px 0 0 0', fontSize: '12px', fontWeight: '600', color: theme.textMuted }}>
-                    DNI: <strong style={{ color: temaOscuro ? '#7dd3fc' : '#0369a1' }}>{paciente.dni}</strong>
-                  </p>
-                </>
-              ) : (
-                <h3 style={{
-                  margin: 0,
-                  fontSize: '16.5px',
-                  fontWeight: '800',
-                  color: theme.textMain,
-                  letterSpacing: '-0.02em',
-                  lineHeight: '1.25'
-                }}>
-                  DNI: {paciente.dni}
-                </h3>
-              )}
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span
+            style={{
+              fontSize: '11px',
+              fontWeight: '600',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              backgroundColor: tieneAlerta
+                ? (temaOscuro ? '#1e293b' : '#EFF6FF')
+                : 'var(--medix-status-bg, #ECFDF3)',
+              color: tieneAlerta
+                ? (temaOscuro ? '#93c5fd' : '#1D5C96')
+                : 'var(--medix-status-green, #067647)',
+              border: tieneAlerta
+                ? (temaOscuro ? '1px solid #334155' : '1px solid #BFDBFE')
+                : '1px solid var(--medix-status-border, #ABEFC6)'
+            }}
+          >
+            {tieneAlerta ? 'Sintomático' : 'Activo'}
+          </span>
 
-            {/* Badges de estado clínico y advertencias */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-              {tieneAlergia && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    if (notificar) {
-                      notificar({
-                        tipo: 'alergia',
-                        titulo: 'Alergias / Advertencia',
-                        texto: `Atención: El expediente del paciente DNI ${paciente.dni} (${paciente.nombre || 'Sin nombre'}) registra alergias: ${paciente.alergias || 'condición médica sensible detectada'}.`,
-                        contador: '2',
-                        actionLabel: 'Entendido'
-                      })
-                    }
-                  }}
-                  title={paciente.alergias ? `Alergia: ${paciente.alergias}` : "Paciente con alertas de alergias activas"}
-                  style={{
-                    fontSize: '10.5px',
-                    fontWeight: '700',
-                    padding: '2px 7px',
-                    borderRadius: '6px',
-                    backgroundColor: temaOscuro ? '#451a03' : '#fffbeb',
-                    color: temaOscuro ? '#fcd34d' : '#b45309',
-                    border: temaOscuro ? '1px solid #78350f' : '1px solid #fde68a',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    maxWidth: '130px',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis'
-                  }}
-                >
-                  <span style={{ fontSize: '10px' }}>⚠️</span>
-                  <span>{paciente.alergias ? (paciente.alergias.length > 12 ? `${paciente.alergias.slice(0, 12)}...` : paciente.alergias) : 'Alergias'}</span>
-                </button>
-              )}
-              <span style={{
-                fontSize: '11px',
-                fontWeight: '700',
-                padding: '2px 8px',
-                borderRadius: '6px',
-                backgroundColor: tieneAlerta
-                  ? (temaOscuro ? '#1e293b' : '#eff6ff')
-                  : (temaOscuro ? '#052e16' : '#f0fdf4'),
-                color: tieneAlerta
-                  ? (temaOscuro ? '#93c5fd' : '#1d4ed8')
-                  : (temaOscuro ? '#86efac' : '#166534'),
-                border: tieneAlerta
-                  ? (temaOscuro ? '1px solid #334155' : '1px solid #bfdbfe')
-                  : (temaOscuro ? '1px solid #14532d' : '1px solid #bbf7d0'),
-                whiteSpace: 'nowrap'
-              }}>
-                {tieneAlerta ? 'Sintomático' : 'Estable'}
-              </span>
-            </div>
-          </div>
+          <span style={{ fontSize: '11px', color: 'var(--medix-text-muted, #5B6675)' }}>
+            Exp. #{paciente.id}
+          </span>
         </div>
 
         {/* ================================================================= */}
-        {/* 3. DESCRIPCIÓN CLÍNICA (SÍNTOMAS / DIAGNÓSTICO) */}
+        {/* 3. RESUMEN CLÍNICO */}
         {/* ================================================================= */}
-        <div>
-          <p style={{
+        <p
+          style={{
             margin: 0,
-            fontSize: '12.5px',
-            color: theme.textMuted,
+            fontSize: '13px',
+            color: 'var(--medix-text-muted, #5B6675)',
             lineHeight: '1.45',
-            fontWeight: '500',
             display: '-webkit-box',
-            WebkitLineClamp: 3,
+            WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            minHeight: '36px'
-          }} title={descripcionClinica}>
-            {descripcionClinica}
-          </p>
-        </div>
-
+            overflow: 'hidden'
+          }}
+          title={descripcionClinica}
+        >
+          {descripcionClinica}
+        </p>
       </div>
 
       {/* ================================================================= */}
-      {/* 4. ACCIÓN DE VER HISTORIA CLÍNICA */}
+      {/* 4. BOTÓN VER HISTORIA */}
       {/* ================================================================= */}
-      <div style={{ marginTop: '14px' }}>
+      <div style={{ marginTop: '12px' }}>
         <button
+          type="button"
           onClick={abrirHistoriaClinica}
           style={{
             width: '100%',
-            height: '42px',
-            backgroundColor: theme.primaryBtnBg,
-            color: theme.primaryBtnColor,
+            height: '36px',
+            backgroundColor: 'var(--medix-action, #1D5C96)',
+            color: '#FFFFFF',
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: '8px',
             fontSize: '13px',
-            fontWeight: '700',
+            fontWeight: '600',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '8px',
+            gap: '6px',
             cursor: 'pointer',
-            boxShadow: temaOscuro ? '0 4px 14px rgba(56, 189, 248, 0.25)' : '0 2px 8px rgba(15, 23, 42, 0.15)',
-            transition: 'all 0.15s ease'
+            transition: 'background-color 0.15s ease'
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = theme.primaryBtnHover
+            e.currentTarget.style.backgroundColor = 'var(--medix-action-hover, #164775)'
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = theme.primaryBtnBg
+            e.currentTarget.style.backgroundColor = 'var(--medix-action, #1D5C96)'
           }}
-          title="Ver historia clínica y silueta anatómica"
         >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
             <circle cx="12" cy="12" r="3" />
           </svg>
