@@ -16,10 +16,8 @@ export default function PacienteCard({
   const [hovered, setHovered] = useState(false)
   const { temaOscuro, theme } = useTheme()
 
-  if (!paciente) return null
-
-  const docs = paciente.documentos || []
-  const totalNotas = paciente.total_notas ?? (paciente.notas_medicas ? paciente.notas_medicas.length : 0)
+  const docs = paciente?.documentos || []
+  const totalNotas = paciente?.total_notas ?? (paciente?.notas_medicas ? paciente.notas_medicas.length : 0)
 
   // Análisis clínico para extraer síntomas y estado
   const analisis = useMemo(() => {
@@ -88,6 +86,8 @@ export default function PacienteCard({
     ].join(' ').toLowerCase()
     return /alerg|penicilina|latex|intoleran|sensib|reacci[oó]n|asma|anafilax|cuidado especial/.test(texto)
   }, [paciente])
+
+  if (!paciente) return null
 
   return (
     <Card

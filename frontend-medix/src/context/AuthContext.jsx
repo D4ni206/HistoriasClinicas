@@ -71,19 +71,19 @@ export function AuthProvider({ children }) {
     const d = Boolean(data.debe_cambiar_password)
 
     if (t) {
-      try { localStorage.setItem('medix_token', t) } catch (e) {}
+      try { localStorage.setItem('medix_token', t) } catch (_e) { /* ignore */ }
       setToken(t)
     }
     if (u) {
-      try { localStorage.setItem('medix_usuario', JSON.stringify(u)) } catch (e) {}
+      try { localStorage.setItem('medix_usuario', JSON.stringify(u)) } catch (_e) { /* ignore */ }
       setUsuario(u)
     }
     setDebeCambiarPassword(d)
     if (d) {
-      try { localStorage.setItem('medix_cambiar_pwd', 'true') } catch (e) {}
+      try { localStorage.setItem('medix_cambiar_pwd', 'true') } catch (_e) { /* ignore */ }
       setModalPasswordAbierto(true)
     } else {
-      try { localStorage.removeItem('medix_cambiar_pwd') } catch (e) {}
+      try { localStorage.removeItem('medix_cambiar_pwd') } catch (_e) { /* ignore */ }
       setModalPasswordAbierto(false)
     }
   }

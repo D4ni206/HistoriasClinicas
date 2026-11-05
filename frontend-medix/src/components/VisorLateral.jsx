@@ -37,8 +37,6 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
     setImgError(false)
   }, [documentoEnVista?.id])
 
-  if (!documentoEnVista) return null
-
   const esModoDividido = modoVista === 'dividida'
   const mostrarDoc = modoVista === 'dividida' || modoVista === 'documento'
   const mostrarManiqui = modoVista === 'dividida' || modoVista === 'maniqui'
@@ -110,7 +108,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
       lista.push({
         tipo: 'alergia',
         id: 'alerta-alergia',
-        fechaRaw: Date.now() + 1000000000, // Siempre fijado en primer lugar de la línea de tiempo
+        fechaRaw: Number.MAX_SAFE_INTEGER, // Siempre fijado en primer lugar de la línea de tiempo
         fecha: 'Condición Médica Permanente',
         titulo: `Alerta: Paciente Alérgico`,
         subtitulo: 'Registro Clínico Oficial',
@@ -124,6 +122,8 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
     // Ordenar cronológicamente descendente (lo más reciente primero)
     return lista.sort((a, b) => b.fechaRaw - a.fechaRaw)
   }, [pacienteFinal, documentos, notas, signos])
+
+  if (!documentoEnVista) return null
 
   const nombreArchivoMostrado = documentoEnVista.nombre_original || documentoEnVista.nombre_archivo
 

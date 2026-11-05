@@ -102,7 +102,7 @@ function AppContent() {
   }, [])
 
   const notificar = (tipo, texto = '', titulo = '', opciones = {}) => {
-    let payload = {}
+    let payload
     if (typeof tipo === 'object' && tipo !== null) {
       payload = {
         id: Date.now(),

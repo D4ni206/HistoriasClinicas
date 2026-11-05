@@ -1,53 +1,84 @@
+/* ==========================================================================
+   MEDIX DESIGN SYSTEM - HOSPITAL SAN JUAN DE DIOS DE PISCO
+   Estilo sobrio, clínico e institucional
+   ========================================================================== */
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Tipografía Inter */
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-title: 24px;
+  --font-weight-title: 700;
+  --font-size-subtitle: 16px;
+  --font-weight-subtitle: 600;
+  --font-size-body: 14px;
+  --font-size-label: 12px;
+  --font-size-xs: 11px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Radios de bordes controlados (8–10px) */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-pill: 9999px;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Paleta Sobria e Institucional - Modo Claro */
+  --medix-navy: #0B2545;               /* Sidebar, títulos y cabeceras */
+  --medix-action: #1D5C96;             /* Botones primarios, enlaces activos */
+  --medix-action-hover: #154572;       /* Hover botones primarios */
+  --medix-bg-app: #F4F6F9;             /* Fondo de aplicación */
+  --medix-bg-card: #FFFFFF;            /* Fondo de tarjetas y paneles */
+  --medix-bg-subtle: #EDF1F5;          /* Fondo sutil */
+  --medix-bg-input: #FFFFFF;           /* Fondo de inputs */
+  --medix-border: #D9DEE5;             /* Bordes de tarjetas y divisiones */
+  --medix-border-subtle: #E8ECF2;      /* Separadores sutiles */
+  --medix-border-input: #CBD5E1;       /* Borde de inputs */
+  --medix-text-main: #1F2937;          /* Texto principal */
+  --medix-text-secondary: #5B6675;     /* Texto secundario */
+  --medix-text-muted: #7E8B9B;         /* Texto tenue / placeholders */
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  /* Estados Clínicos */
+  --medix-alert-red: #B42318;          /* SOLO para alertas / alergias */
+  --medix-alert-red-bg: #FEF3F2;       /* Fondo alertas */
+  --medix-alert-red-border: #FECDCA;   /* Borde alertas */
+  --medix-status-green: #067647;       /* SOLO para estado Activo / Estable */
+  --medix-status-green-bg: #ECFDF3;    /* Fondo estado Activo */
+  --medix-status-green-border: #ABEFC6;/* Borde estado Activo */
+
+  /* Sombras institucionales mínimas */
+  --medix-shadow-sm: 0 1px 2px rgba(11, 37, 69, 0.05);
+  --medix-shadow-card: 0 1px 3px rgba(11, 37, 69, 0.06), 0 1px 2px rgba(11, 37, 69, 0.04);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* Modo Oscuro Sobrio y Accesible */
+[data-theme='dark'],
+.dark {
+  --medix-navy: #0A1B2F;
+  --medix-action: #2C6FA8;
+  --medix-action-hover: #3882C2;
+  --medix-bg-app: #0A111C;
+  --medix-bg-card: #121C2B;
+  --medix-bg-subtle: #172436;
+  --medix-bg-input: #0D1623;
+  --medix-border: #24354A;
+  --medix-border-subtle: #1B293A;
+  --medix-border-input: #2B3E56;
+  --medix-text-main: #F3F4F6;
+  --medix-text-secondary: #A0ABBB;
+  --medix-text-muted: #6E7D91;
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+  --medix-alert-red: #F04438;
+  --medix-alert-red-bg: #381313;
+  --medix-alert-red-border: #5C1D1D;
+  --medix-status-green: #12B76A;
+  --medix-status-green-bg: #0C2B1D;
+  --medix-status-green-border: #164C33;
+
+  --medix-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --medix-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* Resets y Base Global */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 html, body {
@@ -55,13 +86,14 @@ html, body {
   padding: 0;
   width: 100%;
   min-height: 100%;
-  box-sizing: border-box;
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  color: var(--medix-text-main);
+  background-color: var(--medix-bg-app);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  text-align: left;
-}
-
-*, *::before, *::after {
-  box-sizing: border-box;
 }
 
 #root {
@@ -69,50 +101,44 @@ html, body {
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-  text-align: left;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+/* Tipografía de Encabezados */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family);
+  margin: 0;
+  color: var(--medix-text-main);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+h1, .page-title {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-title);
+  color: var(--medix-navy);
+  letter-spacing: -0.02em;
 }
+
+[data-theme='dark'] h1,
+[data-theme='dark'] .page-title,
+.dark h1,
+.dark .page-title {
+  color: var(--medix-text-main);
+}
+
 h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+  font-size: 20px;
+  font-weight: 700;
 }
+
+h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
 p {
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
 }
