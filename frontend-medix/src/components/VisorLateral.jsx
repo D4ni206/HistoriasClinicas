@@ -23,7 +23,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
   const { token } = useAuth()
 
   const [imgError, setImgError] = useState(false)
-  const [pestanaActiva, setPestanaActiva] = useState('documento') // 'documento' | 'notas' | 'anatomia'
+  const [pestanaActiva, setPestanaActiva] = useState('documento')
   const [docSeleccionadoInterno, setDocSeleccionadoInterno] = useState(null)
   const [esPantallaPequena, setEsPantallaPequena] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 960 : false
@@ -138,45 +138,17 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
         right: 0,
         bottom: 0,
         left: esPantallaPequena ? 0 : undefined,
-        boxSizing: 'border-box',
         overflow: 'hidden'
       }}
     >
-      {/* 1. CABECERA FIJA CON NOMBRE, DNI, EDAD Y ETIQUETA DE ALERGIA */}
-      <div
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-          padding: '14px 20px',
-          borderBottom: theme.border,
-          backgroundColor: theme.bgCard,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '12px',
-          flexShrink: 0
-        }}
-      >
+      <div className="medix-visor-header">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '220px', flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 700, color: theme.textHeading, margin: 0 }}>
               {pacienteFinal?.nombre || `Paciente DNI ${dniMostrado}`}
             </h2>
-
             {tieneAlergia && (
-              <span
-                style={{
-                  backgroundColor: 'var(--alert-red-bg)',
-                  color: 'var(--alert-red)',
-                  border: '1px solid var(--alert-red-border)',
-                  padding: '2px 8px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontWeight: 600
-                }}
-              >
+              <span className="medix-badge medix-badge-alert">
                 Alergia: {pacienteFinal.alergias}
               </span>
             )}
@@ -194,16 +166,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
             <a
               href={obtenerUrlArchivo(docActivo.id)}
               download={nombreArchivoMostrado}
-              style={{
-                padding: '7px 12px',
-                backgroundColor: theme.bgSubtle,
-                color: theme.textMain,
-                border: theme.border,
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontSize: '12px',
-                fontWeight: 600
-              }}
+              className="medix-btn medix-btn-secondary medix-btn-sm"
             >
               Descargar archivo
             </a>
@@ -212,50 +175,21 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
             type="button"
             onClick={onCerrar}
             aria-label="Cerrar visor de historia clínica"
-            style={{
-              padding: '7px 14px',
-              backgroundColor: theme.bgSubtle,
-              color: theme.textMain,
-              border: theme.border,
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: 600
-            }}
+            className="medix-btn medix-btn-secondary medix-btn-sm"
           >
             Cerrar
           </button>
         </div>
       </div>
 
-      {/* 2. CUATRO CUADROS CON LOS ÚLTIMOS SIGNOS VITALES */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, minmax(120px, 1fr))',
-          gap: '10px',
-          padding: '12px 20px',
-          backgroundColor: theme.bgApp,
-          borderBottom: theme.border,
-          flexShrink: 0,
-          overflowX: 'auto'
-        }}
-      >
+      <div className="medix-vital-grid">
         {[
           { label: 'Presión arterial', valor: ultimoSigno?.presion_arterial || '—', unidad: ultimoSigno?.presion_arterial ? 'mmHg' : '' },
           { label: 'Frecuencia cardíaca', valor: ultimoSigno?.frecuencia_cardiaca || '—', unidad: ultimoSigno?.frecuencia_cardiaca ? 'lpm' : '' },
           { label: 'Temperatura', valor: ultimoSigno?.temperatura || '—', unidad: ultimoSigno?.temperatura ? '°C' : '' },
           { label: 'Saturación O₂', valor: ultimoSigno?.saturacion_oxigeno || '—', unidad: '' }
         ].map((item) => (
-          <div
-            key={item.label}
-            style={{
-              backgroundColor: theme.bgCard,
-              border: theme.border,
-              borderRadius: '8px',
-              padding: '8px 12px'
-            }}
-          >
+          <div key={item.label} className="medix-vital-box">
             <div style={{ fontSize: '12px', color: theme.textSecondary, fontWeight: 500 }}>
               {item.label}
             </div>
@@ -266,7 +200,6 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
         ))}
       </div>
 
-      {/* 3. CONTENIDO DIVIDIDO: IZQUIERDA LÍNEA DE TIEMPO / DERECHA PESTAÑAS (DOCUMENTO / NOTAS / ANATOMÍA) */}
       <div
         style={{
           flex: 1,
@@ -276,7 +209,6 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
           backgroundColor: theme.bgApp
         }}
       >
-        {/* Columna izquierda: Línea de tiempo cronológica */}
         <div
           style={{
             width: esPantallaPequena ? '100%' : '320px',
@@ -330,13 +262,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
                     />
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                      <span
-                        style={{
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          color: 'var(--color-primary)'
-                        }}
-                      >
+                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-primary)' }}>
                         {ev.tipo}
                       </span>
                       <span style={{ fontSize: '12px', color: theme.textSecondary }}>
@@ -367,20 +293,11 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
                       <div style={{ marginTop: '8px' }}>
                         <button
                           type="button"
+                          className="medix-btn medix-btn-primary medix-btn-sm"
                           onClick={() => {
                             setDocSeleccionadoInterno(ev.doc)
                             if (onSeleccionarDocumento) onSeleccionarDocumento(ev.doc)
                             setPestanaActiva('documento')
-                          }}
-                          style={{
-                            padding: '4px 10px',
-                            borderRadius: '8px',
-                            border: 'none',
-                            backgroundColor: theme.primaryBtnBg,
-                            color: theme.primaryBtnColor,
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            cursor: 'pointer'
                           }}
                         >
                           Ver documento
@@ -394,9 +311,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
           </div>
         </div>
 
-        {/* Columna derecha: Documento con pestañas "Documento / Notas / Anatomía" */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {/* Barra de pestañas */}
           <div
             role="tablist"
             aria-label="Secciones del expediente"
@@ -423,15 +338,11 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
                   role="tab"
                   aria-selected={activa}
                   onClick={() => setPestanaActiva(tab.id)}
+                  className="medix-btn medix-btn-sm"
                   style={{
-                    padding: '7px 14px',
-                    borderRadius: '8px',
-                    border: activa ? 'none' : theme.border,
                     backgroundColor: activa ? 'var(--color-navy)' : theme.bgSubtle,
                     color: activa ? '#FFFFFF' : theme.textSecondary,
-                    fontSize: '14px',
-                    fontWeight: activa ? 600 : 500,
-                    cursor: 'pointer'
+                    border: activa ? 'none' : theme.border
                   }}
                 >
                   {tab.label}
@@ -440,7 +351,6 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
             })}
           </div>
 
-          {/* Contenido de la pestaña activa */}
           <div style={{ flex: 1, overflow: 'auto', padding: '14px' }}>
             {pestanaActiva === 'documento' && (
               <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -465,7 +375,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
                   ) : esImagen(nombreArchivoMostrado) ? (
                     <div style={{ textAlign: 'center', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
                       {imgError ? (
-                        <div style={{ padding: '24px', backgroundColor: theme.bgCard, borderRadius: '8px', border: theme.border, color: theme.textSecondary }}>
+                        <div className="medix-card" style={{ padding: '24px', color: theme.textSecondary }}>
                           No se pudo previsualizar la imagen. Utilice el botón Descargar archivo.
                         </div>
                       ) : (
@@ -482,30 +392,21 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
                       <TextViewer url={obtenerUrlArchivo(docActivo.id, true)} />
                     </div>
                   ) : (
-                    <div style={{ padding: '32px', textAlign: 'center', backgroundColor: theme.bgCard, borderRadius: '8px', border: theme.border }}>
+                    <div className="medix-card" style={{ padding: '32px', textAlign: 'center' }}>
                       <p style={{ fontSize: '14px', color: theme.textSecondary, marginBottom: '12px' }}>
                         Este formato de archivo no tiene vista previa integrada.
                       </p>
                       <a
                         href={obtenerUrlArchivo(docActivo.id)}
                         download={nombreArchivoMostrado}
-                        style={{
-                          display: 'inline-block',
-                          padding: '8px 16px',
-                          backgroundColor: theme.primaryBtnBg,
-                          color: theme.primaryBtnColor,
-                          borderRadius: '8px',
-                          textDecoration: 'none',
-                          fontSize: '14px',
-                          fontWeight: 600
-                        }}
+                        className="medix-btn medix-btn-primary"
                       >
                         Descargar archivo
                       </a>
                     </div>
                   )
                 ) : (
-                  <div style={{ padding: '32px', textAlign: 'center', backgroundColor: theme.bgCard, borderRadius: '8px', border: theme.border, color: theme.textSecondary }}>
+                  <div className="medix-card" style={{ padding: '32px', textAlign: 'center', color: theme.textSecondary }}>
                     Este paciente no cuenta con documentos escaneados seleccionados.
                   </div>
                 )}
@@ -515,20 +416,12 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
             {pestanaActiva === 'notas' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {notas.length === 0 ? (
-                  <div style={{ padding: '24px', textAlign: 'center', backgroundColor: theme.bgCard, borderRadius: '8px', border: theme.border, color: theme.textSecondary }}>
+                  <div className="medix-card" style={{ padding: '24px', textAlign: 'center', color: theme.textSecondary }}>
                     No hay notas médicas registradas para este paciente.
                   </div>
                 ) : (
                   notas.map((n) => (
-                    <div
-                      key={n.id}
-                      style={{
-                        backgroundColor: theme.bgCard,
-                        border: theme.border,
-                        borderRadius: '8px',
-                        padding: '14px 16px'
-                      }}
-                    >
+                    <div key={n.id} className="medix-card" style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <strong style={{ fontSize: '14px', color: theme.textHeading }}>
                           {n.diagnostico || 'Nota de evolución clínica'}

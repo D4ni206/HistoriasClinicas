@@ -81,10 +81,9 @@ export default function DashboardView({
   const { theme } = useTheme()
   const [pacienteParaNotas, setPacienteParaNotas] = useState(null)
 
-  // Filtros de tabla (tipo y fecha) y paginación
   const [filtroTipo, setFiltroTipo] = useState('todos')
   const [filtroFecha, setFiltroFecha] = useState('')
-  const [subVistaLista, setSubVistaLista] = useState('tabla') // 'tabla' (principal) | 'tarjetas'
+  const [subVistaLista, setSubVistaLista] = useState('tabla')
   const [pagina, setPagina] = useState(1)
   const porPagina = 10
 
@@ -162,43 +161,28 @@ export default function DashboardView({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Cabecera superior: Título, selector de 2 vistas y botón Nueva historia */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: theme.textHeading, margin: 0 }}>
-            Historias Clínicas
-          </h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: theme.textSecondary }}>
+          <h1 className="medix-page-title">Historias Clínicas</h1>
+          <p className="medix-page-subtitle">
             Hospital San Juan de Dios de Pisco · {pacientesFiltradosFinal.length} expediente{pacientesFiltradosFinal.length !== 1 ? 's' : ''} registrado{pacientesFiltradosFinal.length !== 1 ? 's' : ''}
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          {/* Selector de las 2 vistas: Lista/Tabla y Analítica */}
           <div
             role="group"
             aria-label="Selector de vista del panel"
-            style={{
-              display: 'inline-flex',
-              backgroundColor: theme.bgCard,
-              border: theme.border,
-              borderRadius: '8px',
-              padding: '3px',
-              gap: '4px'
-            }}
+            className="medix-card"
+            style={{ display: 'inline-flex', padding: '3px', gap: '4px', borderRadius: '8px' }}
           >
             <button
               type="button"
               onClick={() => setVistaDashboard('cards')}
+              className="medix-btn medix-btn-sm"
               style={{
-                padding: '7px 14px',
-                borderRadius: '6px',
-                border: 'none',
                 backgroundColor: !esVistaAnalitica ? 'var(--color-navy)' : 'transparent',
-                color: !esVistaAnalitica ? '#FFFFFF' : theme.textSecondary,
-                fontSize: '14px',
-                fontWeight: !esVistaAnalitica ? 600 : 500,
-                cursor: 'pointer'
+                color: !esVistaAnalitica ? '#FFFFFF' : theme.textSecondary
               }}
             >
               Lista / Tabla
@@ -206,15 +190,10 @@ export default function DashboardView({
             <button
               type="button"
               onClick={() => setVistaDashboard('analitica')}
+              className="medix-btn medix-btn-sm"
               style={{
-                padding: '7px 14px',
-                borderRadius: '6px',
-                border: 'none',
                 backgroundColor: esVistaAnalitica ? 'var(--color-navy)' : 'transparent',
-                color: esVistaAnalitica ? '#FFFFFF' : theme.textSecondary,
-                fontSize: '14px',
-                fontWeight: esVistaAnalitica ? 600 : 500,
-                cursor: 'pointer'
+                color: esVistaAnalitica ? '#FFFFFF' : theme.textSecondary
               }}
             >
               Analítica
@@ -224,35 +203,19 @@ export default function DashboardView({
           <button
             type="button"
             onClick={() => navigate('/agregarhistoria')}
-            style={{
-              padding: '9px 16px',
-              backgroundColor: theme.primaryBtnBg,
-              color: theme.primaryBtnColor,
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
+            className="medix-btn medix-btn-primary"
           >
             Nueva historia
           </button>
         </div>
       </div>
 
-      {/* =================================================================== */}
-      {/* VISTA 1: LISTA / TABLA PRINCIPAL DE EXPEDIENTES */}
-      {/* =================================================================== */}
       {!esVistaAnalitica && (
         <>
-          {/* Barra de buscador (DNI/nombre) y filtros por tipo y fecha */}
           <div
+            className="medix-card"
             style={{
-              backgroundColor: theme.bgCard,
-              border: theme.border,
-              borderRadius: '10px',
               padding: '14px 16px',
-              boxShadow: theme.shadowCard,
               display: 'flex',
               alignItems: 'flex-end',
               justifyContent: 'space-between',
@@ -261,50 +224,29 @@ export default function DashboardView({
             }}
           >
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', flex: '1 1 560px', alignItems: 'flex-end' }}>
-              {/* Buscador DNI / Nombre */}
-              <div style={{ flex: '1 1 260px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label htmlFor="buscador-expedientes" style={{ fontSize: '12px', fontWeight: 600, color: theme.textSecondary }}>
+              <div style={{ flex: '1 1 260px' }}>
+                <label htmlFor="buscador-expedientes" className="medix-label">
                   Buscar paciente (DNI o nombre)
                 </label>
                 <input
                   id="buscador-expedientes"
                   type="search"
+                  className="medix-input"
                   placeholder="Ej. 45892103 o apellido del paciente..."
                   value={busquedaDni}
                   onChange={(e) => setBusquedaDni(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: '38px',
-                    padding: '0 12px',
-                    borderRadius: '8px',
-                    border: `1px solid ${theme.borderInput}`,
-                    backgroundColor: theme.bgInput,
-                    color: theme.textMain,
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
                 />
               </div>
 
-              {/* Filtro por tipo */}
-              <div style={{ flex: '0 1 190px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label htmlFor="filtro-tipo-expediente" style={{ fontSize: '12px', fontWeight: 600, color: theme.textSecondary }}>
+              <div style={{ flex: '0 1 190px' }}>
+                <label htmlFor="filtro-tipo-expediente" className="medix-label">
                   Tipo / Contenido
                 </label>
                 <select
                   id="filtro-tipo-expediente"
+                  className="medix-input"
                   value={filtroTipo}
                   onChange={(e) => setFiltroTipo(e.target.value)}
-                  style={{
-                    height: '38px',
-                    padding: '0 10px',
-                    borderRadius: '8px',
-                    border: `1px solid ${theme.borderInput}`,
-                    backgroundColor: theme.bgInput,
-                    color: theme.textMain,
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
                 >
                   <option value="todos">Todos los expedientes</option>
                   <option value="pdf">Documentos PDF</option>
@@ -315,47 +257,28 @@ export default function DashboardView({
                 </select>
               </div>
 
-              {/* Filtro por fecha */}
-              <div style={{ flex: '0 1 170px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label htmlFor="filtro-fecha-expediente" style={{ fontSize: '12px', fontWeight: 600, color: theme.textSecondary }}>
+              <div style={{ flex: '0 1 170px' }}>
+                <label htmlFor="filtro-fecha-expediente" className="medix-label">
                   Fecha de atención
                 </label>
                 <input
                   id="filtro-fecha-expediente"
                   type="date"
+                  className="medix-input"
                   value={filtroFecha}
                   onChange={(e) => setFiltroFecha(e.target.value)}
-                  style={{
-                    height: '38px',
-                    padding: '0 10px',
-                    borderRadius: '8px',
-                    border: `1px solid ${theme.borderInput}`,
-                    backgroundColor: theme.bgInput,
-                    color: theme.textMain,
-                    fontSize: '14px',
-                    outline: 'none'
-                  }}
                 />
               </div>
 
               {(busquedaDni || filtroTipo !== 'todos' || filtroFecha) && (
                 <button
                   type="button"
+                  className="medix-btn medix-btn-secondary"
+                  style={{ height: '38px', fontSize: '12px' }}
                   onClick={() => {
                     setBusquedaDni('')
                     setFiltroTipo('todos')
                     setFiltroFecha('')
-                  }}
-                  style={{
-                    height: '38px',
-                    padding: '0 12px',
-                    borderRadius: '8px',
-                    border: theme.border,
-                    backgroundColor: theme.bgSubtle,
-                    color: theme.textSecondary,
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
                   }}
                 >
                   Limpiar filtros
@@ -363,68 +286,33 @@ export default function DashboardView({
               )}
             </div>
 
-            {/* Alternador compacto Tabla / Tarjetas y botón Actualizar */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button
                 type="button"
+                className="medix-btn medix-btn-secondary"
+                style={{ height: '38px', fontSize: '12px' }}
                 onClick={() => setSubVistaLista(subVistaLista === 'tabla' ? 'tarjetas' : 'tabla')}
-                style={{
-                  height: '38px',
-                  padding: '0 12px',
-                  borderRadius: '8px',
-                  border: theme.border,
-                  backgroundColor: theme.bgSubtle,
-                  color: theme.textSecondary,
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
               >
                 {subVistaLista === 'tabla' ? 'Ver en tarjetas' : 'Ver en tabla'}
               </button>
 
               <button
                 type="button"
+                className="medix-btn medix-btn-secondary"
+                style={{ height: '38px', fontSize: '12px' }}
                 onClick={() => cargarDatos && cargarDatos(false)}
-                style={{
-                  height: '38px',
-                  padding: '0 12px',
-                  borderRadius: '8px',
-                  border: theme.border,
-                  backgroundColor: theme.bgCard,
-                  color: theme.textMain,
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
               >
                 Actualizar
               </button>
             </div>
           </div>
 
-          {/* Contenido principal: Tabla institucional (por defecto) o Tarjetas */}
           {pacientesFiltradosFinal.length === 0 ? (
-            <div
-              style={{
-                padding: '40px 24px',
-                textAlign: 'center',
-                backgroundColor: theme.bgCard,
-                borderRadius: '10px',
-                border: theme.border,
-                color: theme.textSecondary
-              }}
-            >
+            <div className="medix-card" style={{ padding: '40px 24px', textAlign: 'center', color: theme.textSecondary }}>
               No se encontraron expedientes clínicos con los filtros aplicados.
             </div>
           ) : subVistaLista === 'tarjetas' ? (
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
-                gap: '16px'
-              }}
-            >
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '16px' }}>
               {pacientesPaginados.map(pac => (
                 <PacienteCard
                   key={pac.id}
@@ -444,37 +332,17 @@ export default function DashboardView({
               ))}
             </div>
           ) : (
-            <div
-              style={{
-                backgroundColor: theme.bgCard,
-                border: theme.border,
-                borderRadius: '10px',
-                overflow: 'hidden',
-                boxShadow: theme.shadowCard
-              }}
-            >
+            <div className="medix-card" style={{ overflow: 'hidden' }}>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                <table className="medix-table">
                   <thead>
-                    <tr style={{ backgroundColor: theme.tableHeaderBg, borderBottom: theme.border, color: theme.textSecondary }}>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                        Paciente
-                      </th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                        Documentos
-                      </th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                        Notas
-                      </th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                        Última atención
-                      </th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                        Estado
-                      </th>
-                      <th style={{ padding: '12px 16px', textAlign: 'right', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px' }}>
-                        Acciones
-                      </th>
+                    <tr>
+                      <th>Paciente</th>
+                      <th>Documentos</th>
+                      <th>Notas</th>
+                      <th>Última atención</th>
+                      <th>Estado</th>
+                      <th style={{ textAlign: 'right' }}>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -486,52 +354,20 @@ export default function DashboardView({
                       const seleccionado = documentoEnVista && documentoEnVista.paciente_id === pac.id
 
                       return (
-                        <tr
-                          key={pac.id}
-                          style={{
-                            borderBottom: theme.borderSubtle,
-                            backgroundColor: seleccionado ? theme.tableRowHover : 'transparent'
-                          }}
-                        >
-                          {/* Columna 1: Paciente (iniciales + nombre + DNI + alerta alergia si aplica) */}
-                          <td style={{ padding: '12px 16px' }}>
+                        <tr key={pac.id} style={{ backgroundColor: seleccionado ? theme.tableRowHover : undefined }}>
+                          <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div
-                                style={{
-                                  width: '36px',
-                                  height: '36px',
-                                  borderRadius: '8px',
-                                  backgroundColor: 'var(--color-navy)',
-                                  color: '#FFFFFF',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '12px',
-                                  fontWeight: 700,
-                                  flexShrink: 0
-                                }}
-                              >
+                              <div className="medix-avatar">
                                 {obtenerIniciales(pac.nombre, pac.dni)}
                               </div>
 
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                  <span style={{ fontWeight: 600, color: theme.textMain, fontSize: '14px' }}>
+                                  <span style={{ fontWeight: 600, color: theme.textMain }}>
                                     {pac.nombre || 'Paciente registrado'}
                                   </span>
                                   {tieneAlergia && (
-                                    <span
-                                      style={{
-                                        backgroundColor: 'var(--alert-red-bg)',
-                                        color: 'var(--alert-red)',
-                                        border: '1px solid var(--alert-red-border)',
-                                        fontSize: '12px',
-                                        fontWeight: 600,
-                                        padding: '1px 8px',
-                                        borderRadius: '8px'
-                                      }}
-                                      title={`Alergias: ${pac.alergias}`}
-                                    >
+                                    <span className="medix-badge medix-badge-alert" title={`Alergias: ${pac.alergias}`}>
                                       Alergia: {pac.alergias}
                                     </span>
                                   )}
@@ -543,27 +379,17 @@ export default function DashboardView({
                             </div>
                           </td>
 
-                          {/* Columna 2: Documentos */}
-                          <td style={{ padding: '12px 16px' }}>
+                          <td>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ fontSize: '14px', fontWeight: 600, color: theme.textMain }}>
+                              <span style={{ fontWeight: 600 }}>
                                 {docs.length} {docs.length === 1 ? 'archivo' : 'archivos'}
                               </span>
                               {agregarArchivoACarpeta && (
                                 <button
                                   type="button"
+                                  className="medix-btn medix-btn-secondary medix-btn-sm"
                                   onClick={() => agregarArchivoACarpeta(pac.dni, pac.id)}
                                   aria-label={`Adjuntar documento al paciente DNI ${pac.dni}`}
-                                  style={{
-                                    padding: '3px 8px',
-                                    borderRadius: '8px',
-                                    border: theme.border,
-                                    backgroundColor: theme.bgSubtle,
-                                    color: theme.textSecondary,
-                                    fontSize: '12px',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                  }}
                                 >
                                   + Subir
                                 </button>
@@ -571,83 +397,39 @@ export default function DashboardView({
                             </div>
                           </td>
 
-                          {/* Columna 3: Notas */}
-                          <td style={{ padding: '12px 16px' }}>
+                          <td>
                             <button
                               type="button"
+                              className="medix-btn medix-btn-secondary medix-btn-sm"
                               onClick={() => setPacienteParaNotas(pac)}
-                              style={{
-                                padding: '4px 10px',
-                                borderRadius: '8px',
-                                border: theme.border,
-                                backgroundColor: theme.bgSubtle,
-                                color: theme.textMain,
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                cursor: 'pointer'
-                              }}
                             >
                               {totalNotas} {totalNotas === 1 ? 'nota' : 'notas'}
                             </button>
                           </td>
 
-                          {/* Columna 4: Última atención */}
-                          <td style={{ padding: '12px 16px', fontSize: '14px', color: theme.textSecondary }}>
+                          <td style={{ color: theme.textSecondary }}>
                             {ultimaAtencion || 'Sin atenciones'}
                           </td>
 
-                          {/* Columna 5: Estado */}
-                          <td style={{ padding: '12px 16px' }}>
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                padding: '3px 10px',
-                                borderRadius: '8px',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                backgroundColor: 'var(--status-green-bg)',
-                                color: 'var(--status-green)',
-                                border: '1px solid var(--status-green-border)'
-                              }}
-                            >
-                              Activo
-                            </span>
+                          <td>
+                            <span className="medix-badge medix-badge-status">Activo</span>
                           </td>
 
-                          {/* Columna 6: Acciones */}
-                          <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          <td style={{ textAlign: 'right' }}>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
                               <button
                                 type="button"
+                                className="medix-btn medix-btn-primary medix-btn-sm"
                                 onClick={() => abrirExpedientePaciente(pac)}
-                                style={{
-                                  padding: '6px 12px',
-                                  borderRadius: '8px',
-                                  border: 'none',
-                                  backgroundColor: theme.primaryBtnBg,
-                                  color: theme.primaryBtnColor,
-                                  fontSize: '12px',
-                                  fontWeight: 600,
-                                  cursor: 'pointer'
-                                }}
                               >
                                 Ver historia
                               </button>
                               {handleEliminarPaciente && (
                                 <button
                                   type="button"
+                                  className="medix-btn medix-btn-danger medix-btn-sm"
                                   onClick={() => handleEliminarPaciente(pac.id, pac.dni)}
                                   aria-label={`Eliminar expediente DNI ${pac.dni}`}
-                                  style={{
-                                    padding: '6px 10px',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--alert-red-border)',
-                                    backgroundColor: 'var(--alert-red-bg)',
-                                    color: 'var(--alert-red)',
-                                    fontSize: '12px',
-                                    fontWeight: 600,
-                                    cursor: 'pointer'
-                                  }}
                                 >
                                   Eliminar
                                 </button>
@@ -663,16 +445,13 @@ export default function DashboardView({
             </div>
           )}
 
-          {/* Barra de paginación */}
           {totalPaginas > 1 && (
             <div
+              className="medix-card"
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                backgroundColor: theme.bgCard,
-                border: theme.border,
-                borderRadius: '10px',
                 padding: '12px 16px',
                 flexWrap: 'wrap',
                 gap: '12px'
@@ -685,38 +464,20 @@ export default function DashboardView({
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                 <button
                   type="button"
+                  className="medix-btn medix-btn-secondary medix-btn-sm"
                   onClick={() => setPagina(prev => Math.max(1, prev - 1))}
                   disabled={pagina === 1}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '8px',
-                    border: theme.border,
-                    backgroundColor: theme.bgSubtle,
-                    color: pagina === 1 ? theme.textSecondary : theme.textMain,
-                    cursor: pagina === 1 ? 'not-allowed' : 'pointer',
-                    fontSize: '12px',
-                    fontWeight: 600
-                  }}
                 >
                   Anterior
                 </button>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: theme.textMain, padding: '0 8px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, padding: '0 8px' }}>
                   Página {pagina} de {totalPaginas}
                 </span>
                 <button
                   type="button"
+                  className="medix-btn medix-btn-secondary medix-btn-sm"
                   onClick={() => setPagina(prev => Math.min(totalPaginas, prev + 1))}
                   disabled={pagina === totalPaginas}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '8px',
-                    border: theme.border,
-                    backgroundColor: theme.bgSubtle,
-                    color: pagina === totalPaginas ? theme.textSecondary : theme.textMain,
-                    cursor: pagina === totalPaginas ? 'not-allowed' : 'pointer',
-                    fontSize: '12px',
-                    fontWeight: 600
-                  }}
                 >
                   Siguiente
                 </button>
@@ -726,14 +487,10 @@ export default function DashboardView({
         </>
       )}
 
-      {/* =================================================================== */}
-      {/* VISTA 2: ANALÍTICA */}
-      {/* =================================================================== */}
       {esVistaAnalitica && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* 4 indicadores principales */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '14px' }}>
-            <div style={{ backgroundColor: theme.bgCard, border: theme.border, borderRadius: '10px', padding: '16px 18px', boxShadow: theme.shadowCard }}>
+            <div className="medix-card" style={{ padding: '16px 18px' }}>
               <div style={{ fontSize: '12px', fontWeight: 600, color: theme.textSecondary, textTransform: 'uppercase' }}>
                 Expedientes Clínicos
               </div>
@@ -745,7 +502,7 @@ export default function DashboardView({
               </div>
             </div>
 
-            <div style={{ backgroundColor: theme.bgCard, border: theme.border, borderRadius: '10px', padding: '16px 18px', boxShadow: theme.shadowCard }}>
+            <div className="medix-card" style={{ padding: '16px 18px' }}>
               <div style={{ fontSize: '12px', fontWeight: 600, color: theme.textSecondary, textTransform: 'uppercase' }}>
                 Documentos Digitalizados
               </div>
@@ -757,7 +514,7 @@ export default function DashboardView({
               </div>
             </div>
 
-            <div style={{ backgroundColor: theme.bgCard, border: theme.border, borderRadius: '10px', padding: '16px 18px', boxShadow: theme.shadowCard }}>
+            <div className="medix-card" style={{ padding: '16px 18px' }}>
               <div style={{ fontSize: '12px', fontWeight: 600, color: theme.textSecondary, textTransform: 'uppercase' }}>
                 Promedio por Paciente
               </div>
@@ -769,7 +526,7 @@ export default function DashboardView({
               </div>
             </div>
 
-            <div style={{ backgroundColor: theme.bgCard, border: theme.border, borderRadius: '10px', padding: '16px 18px', boxShadow: theme.shadowCard }}>
+            <div className="medix-card" style={{ padding: '16px 18px' }}>
               <div style={{ fontSize: '12px', fontWeight: 600, color: theme.textSecondary, textTransform: 'uppercase' }}>
                 Pacientes con Alergias
               </div>
@@ -782,8 +539,7 @@ export default function DashboardView({
             </div>
           </div>
 
-          {/* Distribución de documentos por formato */}
-          <div style={{ backgroundColor: theme.bgCard, border: theme.border, borderRadius: '10px', padding: '18px 20px', boxShadow: theme.shadowCard }}>
+          <div className="medix-card" style={{ padding: '18px 20px' }}>
             <h2 style={{ fontSize: '16px', fontWeight: 700, color: theme.textHeading, marginBottom: '12px' }}>
               Distribución de Documentos por Formato
             </h2>
@@ -821,7 +577,6 @@ export default function DashboardView({
         </div>
       )}
 
-      {/* Modal de Notas Médicas */}
       {pacienteParaNotas && (
         <NotasMedicasModal
           paciente={pacienteParaNotas}

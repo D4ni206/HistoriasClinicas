@@ -97,40 +97,21 @@ export default function PacienteCard({
 
   return (
     <Card
-      className="w-full"
+      className="w-full medix-card"
       style={{
-        backgroundColor: theme.bgCard,
-        color: theme.textMain,
-        border: theme.border,
-        borderRadius: '10px',
         padding: '16px',
-        boxShadow: theme.shadowCard,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
-        boxSizing: 'border-box'
+        justifyContent: 'space-between'
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {/* Cabecera: Avatar con iniciales, Nombre, DNI y acciones rápidas */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
             <div
               onClick={abrirHistoriaClinica}
-              style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '8px',
-                backgroundColor: 'var(--color-navy)',
-                color: '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '14px',
-                fontWeight: 700,
-                flexShrink: 0,
-                cursor: 'pointer'
-              }}
+              className="medix-avatar"
+              style={{ width: '42px', height: '42px', fontSize: '14px', cursor: 'pointer' }}
               title="Abrir historia clínica"
             >
               {obtenerIniciales(paciente.nombre, paciente.dni)}
@@ -157,53 +138,23 @@ export default function PacienteCard({
             </div>
           </div>
 
-          <span
-            style={{
-              fontSize: '12px',
-              fontWeight: 600,
-              padding: '2px 8px',
-              borderRadius: '8px',
-              backgroundColor: 'var(--status-green-bg)',
-              color: 'var(--status-green)',
-              border: '1px solid var(--status-green-border)',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Activo
-          </span>
+          <span className="medix-badge medix-badge-status">Activo</span>
         </div>
 
-        {/* Etiqueta roja pequeña de alergia (solo si aplica) y metadatos de documentos/notas */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <span
-              style={{
-                fontSize: '12px',
-                color: theme.textSecondary,
-                backgroundColor: theme.bgSubtle,
-                padding: '2px 8px',
-                borderRadius: '8px',
-                border: theme.border
-              }}
-            >
+            <span className="medix-badge medix-badge-neutral">
               {docs.length} doc{docs.length !== 1 ? 's' : ''}
             </span>
-            <span
-              style={{
-                fontSize: '12px',
-                color: theme.textSecondary,
-                backgroundColor: theme.bgSubtle,
-                padding: '2px 8px',
-                borderRadius: '8px',
-                border: theme.border
-              }}
-            >
+            <span className="medix-badge medix-badge-neutral">
               {totalNotas} nota{totalNotas !== 1 ? 's' : ''}
             </span>
 
             {tieneAlergia && (
               <button
                 type="button"
+                className="medix-badge medix-badge-alert"
+                style={{ cursor: 'pointer' }}
                 onClick={(e) => {
                   e.stopPropagation()
                   if (notificar) {
@@ -216,16 +167,6 @@ export default function PacienteCard({
                   }
                 }}
                 title={paciente.alergias ? `Alergia: ${paciente.alergias}` : 'Paciente con alergias registradas'}
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: '8px',
-                  backgroundColor: 'var(--alert-red-bg)',
-                  color: 'var(--alert-red)',
-                  border: '1px solid var(--alert-red-border)',
-                  cursor: 'pointer'
-                }}
               >
                 Alergia: {paciente.alergias || 'Registrada'}
               </button>
@@ -233,7 +174,6 @@ export default function PacienteCard({
           </div>
         </div>
 
-        {/* Resumen clínico */}
         <p
           style={{
             margin: 0,
@@ -252,22 +192,12 @@ export default function PacienteCard({
         </p>
       </div>
 
-      {/* Pie de acciones */}
       <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: theme.borderSubtle, display: 'flex', alignItems: 'center', gap: '8px' }}>
         <button
           type="button"
           onClick={abrirHistoriaClinica}
-          style={{
-            flex: 1,
-            height: '36px',
-            backgroundColor: theme.primaryBtnBg,
-            color: theme.primaryBtnColor,
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}
+          className="medix-btn medix-btn-primary"
+          style={{ flex: 1 }}
         >
           Ver historia
         </button>
@@ -277,17 +207,7 @@ export default function PacienteCard({
             type="button"
             onClick={() => onAbrirNotas(paciente)}
             aria-label={`Notas médicas de DNI ${paciente.dni}`}
-            style={{
-              height: '36px',
-              padding: '0 10px',
-              borderRadius: '8px',
-              backgroundColor: theme.bgSubtle,
-              border: theme.border,
-              color: theme.textMain,
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
+            className="medix-btn medix-btn-secondary medix-btn-sm"
           >
             Notas
           </button>
@@ -298,17 +218,7 @@ export default function PacienteCard({
             type="button"
             onClick={() => onAgregarArchivo(paciente.dni, paciente.id)}
             aria-label={`Subir documento para DNI ${paciente.dni}`}
-            style={{
-              height: '36px',
-              padding: '0 10px',
-              borderRadius: '8px',
-              backgroundColor: theme.bgSubtle,
-              border: theme.border,
-              color: theme.textMain,
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
+            className="medix-btn medix-btn-secondary medix-btn-sm"
           >
             + Doc
           </button>
@@ -319,17 +229,7 @@ export default function PacienteCard({
             type="button"
             onClick={() => onEliminar(paciente.id, paciente.dni)}
             aria-label={`Eliminar expediente DNI ${paciente.dni}`}
-            style={{
-              height: '36px',
-              padding: '0 10px',
-              borderRadius: '8px',
-              backgroundColor: 'var(--alert-red-bg)',
-              border: '1px solid var(--alert-red-border)',
-              color: 'var(--alert-red)',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
+            className="medix-btn medix-btn-danger medix-btn-sm"
           >
             Eliminar
           </button>

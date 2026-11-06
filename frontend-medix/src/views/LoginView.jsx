@@ -30,7 +30,7 @@ function generarSugerencias(correo, nombres) {
 }
 
 export default function LoginView({ onLoginSuccess }) {
-  const [modo, setModo] = useState('login') // 'login' | 'signup' | 'recuperar_sms'
+  const [modo, setModo] = useState('login')
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -202,71 +202,11 @@ export default function LoginView({ onLoginSuccess }) {
     }
   }
 
-  const inputStyle = {
-    width: '100%',
-    height: '40px',
-    padding: '0 12px',
-    borderRadius: '8px',
-    border: '1px solid #D9DEE5',
-    backgroundColor: '#FFFFFF',
-    color: '#1F2937',
-    fontSize: '14px',
-    outline: 'none',
-    boxSizing: 'border-box'
-  }
-
-  const labelStyle = {
-    display: 'block',
-    fontSize: '12px',
-    fontWeight: 600,
-    color: '#1F2937',
-    marginBottom: '6px'
-  }
-
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundImage: `url(${bgHospital})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        boxSizing: 'border-box',
-        overflowY: 'auto'
-      }}
-    >
-      {/* Capa azul oscura al 80% sobre la foto del hospital */}
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(11, 37, 69, 0.80)',
-          pointerEvents: 'none'
-        }}
-      />
+    <div className="medix-login-screen" style={{ backgroundImage: `url(${bgHospital})` }}>
+      <div className="medix-login-overlay" />
 
-      {/* Tarjeta blanca centrada */}
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 1,
-          width: '100%',
-          maxWidth: '420px',
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #D9DEE5',
-          borderRadius: '10px',
-          padding: '28px 26px',
-          boxShadow: '0 4px 16px rgba(11, 37, 69, 0.25)',
-          boxSizing: 'border-box'
-        }}
-      >
-        {/* Encabezado institucional con logo */}
+      <div className="medix-login-card">
         <div style={{ textAlign: 'center', marginBottom: '22px' }}>
           <img
             src={logoHospital}
@@ -284,16 +224,8 @@ export default function LoginView({ onLoginSuccess }) {
         {error && (
           <div
             role="alert"
-            style={{
-              backgroundColor: '#FEF3F2',
-              color: '#B42318',
-              border: '1px solid #FECDCA',
-              borderRadius: '8px',
-              padding: '10px 12px',
-              fontSize: '12px',
-              fontWeight: 600,
-              marginBottom: '16px'
-            }}
+            className="medix-badge-alert"
+            style={{ borderRadius: '8px', padding: '10px 12px', fontSize: '12px', fontWeight: 600, marginBottom: '16px' }}
           >
             {error}
           </div>
@@ -301,56 +233,40 @@ export default function LoginView({ onLoginSuccess }) {
 
         {mensajeExito && (
           <div
-            style={{
-              backgroundColor: '#ECFDF3',
-              color: '#067647',
-              border: '1px solid #ABEFC6',
-              borderRadius: '8px',
-              padding: '10px 12px',
-              fontSize: '12px',
-              fontWeight: 600,
-              marginBottom: '16px'
-            }}
+            className="medix-badge-status"
+            style={{ borderRadius: '8px', padding: '10px 12px', fontSize: '12px', fontWeight: 600, marginBottom: '16px' }}
           >
             {mensajeExito}
           </div>
         )}
 
-        {/* MODO 1: INICIO DE SESIÓN */}
         {modo === 'login' && (
           <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label htmlFor="login-username" style={labelStyle}>
+              <label htmlFor="login-username" className="medix-label" style={{ color: '#1F2937' }}>
                 Usuario o correo electrónico
               </label>
               <input
                 id="login-username"
                 type="text"
+                className="medix-input"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Ingrese su usuario"
                 autoComplete="username"
-                style={inputStyle}
+                style={{ backgroundColor: '#FFFFFF', color: '#1F2937', borderColor: '#D9DEE5' }}
               />
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label htmlFor="login-password" style={{ ...labelStyle, marginBottom: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <label htmlFor="login-password" className="medix-label" style={{ color: '#1F2937', marginBottom: 0 }}>
                   Contraseña
                 </label>
                 <button
                   type="button"
                   onClick={() => setMostrarPassword(prev => !prev)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#1D5C96',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    padding: 0
-                  }}
+                  style={{ background: 'none', border: 'none', color: '#1D5C96', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: 0 }}
                 >
                   {mostrarPassword ? 'Ocultar' : 'Mostrar'}
                 </button>
@@ -358,29 +274,20 @@ export default function LoginView({ onLoginSuccess }) {
               <input
                 id="login-password"
                 type={mostrarPassword ? 'text' : 'password'}
+                className="medix-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Ingrese su contraseña"
                 autoComplete="current-password"
-                style={inputStyle}
+                style={{ backgroundColor: '#FFFFFF', color: '#1F2937', borderColor: '#D9DEE5' }}
               />
             </div>
 
             <button
               type="submit"
               disabled={cargando}
-              style={{
-                width: '100%',
-                height: '42px',
-                backgroundColor: '#1D5C96',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: cargando ? 'not-allowed' : 'pointer',
-                marginTop: '4px'
-              }}
+              className="medix-btn medix-btn-primary"
+              style={{ width: '100%', height: '42px', marginTop: '4px' }}
             >
               {cargando ? 'Iniciando sesión...' : 'Iniciar sesión'}
             </button>
@@ -388,41 +295,16 @@ export default function LoginView({ onLoginSuccess }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px solid #D9DEE5' }}>
               <button
                 type="button"
-                onClick={() => {
-                  setError('')
-                  setMensajeExito('')
-                  setModo('recuperar_sms')
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#5B6675',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  padding: 0
-                }}
+                onClick={() => { setError(''); setMensajeExito(''); setModo('recuperar_sms') }}
+                style={{ background: 'none', border: 'none', color: '#5B6675', fontSize: '12px', fontWeight: 500, cursor: 'pointer', padding: 0 }}
               >
                 ¿Olvidaste tu contraseña?
               </button>
 
               <button
                 type="button"
-                onClick={() => {
-                  setError('')
-                  setMensajeExito('')
-                  setRegistroExitoso(null)
-                  setModo('signup')
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#1D5C96',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  padding: 0
-                }}
+                onClick={() => { setError(''); setMensajeExito(''); setRegistroExitoso(null); setModo('signup') }}
+                style={{ background: 'none', border: 'none', color: '#1D5C96', fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: 0 }}
               >
                 Solicitar cuenta
               </button>
@@ -430,33 +312,23 @@ export default function LoginView({ onLoginSuccess }) {
           </form>
         )}
 
-        {/* MODO 2: REGISTRO DE PERSONAL */}
         {modo === 'signup' && (
           <div>
             {registroExitoso ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: '#ECFDF3', border: '1px solid #ABEFC6', fontSize: '12px', color: '#067647' }}>
+                <div className="medix-badge-status" style={{ padding: '12px', borderRadius: '8px', fontSize: '12px' }}>
                   <strong>Cuenta creada para {registroExitoso.nombres}</strong>
                   <div style={{ marginTop: '6px' }}>Usuario: <strong>{registroExitoso.username}</strong></div>
                   <div>Contraseña: <strong>{registroExitoso.password}</strong></div>
                 </div>
                 <button
                   type="button"
+                  className="medix-btn medix-btn-primary"
+                  style={{ width: '100%', height: '40px' }}
                   onClick={() => {
                     setUsername(registroExitoso.username)
                     setPassword(registroExitoso.password)
                     setModo('login')
-                  }}
-                  style={{
-                    width: '100%',
-                    height: '40px',
-                    backgroundColor: '#1D5C96',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
                   }}
                 >
                   Ir a iniciar sesión
@@ -465,43 +337,47 @@ export default function LoginView({ onLoginSuccess }) {
             ) : (
               <form onSubmit={handleRegistroSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
-                  <label htmlFor="reg-nombres" style={labelStyle}>Nombres completos</label>
+                  <label htmlFor="reg-nombres" className="medix-label" style={{ color: '#1F2937' }}>Nombres completos</label>
                   <input
                     id="reg-nombres"
                     type="text"
+                    className="medix-input"
                     value={formRegistro.nombres_completos}
                     onChange={(e) => setFormRegistro({ ...formRegistro, nombres_completos: e.target.value })}
-                    style={inputStyle}
+                    style={{ backgroundColor: '#FFFFFF', color: '#1F2937', borderColor: '#D9DEE5' }}
                   />
                 </div>
                 <div>
-                  <label htmlFor="reg-correo" style={labelStyle}>Correo electrónico</label>
+                  <label htmlFor="reg-correo" className="medix-label" style={{ color: '#1F2937' }}>Correo electrónico</label>
                   <input
                     id="reg-correo"
                     type="email"
+                    className="medix-input"
                     value={formRegistro.correo}
                     onChange={(e) => setFormRegistro({ ...formRegistro, correo: e.target.value })}
-                    style={inputStyle}
+                    style={{ backgroundColor: '#FFFFFF', color: '#1F2937', borderColor: '#D9DEE5' }}
                   />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div>
-                    <label htmlFor="reg-telefono" style={labelStyle}>Teléfono</label>
+                    <label htmlFor="reg-telefono" className="medix-label" style={{ color: '#1F2937' }}>Teléfono</label>
                     <input
                       id="reg-telefono"
                       type="text"
+                      className="medix-input"
                       value={formRegistro.telefono}
                       onChange={(e) => setFormRegistro({ ...formRegistro, telefono: e.target.value })}
-                      style={inputStyle}
+                      style={{ backgroundColor: '#FFFFFF', color: '#1F2937', borderColor: '#D9DEE5' }}
                     />
                   </div>
                   <div>
-                    <label htmlFor="reg-rol" style={labelStyle}>Especialidad / Rol</label>
+                    <label htmlFor="reg-rol" className="medix-label" style={{ color: '#1F2937' }}>Especialidad / Rol</label>
                     <select
                       id="reg-rol"
+                      className="medix-input"
                       value={formRegistro.rol}
                       onChange={(e) => setFormRegistro({ ...formRegistro, rol: e.target.value })}
-                      style={inputStyle}
+                      style={{ backgroundColor: '#FFFFFF', color: '#1F2937', borderColor: '#D9DEE5' }}
                     >
                       {ROLES_ESPECIALIDADES.map(r => (
                         <option key={r} value={r}>{r}</option>
@@ -509,39 +385,10 @@ export default function LoginView({ onLoginSuccess }) {
                     </select>
                   </div>
                 </div>
-                <button
-                  type="submit"
-                  disabled={cargando}
-                  style={{
-                    width: '100%',
-                    height: '40px',
-                    backgroundColor: '#1D5C96',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    marginTop: '4px'
-                  }}
-                >
+                <button type="submit" disabled={cargando} className="medix-btn medix-btn-primary" style={{ width: '100%', height: '40px' }}>
                   {cargando ? 'Registrando...' : 'Registrar usuario'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setModo('login')}
-                  style={{
-                    width: '100%',
-                    height: '36px',
-                    backgroundColor: '#F4F6F9',
-                    color: '#1F2937',
-                    border: '1px solid #D9DEE5',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
+                <button type="button" onClick={() => setModo('login')} className="medix-btn medix-btn-secondary" style={{ width: '100%' }}>
                   Volver al inicio de sesión
                 </button>
               </form>
@@ -549,56 +396,28 @@ export default function LoginView({ onLoginSuccess }) {
           </div>
         )}
 
-        {/* MODO 3: RECUPERACIÓN DE CONTRASEÑA */}
         {modo === 'recuperar_sms' && (
           <div>
             {pasoSms === 1 ? (
               <form onSubmit={handleSolicitarSms} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div>
-                  <label htmlFor="sms-identificador" style={labelStyle}>
+                  <label htmlFor="sms-identificador" className="medix-label" style={{ color: '#1F2937' }}>
                     Usuario, correo o teléfono registrado
                   </label>
                   <input
                     id="sms-identificador"
                     type="text"
+                    className="medix-input"
                     value={identificadorSms}
                     onChange={(e) => setIdentificadorSms(e.target.value)}
                     placeholder="Ej. admin o correo institucional"
-                    style={inputStyle}
+                    style={{ backgroundColor: '#FFFFFF', color: '#1F2937', borderColor: '#D9DEE5' }}
                   />
                 </div>
-                <button
-                  type="submit"
-                  disabled={cargando}
-                  style={{
-                    width: '100%',
-                    height: '40px',
-                    backgroundColor: '#1D5C96',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
+                <button type="submit" disabled={cargando} className="medix-btn medix-btn-primary" style={{ width: '100%', height: '40px' }}>
                   {cargando ? 'Enviando...' : 'Enviar código de verificación'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setModo('login')}
-                  style={{
-                    width: '100%',
-                    height: '36px',
-                    backgroundColor: '#F4F6F9',
-                    color: '#1F2937',
-                    border: '1px solid #D9DEE5',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
+                <button type="button" onClick={() => setModo('login')} className="medix-btn medix-btn-secondary" style={{ width: '100%' }}>
                   Cancelar
                 </button>
               </form>
@@ -610,40 +429,28 @@ export default function LoginView({ onLoginSuccess }) {
                   </div>
                 )}
                 <div>
-                  <label htmlFor="sms-codigo" style={labelStyle}>Código de verificación</label>
+                  <label htmlFor="sms-codigo" className="medix-label" style={{ color: '#1F2937' }}>Código de verificación</label>
                   <input
                     id="sms-codigo"
                     type="text"
+                    className="medix-input"
                     value={codigoSmsIngresado}
                     onChange={(e) => setCodigoSmsIngresado(e.target.value)}
-                    style={inputStyle}
+                    style={{ backgroundColor: '#FFFFFF', color: '#1F2937', borderColor: '#D9DEE5' }}
                   />
                 </div>
                 <div>
-                  <label htmlFor="sms-nueva-clave" style={labelStyle}>Nueva contraseña</label>
+                  <label htmlFor="sms-nueva-clave" className="medix-label" style={{ color: '#1F2937' }}>Nueva contraseña</label>
                   <input
                     id="sms-nueva-clave"
                     type="password"
+                    className="medix-input"
                     value={nuevaPassword}
                     onChange={(e) => setNuevaPassword(e.target.value)}
-                    style={inputStyle}
+                    style={{ backgroundColor: '#FFFFFF', color: '#1F2937', borderColor: '#D9DEE5' }}
                   />
                 </div>
-                <button
-                  type="submit"
-                  disabled={cargando}
-                  style={{
-                    width: '100%',
-                    height: '40px',
-                    backgroundColor: '#1D5C96',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
+                <button type="submit" disabled={cargando} className="medix-btn medix-btn-primary" style={{ width: '100%', height: '40px' }}>
                   {cargando ? 'Actualizando...' : 'Confirmar nueva contraseña'}
                 </button>
               </form>
