@@ -142,3 +142,155 @@ button, input, select, textarea {
   font-family: inherit;
   font-size: inherit;
 }
+
+/* ==========================================================================
+   CLASES CSS REUTILIZABLES INSTITUCIONALES
+   ========================================================================== */
+
+/* Botón Primario Institucional */
+.btn-primary {
+  background-color: var(--medix-action);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--medix-action-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Botón Secundario */
+.btn-secondary {
+  background-color: transparent;
+  color: var(--medix-text-main);
+  border: 1px solid var(--medix-border);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 13px;
+  padding: 7px 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.15s ease;
+  text-decoration: none;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--medix-bg-subtle);
+}
+
+/* Botón Peligro / Alerta */
+.btn-danger {
+  background-color: transparent;
+  color: var(--medix-alert-red);
+  border: 1px solid var(--medix-alert-red-border);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 13px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: var(--medix-alert-red-bg);
+}
+
+/* Tarjeta Clínica */
+.medix-card {
+  background-color: var(--medix-bg-card);
+  border: 1px solid var(--medix-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--medix-shadow-card);
+}
+
+/* Tabla Clínica */
+.medix-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--font-size-body);
+}
+
+.medix-table th {
+  padding: 12px 16px;
+  font-weight: 600;
+  color: var(--medix-text-secondary);
+  font-size: var(--font-size-label);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid var(--medix-border);
+  background-color: var(--medix-bg-subtle);
+}
+
+.medix-table td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--medix-border);
+}
+
+/* Insignia Alerta / Alergia */
+.medix-badge-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  background-color: var(--medix-alert-red-bg);
+  color: var(--medix-alert-red);
+  border: 1px solid var(--medix-alert-red-border);
+}
+
+/* Insignia Estado Activo */
+.medix-badge-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  background-color: var(--medix-status-green-bg);
+  color: var(--medix-status-green);
+  border: 1px solid var(--medix-status-green-border);
+}
+
+/* Input Institucional */
+.medix-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--medix-border);
+  background-color: var(--medix-bg-input);
+  color: var(--medix-text-main);
+  font-size: var(--font-size-body);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.medix-input:focus {
+  border-color: var(--medix-action);
+}
