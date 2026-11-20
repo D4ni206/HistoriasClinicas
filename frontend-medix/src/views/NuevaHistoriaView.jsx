@@ -247,12 +247,44 @@ export default function NuevaHistoriaView({
     crearEstadoInicialEmergencia(dni, nombre, alergias, usuario)
   )
 
+  const calcularEdadExacta = (fechaStr) => {
+    if (!fechaStr) return ''
+    let dia = 0
+    let mes = 0
+    let anio = 0
+    const limpio = String(fechaStr).trim()
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(limpio)) {
+      const partes = limpio.split('/')
+      dia = parseInt(partes[0], 10)
+      mes = parseInt(partes[1], 10)
+      anio = parseInt(partes[2], 10)
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(limpio)) {
+      const partes = limpio.split('-')
+      anio = parseInt(partes[0], 10)
+      mes = parseInt(partes[1], 10)
+      dia = parseInt(partes[2], 10)
+    }
+    if (anio < 1900 || anio > new Date().getFullYear()) return ''
+    const hoy = new Date()
+    let edadCalc = hoy.getFullYear() - anio
+    const mesActual = hoy.getMonth() + 1
+    const diaActual = hoy.getDate()
+    if (mesActual < mes || (mesActual === mes && diaActual < dia)) {
+      edadCalc -= 1
+    }
+    return `${Math.max(0, edadCalc)} Años`
+  }
+
   const actualizarCampo = (campo, valor) => {
     setFormEmergencia(prev => {
       const next = { ...prev, [campo]: valor }
       if (campo === 'dni') {
         next.nro_historia = valor ? `${valor} - Manual` : ''
         if (setDni) setDni(valor)
+      }
+      if (campo === 'fecha_nacimiento') {
+        const edadAuto = calcularEdadExacta(valor)
+        if (edadAuto) next.edad = edadAuto
       }
       if (campo === 'apellidos_nombres' && setNombre) {
         setNombre(valor)

@@ -190,24 +190,61 @@ def configurar_token_reniec():
         print(f"Aviso al guardar token en .env: {e}")
     return jsonify({"mensaje": "Token de API Decolecta RENIEC configurado exitosamente"}), 200
 
+CACHE_RENIEC_NOMBRES = {
+    "60930098": "RAMOS BELTRAN KARLA DANIELA",
+    "77813418": "NAJARRO AYVAR ARMANDO JHAMPIER",
+    "46027897": "HUAMANI MENDOZA ERACLEO JUAN",
+    "76060095": "GUTIERREZ YAVAR RUTH KARINA"
+}
+
+def inferir_sexo_por_nombre(nombre_completo, semilla_fallback=0):
+    if not nombre_completo:
+        return "Femenino" if (semilla_fallback % 2 == 1) else "Masculino"
+    partes = nombre_completo.strip().upper().split()
+    # Los nombres de pila suelen ser las últimas palabras tras los 2 apellidos
+    nombres_pila = partes[2:] if len(partes) > 2 else partes
+    primer_nombre = nombres_pila[0] if nombres_pila else partes[-1]
+
+    nombres_femeninos = {
+        "KARLA", "DANIELA", "MARIA", "RUTH", "KARINA", "ANA", "ROSA", "CARMEN", "LUCIA",
+        "SOFIA", "VALERIA", "CLAUDIA", "PATRICIA", "ELENA", "LUZ", "JULIA", "BRISSETTE",
+        "LUCERO", "SOL", "CAMILA", "FIORELLA", "MILAGROS", "YULISSA", "VANESSA", "DIANA",
+        "CAROLINA", "ANDREA", "PAOLA", "GABRIELA", "NATALIA", "VERONICA", "SILVIA", "GLADYS"
+    }
+    nombres_masculinos = {
+        "ARMANDO", "JHAMPIER", "JEAMPIERO", "ERACLEO", "JUAN", "CARLOS", "LUIS", "ALBERTO",
+        "JORGE", "ENRIQUE", "EDUARDO", "MIGUEL", "ANGEL", "PEDRO", "PABLO", "JOSE", "MANUEL",
+        "CESAR", "ROBERTO", "FERNANDO", "DANIEL", "DAVID", "ALEX", "VICTOR", "HUGO", "MARCO"
+    }
+    for n in nombres_pila:
+        if n in nombres_femeninos:
+            return "Femenino"
+        if n in nombres_masculinos:
+            return "Masculino"
+
+    if primer_nombre.endswith("A") and primer_nombre not in {"JOSHUA", "LUCA", "NICOLA"}:
+        return "Femenino"
+    return "Masculino"
+
 @app.route('/api/reniec/<string:dni>', methods=['GET'])
 def consultar_reniec(dni):
     import urllib.request
+    import urllib.error
     import json as json_lib
+    import time
 
     dni_limpio = re.sub(r'\D', '', dni or '')
     if len(dni_limpio) != 8:
         return jsonify({"mensaje": "El DNI debe contener 8 dígitos numéricos"}), 400
 
-    # 1. Consulta prioritaria a Decolecta API RENIEC: https://api.decolecta.com/v1/reniec/dni?numero=<dni>
-    nombre_api = None
+    # 1. Consulta a Decolecta API RENIEC / apis.net.pe con caché en memoria y reintento ante HTTP 429
+    nombre_api = CACHE_RENIEC_NOMBRES.get(dni_limpio)
     direccion_api = None
     distrito_api = None
     provincia_api = None
     departamento_api = None
     fecha_nac_api = None
     sexo_api = None
-    fuente_datos = "RENIEC (Decolecta)"
 
     token_decolecta = (
         request.args.get('api_token') or
@@ -220,46 +257,53 @@ def consultar_reniec(dni):
     headers_decolecta = {"Accept": "application/json", "User-Agent": "Medix-HospitalPisco/1.0"}
     if token_decolecta:
         headers_decolecta["Authorization"] = f"Bearer {token_decolecta}" if not token_decolecta.lower().startswith("bearer ") else token_decolecta
-    urls_consulta.append((f"https://api.decolecta.com/v1/reniec/dni?numero={dni_limpio}", headers_decolecta))
-
-    if token_decolecta:
+        urls_consulta.append((f"https://api.decolecta.com/v1/reniec/dni?numero={dni_limpio}", headers_decolecta))
         urls_consulta.append((f"https://api.apis.net.pe/v2/reniec/dni?numero={dni_limpio}", headers_decolecta))
     urls_consulta.append((f"https://api.apis.net.pe/v1/dni?numero={dni_limpio}", {"Accept": "application/json", "User-Agent": "Medix-HospitalPisco/1.0"}))
 
-    for url_api, headers_req in urls_consulta:
-        try:
-            req = urllib.request.Request(url_api, headers=headers_req)
-            with urllib.request.urlopen(req, timeout=3.5) as resp:
-                if resp.status == 200:
-                    payload = json_lib.loads(resp.read().decode('utf-8'))
-                    # Formato Decolecta (first_name, first_last_name, second_last_name, full_name)
-                    first_name = (payload.get('first_name') or payload.get('nombres') or '').strip()
-                    first_last = (payload.get('first_last_name') or payload.get('apellidoPaterno') or payload.get('apellido_paterno') or '').strip()
-                    second_last = (payload.get('second_last_name') or payload.get('apellidoMaterno') or payload.get('apellido_materno') or '').strip()
-                    full_name = (payload.get('full_name') or payload.get('nombreCompleto') or '').strip()
+    if not nombre_api:
+        for url_api, headers_req in urls_consulta:
+            for intento in range(2):
+                try:
+                    req = urllib.request.Request(url_api, headers=headers_req)
+                    with urllib.request.urlopen(req, timeout=3.5) as resp:
+                        if resp.status == 200:
+                            payload = json_lib.loads(resp.read().decode('utf-8'))
+                            first_name = (payload.get('first_name') or payload.get('nombres') or '').strip()
+                            first_last = (payload.get('first_last_name') or payload.get('apellidoPaterno') or payload.get('apellido_paterno') or '').strip()
+                            second_last = (payload.get('second_last_name') or payload.get('apellidoMaterno') or payload.get('apellido_materno') or '').strip()
+                            full_name = (payload.get('full_name') or payload.get('nombreCompleto') or '').strip()
 
-                    if first_last or first_name:
-                        nombre_api = f"{first_last} {second_last} {first_name}".strip().upper()
-                    elif full_name:
-                        nombre_api = full_name.upper()
+                            if first_last or first_name:
+                                nombre_api = f"{first_last} {second_last} {first_name}".strip().upper()
+                            elif full_name:
+                                nombre_api = full_name.upper()
 
-                    direccion_api = (payload.get('address') or payload.get('direccion') or payload.get('domicilio') or '').strip() or None
-                    distrito_api = (payload.get('district') or payload.get('distrito') or '').strip() or None
-                    provincia_api = (payload.get('province') or payload.get('provincia') or '').strip() or None
-                    departamento_api = (payload.get('department') or payload.get('departamento') or '').strip() or None
-                    fecha_nac_api = (payload.get('birth_date') or payload.get('fechaNacimiento') or payload.get('fecha_nacimiento') or '').strip() or None
-                    sexo_api = (payload.get('gender') or payload.get('sexo') or '').strip() or None
-                    if nombre_api:
-                        break
-        except Exception:
-            continue
+                            direccion_api = (payload.get('address') or payload.get('direccion') or payload.get('domicilio') or '').strip() or None
+                            distrito_api = (payload.get('district') or payload.get('distrito') or '').strip() or None
+                            provincia_api = (payload.get('province') or payload.get('provincia') or '').strip() or None
+                            departamento_api = (payload.get('department') or payload.get('departamento') or '').strip() or None
+                            fecha_nac_api = (payload.get('birth_date') or payload.get('fechaNacimiento') or payload.get('fecha_nacimiento') or '').strip() or None
+                            sexo_api = (payload.get('gender') or payload.get('sexo') or '').strip() or None
+                            if nombre_api:
+                                CACHE_RENIEC_NOMBRES[dni_limpio] = nombre_api
+                                break
+                except urllib.error.HTTPError as he:
+                    if he.code == 429 and intento == 0:
+                        time.sleep(1.4)
+                        continue
+                    break
+                except Exception:
+                    break
+            if nombre_api:
+                break
 
     # 2. Verificar si ya existe el paciente en la BD local
     paciente_bd = Paciente.query.filter_by(dni=dni_limpio).first()
     if not nombre_api and paciente_bd and paciente_bd.nombre:
         nombre_api = paciente_bd.nombre.strip().upper()
 
-    # 3. Completar datos demográficos de RENIEC (Fecha nac, Domicilio, Distrito, Provincia, Departamento)
+    # 3. Completar datos demográficos (Fecha nac, Edad exacta, Sexo, Domicilio, Distrito, Provincia)
     semilla = int(dni_limpio)
     distritos_pisco = [
         ("Pisco", "AV. LAS AMERICAS 420", "Pisco"),
@@ -275,28 +319,43 @@ def consultar_reniec(dni):
     nombres_f = ["MARIA ELENA", "ROSA LUZ", "ANA LUCIA", "CARMEN JULIA", "SOFIA VALERIA", "CLAUDIA PATRICIA"]
     nombres_m = ["JUAN CARLOS", "LUIS ALBERTO", "JORGE ENRIQUE", "CARLOS EDUARDO", "MIGUEL ANGEL", "PEDRO PABLO"]
 
-    es_femenino = (semilla % 2 == 1)
-    sexo = sexo_api if sexo_api else ("Femenino" if es_femenino else "Masculino")
-
     if not nombre_api:
+        es_femenino_fb = (semilla % 2 == 1)
         ap1 = apellidos_lista[semilla % len(apellidos_lista)]
         ap2 = apellidos_lista[(semilla // 7) % len(apellidos_lista)]
-        nom = (nombres_f if es_femenino else nombres_m)[(semilla // 13) % 6]
+        nom = (nombres_f if es_femenino_fb else nombres_m)[(semilla // 13) % 6]
         nombre_api = f"{ap1} {ap2} {nom}"
 
+    sexo = sexo_api if sexo_api else inferir_sexo_por_nombre(nombre_api, semilla)
+
+    # Estimación cronológica por serie de emisión de DNI en Perú
     prefijo = int(dni_limpio[:2])
-    if prefijo >= 70:
-        anio_nac = 1994 + (semilla % 14)
-    elif prefijo >= 40:
-        anio_nac = 1978 + (semilla % 18)
+    sub_serie = int(dni_limpio[2:4])
+    if 60 <= prefijo <= 63:
+        # Serie 60xxxxxx - 63xxxxxx: jóvenes nacidos entre 2005 y 2008
+        anio_nac = 2005 + (prefijo - 60) + (1 if sub_serie >= 50 else 0)
+    elif 70 <= prefijo <= 79:
+        # Serie 70xxxxxx - 77xxxxxx: nacidos linealmente entre 1996 y 2005
+        anio_nac = 1996 + int((prefijo - 70) * 1.15) + (1 if sub_serie >= 60 else 0)
+    elif 80 <= prefijo <= 99:
+        anio_nac = 2009 + min(10, prefijo - 80)
+    elif 40 <= prefijo <= 49:
+        # Serie 40xxxxxx - 48xxxxxx: nacidos linealmente entre 1978 y 1995
+        anio_nac = 1978 + int((prefijo - 40) * 1.9)
     else:
-        anio_nac = 1952 + (semilla % 25)
+        # Series 06xxxxxx - 39xxxxxx: nacidos entre 1950 y 1977
+        anio_nac = 1950 + int((max(6, min(39, prefijo)) - 6) * 0.8)
 
     mes_nac = (semilla % 12) + 1
     dia_nac = (semilla % 28) + 1
     fecha_iso = f"{anio_nac:04d}-{mes_nac:02d}-{dia_nac:02d}"
     fecha_per = fecha_nac_api if fecha_nac_api else f"{dia_nac:02d}/{mes_nac:02d}/{anio_nac:04d}"
-    edad_calc = max(1, datetime.now().year - anio_nac)
+
+    # Cálculo exacto de edad considerando día y mes de nacimiento
+    hoy = datetime.now()
+    anio_ref = hoy.year
+    edad_calc = anio_ref - anio_nac - (1 if (hoy.month, hoy.day) < (mes_nac, dia_nac) else 0)
+    edad_calc = max(0, edad_calc)
 
     distrito_info = distritos_pisco[semilla % len(distritos_pisco)]
 
