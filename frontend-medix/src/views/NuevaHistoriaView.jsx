@@ -753,6 +753,21 @@ export default function NuevaHistoriaView({
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-dni-col" className="medix-label" style={{ marginBottom: 0 }}>DNI</label>
+                <input
+                  id="hc-dni-col"
+                  type="text"
+                  maxLength={8}
+                  className="medix-input"
+                  style={{ fontWeight: 700 }}
+                  placeholder="Ej. 76060095"
+                  value={formEmergencia.dni}
+                  onChange={(e) => actualizarCampo('dni', e.target.value.replace(/\D/g, ''))}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
                 <label htmlFor="hc-gravedad" className="medix-label" style={{ marginBottom: 0 }}>GRAVEDAD</label>
                 <input
                   id="hc-gravedad"
