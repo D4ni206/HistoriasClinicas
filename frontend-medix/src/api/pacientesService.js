@@ -1,5 +1,16 @@
 // Capa de servicios para comunicación con backend Medix
 
+export async function consultarReniec(authFetch, dni) {
+  const dniLimpio = String(dni || '').replace(/\D/g, '')
+  if (dniLimpio.length !== 8) {
+    throw new Error('El DNI debe tener 8 dígitos')
+  }
+  const res = await authFetch(`/reniec/${dniLimpio}`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.mensaje || 'No se pudo consultar RENIEC')
+  return data
+}
+
 export async function listarPacientes(authFetch, { page, per_page, q } = {}) {
   const params = new URLSearchParams()
   if (page) params.append('page', page)

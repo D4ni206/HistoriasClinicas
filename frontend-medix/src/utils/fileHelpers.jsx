@@ -1,4 +1,4 @@
-export const esPdf = (nombre = '') => nombre.toLowerCase().endsWith('.pdf')
+export const esPdf = (nombre = '') => /\.(pdf|html|htm)$/i.test(nombre)
 export const esDocx = (nombre = '') => /\.(docx|doc)$/i.test(nombre)
 export const esImagen = (nombre = '') => /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(nombre)
 export const esTexto = (nombre = '') => /\.(txt|csv|log|json|xml)$/i.test(nombre)

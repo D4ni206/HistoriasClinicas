@@ -1,6 +1,172 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
+import * as api from '../api/pacientesService'
+
+function obtenerFechaActualPeru() {
+  const hoy = new Date()
+  const dd = String(hoy.getDate()).padStart(2, '0')
+  const mm = String(hoy.getMonth() + 1).padStart(2, '0')
+  const yyyy = hoy.getFullYear()
+  return `${dd}/${mm}/${yyyy}`
+}
+
+function obtenerHoraActual() {
+  const ahora = new Date()
+  const hh = String(ahora.getHours()).padStart(2, '0')
+  const min = String(ahora.getMinutes()).padStart(2, '0')
+  return `${hh}:${min}`
+}
+
+function generarHtmlHistoriaEmergencia(f) {
+  const diagFilas = (f.diagnosticos || [])
+    .filter(d => d.descripcion && d.descripcion.trim())
+    .map((d, idx) => `
+      <tr>
+        <td style="border:1px solid #000;padding:5px 8px;">${idx + 1}. ${d.descripcion}</td>
+        <td style="border:1px solid #000;padding:5px;text-align:center;width:32px;">${d.tipo === 'P' ? 'X' : ''}</td>
+        <td style="border:1px solid #000;padding:5px;text-align:center;width:32px;">${d.tipo === 'D' ? 'X' : ''}</td>
+        <td style="border:1px solid #000;padding:5px 8px;width:90px;">${d.cie10 || ''}</td>
+      </tr>
+    `).join('') || `
+      <tr>
+        <td style="border:1px solid #000;padding:10px 8px;">1...</td>
+        <td style="border:1px solid #000;padding:5px;text-align:center;width:32px;">P</td>
+        <td style="border:1px solid #000;padding:5px;text-align:center;width:32px;">D</td>
+        <td style="border:1px solid #000;padding:5px 8px;width:90px;"></td>
+      </tr>
+    `
+
+  const destinos = ['HOSPITALIZACION', 'DOMICILIO', 'TRANSFERENCIA', 'C. EXT', 'MORGUE']
+  const destinosHtml = destinos
+    .map(dest => `[ ${f.destino_alta === dest ? 'X' : ' '} ] ${dest}`)
+    .join('&nbsp;&nbsp;&nbsp;&nbsp;')
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Historia Clínica de Emergencia - DNI ${f.dni}</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #111; margin: 24px; line-height: 1.4; }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1.5px solid #000; padding-bottom: 8px; margin-bottom: 10px; }
+  .header-center { text-align: center; flex: 1; }
+  .header-center h1 { font-size: 15px; margin: 6px 0 2px 0; letter-spacing: 0.3px; }
+  .header-center p { margin: 1px 0; font-size: 10.5px; }
+  .filiacion-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 6px 20px; margin-bottom: 12px; font-size: 11.5px; }
+  .fila-dato { display: flex; gap: 6px; }
+  .fila-dato strong { min-width: 120px; display: inline-block; }
+  table.vitales { width: 100%; border-collapse: collapse; margin: 6px 0 14px 0; font-size: 11.5px; }
+  table.vitales th, table.vitales td { border: 1px solid #000; padding: 6px 8px; text-align: center; }
+  table.vitales th { background: #f3f4f6; font-weight: bold; }
+  .seccion-clinica { display: grid; grid-template-columns: 135px 1fr; gap: 10px; margin-bottom: 14px; min-height: 44px; border-bottom: 1px dotted #ccc; padding-bottom: 8px; }
+  .seccion-titulo { font-weight: bold; font-size: 11.5px; }
+  .seccion-texto { white-space: pre-wrap; font-size: 12px; }
+  .footer-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 11px; }
+  .footer-table td, .footer-table th { border: 1px solid #000; padding: 6px 8px; }
+</style>
+</head>
+<body>
+  <div class="header-top">
+    <div style="font-size:10px;line-height:1.3;">
+      <strong>Ministerio de Salud</strong><br/>
+      SISGALENPLUS
+    </div>
+    <div class="header-center">
+      <p><strong>HOSP. SAN JUAN DE DIOS DE PISCO</strong></p>
+      <p>MZA B LOTE 5 FND. ALTO LA LUNA (AV. FERMIN TANGUIS)</p>
+      <p>TELEFONO: 056-535718</p>
+      <h1>HISTORIA CLÍNICA DE EMERGENCIA &nbsp;&nbsp; ${f.codigo_atencion}</h1>
+    </div>
+    <div style="font-size:10px;text-align:right;">
+      ${f.fecha_ingreso}<br/>
+      ${f.hora_ingreso}<br/>
+      Página 1 de 1
+    </div>
+  </div>
+
+  <div class="filiacion-grid">
+    <div class="fila-dato"><strong>Nro Historia</strong> <span>${f.nro_historia || `${f.dni} - Manual`}</span></div>
+    <div class="fila-dato"><strong>Nro Cuenta</strong> <span>${f.nro_cuenta || 'SIS'}</span></div>
+
+    <div class="fila-dato"><strong>Apellidos Y Nombres</strong> <span><strong>${f.apellidos_nombres}</strong></span></div>
+    <div class="fila-dato"><strong>Edad</strong> <span>${f.edad}</span></div>
+
+    <div class="fila-dato"><strong>Fecha ingreso</strong> <span>${f.fecha_ingreso}</span></div>
+    <div class="fila-dato"><strong>Fecha nacimiento</strong> <span>${f.fecha_nacimiento}</span></div>
+
+    <div class="fila-dato"><strong>Hora ingreso</strong> <span>${f.hora_ingreso}</span></div>
+    <div class="fila-dato"><strong>Sexo</strong> <span>${f.sexo}</span></div>
+
+    <div class="fila-dato"><strong>Consultorio médico</strong> <span>${f.consultorio}</span></div>
+    <div class="fila-dato"><strong>DNI:</strong> <span><strong>${f.dni}</strong></span></div>
+
+    <div class="fila-dato"><strong>Médico</strong> <span>${f.medico}</span></div>
+    <div class="fila-dato"><strong>GRAVEDAD:</strong> <span>${f.gravedad} (Prioridad ${f.prioridad})</span></div>
+
+    <div class="fila-dato"><strong>Teléfono</strong> <span>${f.telefono || '—'}</span></div>
+    <div class="fila-dato"><strong>Provincia</strong> <span>${f.provincia}</span></div>
+
+    <div class="fila-dato"><strong>Dirección</strong> <span>${f.direccion}</span></div>
+    <div class="fila-dato"><strong>Centro Poblado</strong> <span>${f.centro_poblado}</span></div>
+
+    <div class="fila-dato"><strong>Departamento</strong> <span>${f.departamento}</span></div>
+    <div class="fila-dato"><strong>USUARIO:</strong> <span>${f.usuario_registro}</span></div>
+
+    <div class="fila-dato"><strong>Distrito</strong> <span>${f.distrito}</span></div>
+    <div class="fila-dato"><strong>Acompañante</strong> <span>${f.acompanante || '—'}</span></div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+    <strong>FUNCIONES VITALES :</strong>
+    <span style="font-size:11.5px;"><strong>Peso:</strong> ${f.peso || '—'} kg &nbsp;&nbsp;&nbsp; <strong>Talla:</strong> ${f.talla || '—'} m</span>
+  </div>
+  <table class="vitales">
+    <thead>
+      <tr>
+        <th>Presion Arterial</th>
+        <th>Frec. Respiratoria</th>
+        <th>Pulso</th>
+        <th>Temperatura</th>
+        <th>Frec. Cardiaca</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>${f.presion_arterial || '—'}</td>
+        <td>${f.frec_respiratoria || '—'}</td>
+        <td>${f.pulso || '—'}</td>
+        <td>${f.temperatura || '—'}</td>
+        <td>${f.frec_cardiaca || '—'}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="seccion-clinica"><div class="seccion-titulo">Anamnesis</div><div class="seccion-texto">${f.anamnesis || ''}</div></div>
+  <div class="seccion-clinica"><div class="seccion-titulo">Antecedentes</div><div class="seccion-texto">${f.antecedentes || ''}${f.alergias ? `\nAlergias: ${f.alergias}` : ''}</div></div>
+  <div class="seccion-clinica"><div class="seccion-titulo">Examen Físico</div><div class="seccion-texto">${f.examen_fisico || ''}</div></div>
+  <div class="seccion-clinica"><div class="seccion-titulo">Examenes Auxiliares</div><div class="seccion-texto">${f.examenes_auxiliares || ''}</div></div>
+  <div class="seccion-clinica"><div class="seccion-titulo">Plan de Trabajo</div><div class="seccion-texto">${f.plan_trabajo || ''}</div></div>
+  <div class="seccion-clinica"><div class="seccion-titulo">Terapeutica a seguir</div><div class="seccion-texto">${f.terapeutica || ''}</div></div>
+
+  <table class="footer-table">
+    <tbody>
+      ${diagFilas}
+      <tr>
+        <td colspan="2"><strong>Médico:</strong> ${f.medico}</td>
+        <td colspan="2"><strong>Fecha y Hora de Alta:</strong> ${f.fecha_hora_alta || '—'} &nbsp;|&nbsp; <strong>Sello y Firma</strong></td>
+      </tr>
+      <tr>
+        <td colspan="4" style="text-align:center;font-weight:bold;">
+          ${destinosHtml}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>`
+}
 
 export default function NuevaHistoriaView({
   dni,
@@ -13,539 +179,986 @@ export default function NuevaHistoriaView({
   setFile,
   fileInputRef,
   subiendo,
-  pacientes,
+  pacientes = [],
   handleUpload
 }) {
   const navigate = useNavigate()
-  const { theme, temaOscuro } = useTheme()
-  const [isDragging, setIsDragging] = useState(false)
+  const { theme } = useTheme()
+  const { usuario, authFetch } = useAuth()
+
+  // 'formato_emergencia' (principal) | 'subir_archivo'
+  const [modoRegistro, setModoRegistro] = useState('formato_emergencia')
+  const [consultandoReniec, setConsultandoReniec] = useState(false)
+  const [mensajeReniec, setMensajeReniec] = useState('')
+  const [guardandoFormato, setGuardandoFormato] = useState(false)
+  const [alertaLocal, setAlertaLocal] = useState({ tipo: '', texto: '' })
+
+  const [formEmergencia, setFormEmergencia] = useState(() => ({
+    codigo_atencion: `2026-${Math.floor(10000 + Math.random() * 89999)}`,
+    dni: dni || '',
+    nro_historia: dni ? `${dni} - Manual` : '',
+    nro_cuenta: '1140030 SIS',
+    apellidos_nombres: nombre || '',
+    edad: '',
+    fecha_ingreso: obtenerFechaActualPeru(),
+    fecha_nacimiento: '',
+    hora_ingreso: obtenerHoraActual(),
+    sexo: 'Femenino',
+    consultorio: 'Emergencia Medicina General',
+    medico: (usuario?.nombres_completos || usuario?.username || 'MÉDICO DE GUARDIA').toUpperCase(),
+    gravedad: 'Emerg. leve (sem=4)',
+    prioridad: 3,
+    telefono: '',
+    direccion: '',
+    provincia: 'Pisco',
+    departamento: 'Ica',
+    distrito: 'Pisco',
+    centro_poblado: 'Pisco',
+    acompanante: '',
+    usuario_registro: (usuario?.username || 'ADMIN').toUpperCase(),
+    alergias: alergias || '',
+    // Funciones vitales
+    peso: '',
+    talla: '',
+    presion_arterial: '',
+    frec_respiratoria: '',
+    pulso: '',
+    temperatura: '',
+    frec_cardiaca: '',
+    // Cuerpo clínico
+    anamnesis: '',
+    antecedentes: '',
+    examen_fisico: '',
+    examenes_auxiliares: '',
+    plan_trabajo: '',
+    terapeutica: '',
+    // Pie de formato
+    diagnosticos: [
+      { descripcion: '', tipo: 'D', cie10: '' },
+      { descripcion: '', tipo: 'P', cie10: '' }
+    ],
+    fecha_hora_alta: '',
+    destino_alta: 'DOMICILIO'
+  }))
+
+  const actualizarCampo = (campo, valor) => {
+    setFormEmergencia(prev => {
+      const next = { ...prev, [campo]: valor }
+      if (campo === 'dni') {
+        next.nro_historia = valor ? `${valor} - Manual` : ''
+        if (setDni) setDni(valor)
+      }
+      if (campo === 'apellidos_nombres' && setNombre) {
+        setNombre(valor)
+      }
+      if (campo === 'alergias' && setAlergias) {
+        setAlergias(valor)
+      }
+      if (campo === 'prioridad') {
+        const mapaGravedad = {
+          1: 'Prioridad I - Emerg. crítica',
+          2: 'Prioridad II - Emerg. mayor',
+          3: 'Prioridad III - Emerg. moderada',
+          4: 'Emerg. leve (sem=4)'
+        }
+        next.gravedad = mapaGravedad[valor] || next.gravedad
+      }
+      return next
+    })
+  }
+
+  // Función de autocompletado con la API de RENIEC
+  const buscarDatosReniec = async (dniBuscar) => {
+    const limpio = String(dniBuscar || '').replace(/\D/g, '')
+    if (limpio.length !== 8) {
+      setMensajeReniec('Ingrese un DNI válido de 8 dígitos para consultar RENIEC.')
+      return
+    }
+    setConsultandoReniec(true)
+    setMensajeReniec('Consultando padrón RENIEC...')
+    try {
+      const data = await api.consultarReniec(authFetch, limpio)
+      setFormEmergencia(prev => ({
+        ...prev,
+        dni: limpio,
+        nro_historia: `${limpio} - Manual`,
+        apellidos_nombres: data.apellidos_nombres || prev.apellidos_nombres,
+        fecha_nacimiento: data.fecha_nacimiento_Per || data.fecha_nacimiento || prev.fecha_nacimiento,
+        edad: data.edad || prev.edad,
+        sexo: data.sexo || prev.sexo,
+        direccion: data.direccion || prev.direccion,
+        departamento: data.departamento || 'Ica',
+        provincia: data.provincia || 'Pisco',
+        distrito: data.distrito || 'Pisco',
+        centro_poblado: data.centro_poblado || data.distrito || 'Pisco'
+      }))
+      if (setDni) setDni(limpio)
+      if (setNombre && data.apellidos_nombres) setNombre(data.apellidos_nombres)
+      setMensajeReniec(`Datos RENIEC cargados automáticamente para DNI ${limpio}.`)
+    } catch (err) {
+      setMensajeReniec(err.message || 'No se pudo conectar con RENIEC.')
+    } finally {
+      setConsultandoReniec(false)
+    }
+  }
+
+  // Autocompletar automáticamente cuando el médico termina de escribir los 8 dígitos del DNI
+  useEffect(() => {
+    const limpio = String(formEmergencia.dni || '').replace(/\D/g, '')
+    if (limpio.length === 8) {
+      buscarDatosReniec(limpio)
+    }
+  }, [formEmergencia.dni])
+
+  const actualizarDiagnostico = (index, campo, valor) => {
+    setFormEmergencia(prev => {
+      const copia = [...prev.diagnosticos]
+      copia[index] = { ...copia[index], [campo]: valor }
+      return { ...prev, diagnosticos: copia }
+    })
+  }
+
+  const handleImprimirFormato = () => {
+    const html = generarHtmlHistoriaEmergencia(formEmergencia)
+    const ventana = window.open('', '_blank', 'width=920,height=800')
+    if (ventana) {
+      ventana.document.open()
+      ventana.document.write(html)
+      ventana.document.close()
+      ventana.focus()
+      setTimeout(() => ventana.print(), 250)
+    }
+  }
+
+  const handleGuardarFormatoEmergencia = async (e) => {
+    e.preventDefault()
+    const dniLimpio = String(formEmergencia.dni || '').replace(/\D/g, '')
+    if (!dniLimpio || dniLimpio.length < 8) {
+      setAlertaLocal({ tipo: 'error', texto: 'El DNI del paciente (8 dígitos) es obligatorio.' })
+      return
+    }
+    if (!formEmergencia.apellidos_nombres.trim()) {
+      setAlertaLocal({ tipo: 'error', texto: 'El nombre completo del paciente es obligatorio.' })
+      return
+    }
+
+    setGuardandoFormato(true)
+    setAlertaLocal({ tipo: '', texto: '' })
+    try {
+      // 1. Generar el archivo HTML con el formato oficial de Historia Clínica de Emergencia y subirlo
+      const htmlString = generarHtmlHistoriaEmergencia(formEmergencia)
+      const blob = new Blob([htmlString], { type: 'text/html' })
+      const nombreArchivo = `HC_Emergencia_${dniLimpio}_${formEmergencia.codigo_atencion}.html`
+      const archivoHtml = new File([blob], nombreArchivo, { type: 'text/html' })
+
+      const formData = new FormData()
+      formData.append('dni', dniLimpio)
+      formData.append('nombre', formEmergencia.apellidos_nombres.trim())
+      if (formEmergencia.alergias.trim()) {
+        formData.append('alergias', formEmergencia.alergias.trim())
+      }
+      formData.append('archivo', archivoHtml)
+
+      const resDoc = await api.subirDocumento(authFetch, formData)
+      const pacienteId = resDoc?.documento?.paciente_id
+
+      // 2. Si hay funciones vitales registradas, guardarlas también en SignosVitales
+      if (
+        pacienteId &&
+        (formEmergencia.presion_arterial || formEmergencia.temperatura || formEmergencia.frec_cardiaca || formEmergencia.peso || formEmergencia.talla)
+      ) {
+        try {
+          await api.agregarSignos(authFetch, pacienteId, {
+            enfermera_nombre: formEmergencia.medico,
+            presion_arterial: formEmergencia.presion_arterial,
+            frecuencia_cardiaca: formEmergencia.frec_cardiaca || formEmergencia.pulso,
+            temperatura: formEmergencia.temperatura,
+            peso: formEmergencia.peso,
+            talla: formEmergencia.talla,
+            observaciones: `Triaje Emergencia (${formEmergencia.consultorio}) - FR: ${formEmergencia.frec_respiratoria || '—'}`
+          })
+        } catch {
+          // Continuar si falla el registro secundario de signos
+        }
+      }
+
+      // 3. Registrar resumen en Notas Médicas
+      if (pacienteId && (formEmergencia.anamnesis || formEmergencia.examen_fisico || formEmergencia.plan_trabajo || formEmergencia.terapeutica)) {
+        const partesNota = [
+          `[HISTORIA CLÍNICA DE EMERGENCIA ${formEmergencia.codigo_atencion}]`,
+          `Consultorio: ${formEmergencia.consultorio} | Edad: ${formEmergencia.edad} | Prioridad: ${formEmergencia.prioridad}`,
+          formEmergencia.anamnesis ? `Anamnesis: ${formEmergencia.anamnesis}` : '',
+          formEmergencia.antecedentes ? `Antecedentes: ${formEmergencia.antecedentes}` : '',
+          formEmergencia.examen_fisico ? `Examen Físico: ${formEmergencia.examen_fisico}` : '',
+          formEmergencia.plan_trabajo ? `Plan de Trabajo: ${formEmergencia.plan_trabajo}` : '',
+          formEmergencia.terapeutica ? `Terapéutica: ${formEmergencia.terapeutica}` : ''
+        ].filter(Boolean).join('\n')
+
+        try {
+          await api.agregarNota(authFetch, pacienteId, {
+            medico_nombre: formEmergencia.medico,
+            contenido: partesNota
+          })
+        } catch {
+          // Continuar si falla la nota secundaria
+        }
+      }
+
+      setAlertaLocal({
+        tipo: 'exito',
+        texto: `Historia Clínica de Emergencia (${formEmergencia.codigo_atencion}) guardada exitosamente en el expediente de ${formEmergencia.apellidos_nombres}.`
+      })
+      setTimeout(() => {
+        window.location.href = '/dashboard'
+      }, 900)
+    } catch (err) {
+      setAlertaLocal({ tipo: 'error', texto: err.message || 'Error al guardar la Historia Clínica de Emergencia.' })
+    } finally {
+      setGuardandoFormato(false)
+    }
+  }
 
   const dniLimpio = (dni || '').trim()
   const pacienteDetectado = pacientes.find(p => p.dni && p.dni.trim() === dniLimpio)
 
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
-
-  const handleDragLeave = () => {
-    setIsDragging(false)
-  }
-
-  const handleDrop = (e) => {
-    e.preventDefault()
-    setIsDragging(false)
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0])
-    }
-  }
-
-  const obtenerExtBadge = (nombre = '') => {
-    const ext = nombre.split('.').pop().toUpperCase()
-    return ext || 'FILE'
-  }
-
   return (
-    <div style={{ maxWidth: '820px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      
-      {/* 1. ENCABEZADO MINIMALISTA */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+    <div style={{ maxWidth: '1040px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '32px' }}>
+      {/* Cabecera de la vista con selector de modo */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 style={{ fontSize: '20px', fontWeight: '800', color: theme.textMain, margin: '0 0 4px 0', letterSpacing: '-0.02em' }}>
-            Agregar Nueva Historia Clínica
-          </h2>
-          <p style={{ margin: 0, fontSize: '13px', color: theme.textMuted }}>
-            Registra un nuevo expediente clínico o anexa documentos a una carpeta existente por DNI.
+          <h1 className="medix-page-title">Historia Clínica de Emergencia</h1>
+          <p className="medix-page-subtitle">
+            Formato oficial SISGALENPLUS — Hospital San Juan de Dios de Pisco con autocompletado RENIEC
           </p>
         </div>
 
-        {/* Botón de retorno rápido */}
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard')}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '7px 14px',
-            backgroundColor: theme.secondaryBtnBg,
-            border: theme.secondaryBtnBorder,
-            borderRadius: '8px',
-            fontSize: '12px',
-            fontWeight: '600',
-            color: theme.secondaryBtnColor,
-            cursor: 'pointer',
-            transition: 'all 0.15s ease',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = temaOscuro ? '#334155' : '#f8fafc'
-            e.currentTarget.style.color = theme.textMain
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = theme.secondaryBtnBg
-            e.currentTarget.style.color = theme.secondaryBtnColor
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          <span>Volver al Dashboard</span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="medix-card" style={{ display: 'inline-flex', padding: '3px', gap: '4px', borderRadius: '8px' }}>
+            <button
+              type="button"
+              onClick={() => setModoRegistro('formato_emergencia')}
+              className="medix-btn medix-btn-sm"
+              style={{
+                backgroundColor: modoRegistro === 'formato_emergencia' ? 'var(--color-navy)' : 'transparent',
+                color: modoRegistro === 'formato_emergencia' ? '#FFFFFF' : theme.textSecondary
+              }}
+            >
+              Formato Emergencia
+            </button>
+            <button
+              type="button"
+              onClick={() => setModoRegistro('subir_archivo')}
+              className="medix-btn medix-btn-sm"
+              style={{
+                backgroundColor: modoRegistro === 'subir_archivo' ? 'var(--color-navy)' : 'transparent',
+                color: modoRegistro === 'subir_archivo' ? '#FFFFFF' : theme.textSecondary
+              }}
+            >
+              Adjuntar Archivo Escaneado
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="medix-btn medix-btn-secondary"
+          >
+            Volver a la tabla
+          </button>
+        </div>
       </div>
 
-      {/* 2. TARJETA PRINCIPAL DEL FORMULARIO (MINIMALISTA Y FORMAL CON TONOS FRÍOS) */}
-      <div style={{
-        backgroundColor: theme.bgCard,
-        border: theme.border,
-        borderRadius: '16px',
-        padding: '28px 30px',
-        boxShadow: theme.shadowCard
-      }}>
-        <form onSubmit={handleUpload}>
-          
-          {/* Campo DNI */}
-          <div style={{ marginBottom: '22px' }}>
-            <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '700', color: theme.textMain, marginBottom: '6px' }}>
-              DNI del Paciente <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            
-            <div style={{ position: 'relative' }}>
+      {alertaLocal.texto && (
+        <div
+          role="alert"
+          className={alertaLocal.tipo === 'error' ? 'medix-badge-alert' : 'medix-badge-status'}
+          style={{ padding: '12px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: 600 }}
+        >
+          {alertaLocal.texto}
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* MODO 1: FORMATO OFICIAL HISTORIA CLÍNICA DE EMERGENCIA (SISGALENPLUS) */}
+      {/* =================================================================== */}
+      {modoRegistro === 'formato_emergencia' && (
+        <form onSubmit={handleGuardarFormatoEmergencia} className="medix-card" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          {/* ENCABEZADO OFICIAL DE LA HOJA DE EMERGENCIA */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              borderBottom: '2px solid var(--color-navy)',
+              paddingBottom: '14px',
+              flexWrap: 'wrap',
+              gap: '12px'
+            }}
+          >
+            <div style={{ fontSize: '12px', color: theme.textSecondary, lineHeight: 1.35 }}>
+              <strong style={{ color: theme.textHeading, display: 'block', fontSize: '13px' }}>Ministerio de Salud</strong>
+              <span>SISGALENPLUS</span>
+            </div>
+
+            <div style={{ textAlign: 'center', flex: '1 1 360px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: theme.textHeading }}>
+                HOSP. SAN JUAN DE DIOS DE PISCO
+              </div>
+              <div style={{ fontSize: '11.5px', color: theme.textSecondary }}>
+                MZA B LOTE 5 FND. ALTO LA LUNA (AV. FERMIN TANGUIS) · TELEFONO: 056-535718
+              </div>
+              <div style={{ fontSize: '17px', fontWeight: 700, color: theme.textHeading, marginTop: '6px', letterSpacing: '0.2px' }}>
+                HISTORIA CLÍNICA DE EMERGENCIA &nbsp; {formEmergencia.codigo_atencion}
+              </div>
+            </div>
+
+            <div style={{ fontSize: '12px', color: theme.textSecondary, textAlign: 'right', lineHeight: 1.4 }}>
+              <div>{formEmergencia.fecha_ingreso}</div>
+              <div>{formEmergencia.hora_ingreso}</div>
+              <div>Página 1 de 1</div>
+            </div>
+          </div>
+
+          {/* BARRA RÁPIDA DE CONSULTA RENIEC POR DNI */}
+          <div
+            style={{
+              backgroundColor: theme.bgSubtle,
+              border: theme.border,
+              borderRadius: '8px',
+              padding: '12px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: '1 1 420px' }}>
+              <label htmlFor="hc-dni-reniec" style={{ fontSize: '12px', fontWeight: 700, color: theme.textHeading }}>
+                DNI del Paciente (Autocompletado RENIEC):
+              </label>
               <input
+                id="hc-dni-reniec"
                 type="text"
-                placeholder="Ejemplo: 45892314"
+                className="medix-input"
+                maxLength={8}
+                placeholder="Ej. 76060095"
+                value={formEmergencia.dni}
+                onChange={(e) => actualizarCampo('dni', e.target.value.replace(/\D/g, ''))}
+                style={{ width: '150px', fontWeight: 700 }}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => buscarDatosReniec(formEmergencia.dni)}
+                disabled={consultandoReniec}
+                className="medix-btn medix-btn-primary medix-btn-sm"
+              >
+                {consultandoReniec ? 'Consultando...' : 'Consultar RENIEC'}
+              </button>
+            </div>
+
+            {mensajeReniec && (
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-primary)' }}>
+                {mensajeReniec}
+              </span>
+            )}
+          </div>
+
+          {/* BLOQUE 1: FILIACIÓN Y DATOS DE INGRESO (2 COLUMNAS COMO EL FORMATO IMPRESO) */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '12px 24px' }}>
+            {/* Columna Izquierda */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-nro-historia" className="medix-label" style={{ marginBottom: 0 }}>Nro Historia</label>
+                <input
+                  id="hc-nro-historia"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.nro_historia}
+                  onChange={(e) => actualizarCampo('nro_historia', e.target.value)}
+                  placeholder="76060095 - Manual"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-apellidos-nombres" className="medix-label" style={{ marginBottom: 0 }}>Apellidos Y Nombres</label>
+                <input
+                  id="hc-apellidos-nombres"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.apellidos_nombres}
+                  onChange={(e) => actualizarCampo('apellidos_nombres', e.target.value)}
+                  placeholder="GUTIERREZ YAVAR RUTH KARINA"
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-fecha-ingreso" className="medix-label" style={{ marginBottom: 0 }}>Fecha ingreso</label>
+                <input
+                  id="hc-fecha-ingreso"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.fecha_ingreso}
+                  onChange={(e) => actualizarCampo('fecha_ingreso', e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-hora-ingreso" className="medix-label" style={{ marginBottom: 0 }}>Hora ingreso</label>
+                <input
+                  id="hc-hora-ingreso"
+                  type="time"
+                  className="medix-input"
+                  value={formEmergencia.hora_ingreso}
+                  onChange={(e) => actualizarCampo('hora_ingreso', e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-consultorio" className="medix-label" style={{ marginBottom: 0 }}>Consultorio médico</label>
+                <select
+                  id="hc-consultorio"
+                  className="medix-input"
+                  value={formEmergencia.consultorio}
+                  onChange={(e) => actualizarCampo('consultorio', e.target.value)}
+                >
+                  <option value="Emergencia Gineco Obstetricia">Emergencia Gineco Obstetricia</option>
+                  <option value="Emergencia Medicina General">Emergencia Medicina General</option>
+                  <option value="Emergencia Pediatría">Emergencia Pediatría</option>
+                  <option value="Emergencia Cirugía">Emergencia Cirugía</option>
+                  <option value="Tópico / Trauma Shock">Tópico / Trauma Shock</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-medico" className="medix-label" style={{ marginBottom: 0 }}>Médico</label>
+                <input
+                  id="hc-medico"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.medico}
+                  onChange={(e) => actualizarCampo('medico', e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-telefono" className="medix-label" style={{ marginBottom: 0 }}>Teléfono</label>
+                <input
+                  id="hc-telefono"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.telefono}
+                  onChange={(e) => actualizarCampo('telefono', e.target.value)}
+                  placeholder="Opcional"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-direccion" className="medix-label" style={{ marginBottom: 0 }}>Dirección (RENIEC)</label>
+                <input
+                  id="hc-direccion"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.direccion}
+                  onChange={(e) => actualizarCampo('direccion', e.target.value)}
+                  placeholder="Autocompletado por RENIEC"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-departamento" className="medix-label" style={{ marginBottom: 0 }}>Departamento (RENIEC)</label>
+                <input
+                  id="hc-departamento"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.departamento}
+                  onChange={(e) => actualizarCampo('departamento', e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-distrito" className="medix-label" style={{ marginBottom: 0 }}>Distrito (RENIEC)</label>
+                <input
+                  id="hc-distrito"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.distrito}
+                  onChange={(e) => actualizarCampo('distrito', e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-acompanante" className="medix-label" style={{ marginBottom: 0 }}>Acompañante</label>
+                <input
+                  id="hc-acompanante"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.acompanante}
+                  onChange={(e) => actualizarCampo('acompanante', e.target.value)}
+                  placeholder="Nombre del acompañante"
+                />
+              </div>
+            </div>
+
+            {/* Columna Derecha */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-nro-cuenta" className="medix-label" style={{ marginBottom: 0 }}>Nro Cuenta</label>
+                <input
+                  id="hc-nro-cuenta"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.nro_cuenta}
+                  onChange={(e) => actualizarCampo('nro_cuenta', e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-edad" className="medix-label" style={{ marginBottom: 0 }}>Edad</label>
+                <input
+                  id="hc-edad"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.edad}
+                  onChange={(e) => actualizarCampo('edad', e.target.value)}
+                  placeholder="Ej. 22 Años"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-fecha-nac" className="medix-label" style={{ marginBottom: 0 }}>Fecha nac. (RENIEC)</label>
+                <input
+                  id="hc-fecha-nac"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.fecha_nacimiento}
+                  onChange={(e) => actualizarCampo('fecha_nacimiento', e.target.value)}
+                  placeholder="DD/MM/AAAA"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-sexo" className="medix-label" style={{ marginBottom: 0 }}>Sexo</label>
+                <select
+                  id="hc-sexo"
+                  className="medix-input"
+                  value={formEmergencia.sexo}
+                  onChange={(e) => actualizarCampo('sexo', e.target.value)}
+                >
+                  <option value="Femenino">Femenino</option>
+                  <option value="Masculino">Masculino</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-gravedad" className="medix-label" style={{ marginBottom: 0 }}>GRAVEDAD</label>
+                <input
+                  id="hc-gravedad"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.gravedad}
+                  onChange={(e) => actualizarCampo('gravedad', e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <span className="medix-label" style={{ marginBottom: 0 }}>Prioridad</span>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  {[1, 2, 3, 4].map((num) => {
+                    const activo = formEmergencia.prioridad === num
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => actualizarCampo('prioridad', num)}
+                        style={{
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '50%',
+                          border: activo ? '2px solid var(--color-navy)' : '1px solid var(--border-color)',
+                          backgroundColor: activo ? 'var(--color-navy)' : theme.bgInput,
+                          color: activo ? '#FFFFFF' : theme.textMain,
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {num}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-provincia" className="medix-label" style={{ marginBottom: 0 }}>Provincia (RENIEC)</label>
+                <input
+                  id="hc-provincia"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.provincia}
+                  onChange={(e) => actualizarCampo('provincia', e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-centro-poblado" className="medix-label" style={{ marginBottom: 0 }}>Centro Poblado</label>
+                <input
+                  id="hc-centro-poblado"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.centro_poblado}
+                  onChange={(e) => actualizarCampo('centro_poblado', e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-usuario-reg" className="medix-label" style={{ marginBottom: 0 }}>USUARIO</label>
+                <input
+                  id="hc-usuario-reg"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.usuario_registro}
+                  onChange={(e) => actualizarCampo('usuario_registro', e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
+                <label htmlFor="hc-alergias" className="medix-label" style={{ marginBottom: 0, color: 'var(--alert-red)' }}>
+                  Alergias (Alerta)
+                </label>
+                <input
+                  id="hc-alergias"
+                  type="text"
+                  className="medix-input"
+                  value={formEmergencia.alergias}
+                  onChange={(e) => actualizarCampo('alergias', e.target.value)}
+                  placeholder="Ej. Penicilina o Ninguna"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* BLOQUE 2: TABLA DE FUNCIONES VITALES */}
+          <div style={{ borderTop: theme.border, paddingTop: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '8px' }}>
+              <strong style={{ fontSize: '13px', color: theme.textHeading, letterSpacing: '0.3px' }}>
+                FUNCIONES VITALES :
+              </strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label htmlFor="hc-peso" style={{ fontSize: '12px', fontWeight: 600, color: theme.textSecondary }}>Peso (kg):</label>
+                  <input
+                    id="hc-peso"
+                    type="text"
+                    className="medix-input"
+                    style={{ width: '80px', height: '32px' }}
+                    placeholder="78"
+                    value={formEmergencia.peso}
+                    onChange={(e) => actualizarCampo('peso', e.target.value)}
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label htmlFor="hc-talla" style={{ fontSize: '12px', fontWeight: 600, color: theme.textSecondary }}>Talla (m):</label>
+                  <input
+                    id="hc-talla"
+                    type="text"
+                    className="medix-input"
+                    style={{ width: '80px', height: '32px' }}
+                    placeholder="1.55"
+                    value={formEmergencia.talla}
+                    onChange={(e) => actualizarCampo('talla', e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table className="medix-table" style={{ border: '1px solid var(--border-color)' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'center', borderRight: '1px solid var(--border-color)' }}>Presion Arterial</th>
+                    <th style={{ textAlign: 'center', borderRight: '1px solid var(--border-color)' }}>Frec. Respiratoria</th>
+                    <th style={{ textAlign: 'center', borderRight: '1px solid var(--border-color)' }}>Pulso</th>
+                    <th style={{ textAlign: 'center', borderRight: '1px solid var(--border-color)' }}>Temperatura</th>
+                    <th style={{ textAlign: 'center' }}>Frec. Cardiaca</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ padding: '6px', borderRight: '1px solid var(--border-color)' }}>
+                      <input
+                        type="text"
+                        aria-label="Presión arterial"
+                        className="medix-input"
+                        style={{ textAlign: 'center', height: '34px' }}
+                        placeholder="100/60"
+                        value={formEmergencia.presion_arterial}
+                        onChange={(e) => actualizarCampo('presion_arterial', e.target.value)}
+                      />
+                    </td>
+                    <td style={{ padding: '6px', borderRight: '1px solid var(--border-color)' }}>
+                      <input
+                        type="text"
+                        aria-label="Frecuencia respiratoria"
+                        className="medix-input"
+                        style={{ textAlign: 'center', height: '34px' }}
+                        placeholder="19 x'"
+                        value={formEmergencia.frec_respiratoria}
+                        onChange={(e) => actualizarCampo('frec_respiratoria', e.target.value)}
+                      />
+                    </td>
+                    <td style={{ padding: '6px', borderRight: '1px solid var(--border-color)' }}>
+                      <input
+                        type="text"
+                        aria-label="Pulso"
+                        className="medix-input"
+                        style={{ textAlign: 'center', height: '34px' }}
+                        placeholder="78 x'"
+                        value={formEmergencia.pulso}
+                        onChange={(e) => actualizarCampo('pulso', e.target.value)}
+                      />
+                    </td>
+                    <td style={{ padding: '6px', borderRight: '1px solid var(--border-color)' }}>
+                      <input
+                        type="text"
+                        aria-label="Temperatura"
+                        className="medix-input"
+                        style={{ textAlign: 'center', height: '34px' }}
+                        placeholder="36.8 °C"
+                        value={formEmergencia.temperatura}
+                        onChange={(e) => actualizarCampo('temperatura', e.target.value)}
+                      />
+                    </td>
+                    <td style={{ padding: '6px' }}>
+                      <input
+                        type="text"
+                        aria-label="Frecuencia cardíaca"
+                        className="medix-input"
+                        style={{ textAlign: 'center', height: '34px' }}
+                        placeholder="78 lpm"
+                        value={formEmergencia.frec_cardiaca}
+                        onChange={(e) => actualizarCampo('frec_cardiaca', e.target.value)}
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* BLOQUE 3: SECCIONES CLÍNICAS DEL FORMATO */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: theme.border, paddingTop: '14px' }}>
+            {[
+              { id: 'anamnesis', label: 'Anamnesis', placeholder: 'Motivo de ingreso, tiempo de enfermedad, relato cronológico...' },
+              { id: 'antecedentes', label: 'Antecedentes', placeholder: 'Antecedentes médicos, quirúrgicos, gineco-obstétricos, farmacológicos...' },
+              { id: 'examen_fisico', label: 'Examen Físico', placeholder: 'Estado general, hallazgos clínicos por aparatos y sistemas...' },
+              { id: 'examenes_auxiliares', label: 'Examenes Auxiliares', placeholder: 'Laboratorio, ecografía, radiografía, monitoreo solicitado...' },
+              { id: 'plan_trabajo', label: 'Plan de Trabajo', placeholder: 'Conducta médica, observación, interconsultas, procedimientos...' },
+              { id: 'terapeutica', label: 'Terapeutica a seguir', placeholder: 'Indicaciones farmacológicas, fluidoterapia, dosis y vía...' }
+            ].map((sec) => (
+              <div key={sec.id} style={{ display: 'grid', gridTemplateColumns: '150px 1fr', alignItems: 'flex-start', gap: '12px' }}>
+                <label htmlFor={`hc-${sec.id}`} style={{ fontSize: '13px', fontWeight: 700, color: theme.textHeading, paddingTop: '8px' }}>
+                  {sec.label}
+                </label>
+                <textarea
+                  id={`hc-${sec.id}`}
+                  rows={2}
+                  className="medix-input"
+                  style={{ height: 'auto', padding: '8px 12px', resize: 'vertical' }}
+                  placeholder={sec.placeholder}
+                  value={formEmergencia[sec.id]}
+                  onChange={(e) => actualizarCampo(sec.id, e.target.value)}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* BLOQUE 4: DIAGNÓSTICOS (P / D), ALTA, FIRMA Y DESTINO */}
+          <div style={{ borderTop: theme.border, paddingTop: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: '12px', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: theme.textHeading }}>
+                  Impresión Diagnóstica (P: Presuntivo / D: Definitivo)
+                </span>
+                {formEmergencia.diagnosticos.map((diag, idx) => (
+                  <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 110px', gap: '8px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      className="medix-input"
+                      placeholder={`${idx + 1}... Diagnóstico clínico`}
+                      value={diag.descripcion}
+                      onChange={(e) => actualizarDiagnostico(idx, 'descripcion', e.target.value)}
+                    />
+                    <select
+                      aria-label={`Tipo de diagnóstico ${idx + 1}`}
+                      className="medix-input"
+                      value={diag.tipo}
+                      onChange={(e) => actualizarDiagnostico(idx, 'tipo', e.target.value)}
+                    >
+                      <option value="P">P</option>
+                      <option value="D">D</option>
+                    </select>
+                    <input
+                      type="text"
+                      className="medix-input"
+                      placeholder="CIE-10"
+                      value={diag.cie10}
+                      onChange={(e) => actualizarDiagnostico(idx, 'cie10', e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <label htmlFor="hc-alta" className="medix-label">Fecha y Hora de Alta</label>
+                <input
+                  id="hc-alta"
+                  type="text"
+                  className="medix-input"
+                  placeholder="Ej. 02/11/2026 08:30"
+                  value={formEmergencia.fecha_hora_alta}
+                  onChange={(e) => actualizarCampo('fecha_hora_alta', e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Destino al pie del formato */}
+            <div
+              style={{
+                backgroundColor: theme.bgSubtle,
+                border: theme.border,
+                borderRadius: '8px',
+                padding: '10px 14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '10px'
+              }}
+            >
+              <span style={{ fontSize: '12px', fontWeight: 700, color: theme.textHeading }}>
+                Destino de Egreso:
+              </span>
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                {['HOSPITALIZACION', 'DOMICILIO', 'TRANSFERENCIA', 'C. EXT', 'MORGUE'].map((dest) => (
+                  <label key={dest} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                    <input
+                      type="radio"
+                      name="destino_alta"
+                      checked={formEmergencia.destino_alta === dest}
+                      onChange={() => actualizarCampo('destino_alta', dest)}
+                    />
+                    <span>{dest}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* BOTONES DE ACCIÓN DEL FORMATO */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '8px', borderTop: theme.border }}>
+            <button
+              type="button"
+              onClick={handleImprimirFormato}
+              className="medix-btn medix-btn-secondary"
+            >
+              Imprimir formato oficial
+            </button>
+            <button
+              type="submit"
+              disabled={guardandoFormato}
+              className="medix-btn medix-btn-primary"
+            >
+              {guardandoFormato ? 'Guardando historia...' : 'Guardar Historia Clínica de Emergencia'}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* =================================================================== */}
+      {/* MODO 2: ADJUNTAR ARCHIVO ESCANEADO EXTERNO */}
+      {/* =================================================================== */}
+      {modoRegistro === 'subir_archivo' && (
+        <div className="medix-card" style={{ padding: '24px 28px' }}>
+          <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label htmlFor="upload-dni" className="medix-label">DNI del Paciente *</label>
+              <input
+                id="upload-dni"
+                type="text"
+                className="medix-input"
+                placeholder="Ej. 76060095"
                 value={dni}
                 onChange={(e) => setDni(e.target.value)}
                 maxLength={12}
                 required
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  padding: '11px 14px 11px 38px',
-                  borderRadius: '9px',
-                  border: `1px solid ${theme.borderInput}`,
-                  fontSize: '14.5px',
-                  fontWeight: '600',
-                  color: theme.textMain,
-                  backgroundColor: theme.bgInput,
-                  outline: 'none',
-                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#38bdf8'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(56, 189, 248, 0.15)'
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = theme.borderInput
-                  e.target.style.boxShadow = 'none'
-                }}
               />
-              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: theme.textMuted }}>
-                🪪
-              </span>
-            </div>
-
-            {/* Detección en tiempo real de carpeta por DNI (Minimalista) */}
-            {dniLimpio.length > 0 && (
-              <div style={{ marginTop: '10px' }}>
-                {pacienteDetectado ? (
-                  <div style={{
-                    padding: '10px 14px',
-                    borderRadius: '8px',
-                    backgroundColor: temaOscuro ? 'rgba(16, 185, 129, 0.12)' : '#f0fdf4',
-                    border: temaOscuro ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid #bbf7d0',
-                    color: temaOscuro ? '#6ee7b7' : '#166534',
-                    fontSize: '12.5px',
-                    lineHeight: '1.45',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <div>
-                      <strong>Carpeta Existente:</strong> El DNI <strong>{pacienteDetectado.dni}</strong> cuenta con {pacienteDetectado.total_documentos || (pacienteDetectado.documentos ? pacienteDetectado.documentos.length : 0)} documento(s). El archivo se anexará ordenadamente a su expediente.
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{
-                    padding: '10px 14px',
-                    borderRadius: '8px',
-                    backgroundColor: temaOscuro ? 'rgba(56, 189, 248, 0.12)' : '#f0f9ff',
-                    border: temaOscuro ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid #bae6fd',
-                    color: temaOscuro ? '#7dd3fc' : '#0369a1',
-                    fontSize: '12.5px',
-                    lineHeight: '1.45',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                      <line x1="12" y1="11" x2="12" y2="17"></line>
-                      <line x1="9" y1="14" x2="15" y2="14"></line>
-                    </svg>
-                    <div>
-                      <strong>Nuevo Expediente:</strong> El DNI <strong>{dniLimpio}</strong> no está registrado. Se creará automáticamente una carpeta digital exclusiva.
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Campo Nombre Completo del Paciente */}
-          <div style={{ marginBottom: '22px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: '700', color: theme.textMain }}>
-                Nombre y Apellidos del Paciente
-              </label>
-              {pacienteDetectado?.nombre && (
-                <span style={{ fontSize: '11.5px', color: theme.accentCool }}>
-                  Registrado: {pacienteDetectado.nombre}
-                </span>
+              {dniLimpio.length > 0 && (
+                <div style={{ marginTop: '6px', fontSize: '12px', color: theme.textSecondary }}>
+                  {pacienteDetectado
+                    ? `Carpeta existente: ${pacienteDetectado.nombre || pacienteDetectado.dni} (${(pacienteDetectado.documentos || []).length} documentos)`
+                    : `Se creará un nuevo expediente para el DNI ${dniLimpio}.`}
+                </div>
               )}
             </div>
-            <div style={{ position: 'relative' }}>
+
+            <div>
+              <label htmlFor="upload-nombre" className="medix-label">Apellidos y Nombres del Paciente</label>
               <input
+                id="upload-nombre"
                 type="text"
-                placeholder={pacienteDetectado?.nombre ? pacienteDetectado.nombre : "Ejemplo: Carlos Mendoza Silva"}
+                className="medix-input"
+                placeholder="Ej. GUTIERREZ YAVAR RUTH KARINA"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                maxLength={150}
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  padding: '11px 14px 11px 38px',
-                  borderRadius: '9px',
-                  border: `1px solid ${theme.borderInput}`,
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: theme.textMain,
-                  backgroundColor: theme.bgInput,
-                  outline: 'none',
-                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#38bdf8'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(56, 189, 248, 0.15)'
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = theme.borderInput
-                  e.target.style.boxShadow = 'none'
-                }}
               />
-              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: theme.textMuted }}>
-                👤
-              </span>
             </div>
-          </div>
 
-          {/* Campo Alergias Conocidas y Condiciones Sensibles */}
-          <div style={{ marginBottom: '22px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: '700', color: theme.textMain }}>
-                Alergias o Condiciones Médicas de Cuidado
-              </label>
-              <span style={{ fontSize: '11px', color: theme.textMuted }}>
-                Opcional · Alerta preventiva
-              </span>
-            </div>
-            <div style={{ position: 'relative' }}>
+            <div>
+              <label htmlFor="upload-alergias" className="medix-label">Alergias conocidas</label>
               <input
+                id="upload-alergias"
                 type="text"
-                placeholder={pacienteDetectado?.alergias ? pacienteDetectado.alergias : "Ejemplo: Penicilina, Látex, AINEs, Asma"}
+                className="medix-input"
+                placeholder="Ej. Penicilina o Ninguna"
                 value={alergias}
                 onChange={(e) => setAlergias(e.target.value)}
-                maxLength={255}
-                style={{
-                  width: '100%',
-                  boxSizing: 'border-box',
-                  padding: '11px 14px 11px 38px',
-                  borderRadius: '9px',
-                  border: `1px solid ${theme.borderInput}`,
-                  fontSize: '13.5px',
-                  fontWeight: '500',
-                  color: theme.textMain,
-                  backgroundColor: theme.bgInput,
-                  outline: 'none',
-                  transition: 'border-color 0.15s ease, box-shadow 0.15s ease'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#f59e0b'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.15)'
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = theme.borderInput
-                  e.target.style.boxShadow = 'none'
-                }}
               />
-              <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '15px', color: theme.textMuted }}>
-                ⚠️
-              </span>
             </div>
 
-            {/* Chips de sugerencias rápidas de alergias */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
-              {['Penicilina', 'Látex', 'AINEs / Ibuprofeno', 'Sulfas', 'Ninguna conocida'].map((sug) => (
-                <button
-                  type="button"
-                  key={sug}
-                  onClick={() => {
-                    if (sug === 'Ninguna conocida') {
-                      setAlergias('Ninguna conocida')
-                    } else {
-                      if (!alergias || alergias === 'Ninguna conocida') {
-                        setAlergias(sug)
-                      } else if (!alergias.includes(sug)) {
-                        setAlergias(`${alergias}, ${sug}`)
-                      }
-                    }
-                  }}
-                  style={{
-                    padding: '3px 9px',
-                    borderRadius: '6px',
-                    border: theme.border,
-                    backgroundColor: theme.bgSubtle,
-                    color: theme.textSecondary,
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = temaOscuro ? '#334155' : '#e2e8f0'
-                    e.currentTarget.style.color = theme.textMain
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = theme.bgSubtle
-                    e.currentTarget.style.color = theme.textSecondary
-                  }}
-                >
-                  + {sug}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Campo Selector de Archivo (Dropzone Minimalista) */}
-          <div style={{ marginBottom: '26px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ fontSize: '12.5px', fontWeight: '700', color: theme.textMain }}>
-                Documento o Archivo Adjunto <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <span style={{ fontSize: '11.5px', color: theme.textMuted }}>
-                Formatos: PDF, Word, JPG, PNG, TXT
-              </span>
-            </div>
-
-            <div
-              style={{
-                border: isDragging ? '2px dashed #38bdf8' : (file ? `1.5px solid ${theme.borderInput}` : `1.5px dashed ${theme.borderInput}`),
-                borderRadius: '12px',
-                padding: '28px 20px',
-                textAlign: 'center',
-                backgroundColor: isDragging ? (temaOscuro ? 'rgba(56, 189, 248, 0.1)' : '#eff6ff') : (temaOscuro ? theme.bgSubtle : '#f8fafc'),
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-              onClick={() => fileInputRef.current && fileInputRef.current.click()}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
+            <div>
+              <label htmlFor="upload-file" className="medix-label">Archivo digitalizado (PDF, Word, Imagen, Texto) *</label>
               <input
+                id="upload-file"
                 ref={fileInputRef}
                 type="file"
+                className="medix-input"
+                style={{ padding: '6px 10px', height: 'auto' }}
                 accept="application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/msword, image/*, text/plain"
                 onChange={(e) => setFile(e.target.files[0])}
-                style={{ display: 'none' }}
                 required
               />
-
-              {file ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', flexWrap: 'wrap' }}>
-                  <div style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '10px',
-                    backgroundColor: temaOscuro ? '#1e293b' : '#e2e8f0',
-                    color: theme.textMain,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: '800',
-                    fontSize: '11px',
-                    letterSpacing: '0.5px'
-                  }}>
-                    {obtenerExtBadge(file.name)}
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '13.5px', fontWeight: '700', color: theme.textMain, wordBreak: 'break-all' }}>
-                      {file.name}
-                    </div>
-                    <div style={{ fontSize: '12px', color: theme.textMuted, marginTop: '2px' }}>
-                      {(file.size / 1024).toFixed(1)} KB · <span style={{ color: '#38bdf8', fontWeight: '600' }}>Clic para cambiar archivo</span>
-                    </div>
-                  </div>
-                  <div style={{
-                    marginLeft: 'auto',
-                    padding: '4px 10px',
-                    borderRadius: '20px',
-                    backgroundColor: temaOscuro ? 'rgba(16, 185, 129, 0.15)' : '#f0fdf4',
-                    border: temaOscuro ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid #bbf7d0',
-                    color: temaOscuro ? '#34d399' : '#166534',
-                    fontSize: '11.5px',
-                    fontWeight: '700'
-                  }}>
-                    ✓ Listo
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '50%',
-                    backgroundColor: theme.bgCard,
-                    border: theme.border,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 10px auto',
-                    color: theme.textMuted,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
-                  }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="17 8 12 3 7 8"></polyline>
-                      <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                  </div>
-                  <div style={{ fontSize: '13.5px', fontWeight: '700', color: theme.textMain, marginBottom: '3px' }}>
-                    Haz clic aquí o arrastra un archivo
-                  </div>
-                  <div style={{ fontSize: '12px', color: theme.textMuted }}>
-                    Formatos admitidos: PDF, Word (.docx), Imágenes (.jpg, .png) y Texto (.txt)
-                  </div>
+              {file && (
+                <div style={{ marginTop: '6px', fontSize: '12px', color: theme.textSecondary }}>
+                  Archivo seleccionado: <strong>{file.name}</strong> ({(file.size / 1024).toFixed(1)} KB)
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Botones de Envío Minimalistas */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '10px' }}>
-            <button
-              type="submit"
-              disabled={subiendo}
-              style={{
-                flex: 1,
-                padding: '11px 20px',
-                backgroundColor: subiendo ? (temaOscuro ? '#334155' : '#94a3b8') : theme.primaryBtnBg,
-                color: theme.primaryBtnColor,
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '700',
-                fontSize: '13.5px',
-                cursor: subiendo ? 'not-allowed' : 'pointer',
-                transition: 'background-color 0.15s ease, transform 0.1s ease',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-              onMouseEnter={(e) => {
-                if (!subiendo) e.currentTarget.style.backgroundColor = theme.primaryBtnHover
-              }}
-              onMouseLeave={(e) => {
-                if (!subiendo) e.currentTarget.style.backgroundColor = theme.primaryBtnBg
-              }}
-            >
-              {subiendo ? (
-                <>
-                  <span>Guardando en MinIO S3 y SQL Server...</span>
-                </>
-              ) : (
-                <>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  <span>Guardar en Carpeta del Paciente</span>
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              style={{
-                padding: '11px 18px',
-                backgroundColor: theme.secondaryBtnBg,
-                color: theme.secondaryBtnColor,
-                border: theme.secondaryBtnBorder,
-                borderRadius: '8px',
-                fontWeight: '600',
-                fontSize: '13px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = temaOscuro ? '#334155' : '#f8fafc'
-                e.currentTarget.style.color = theme.textMain
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = theme.secondaryBtnBg
-                e.currentTarget.style.color = theme.secondaryBtnColor
-              }}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* 3. TARJETA DE INFORMACIÓN Y PROTOCOLO CLÍNICO (MINIMALISTA) */}
-      <div style={{
-        backgroundColor: theme.bgSubtle,
-        border: theme.border,
-        borderRadius: '12px',
-        padding: '16px 20px',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '12px',
-        color: theme.textMuted,
-        fontSize: '12.5px',
-        lineHeight: '1.5'
-      }}>
-        <div style={{
-          width: '28px',
-          height: '28px',
-          borderRadius: '8px',
-          backgroundColor: theme.bgCard,
-          border: theme.border,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: theme.textMuted,
-          flexShrink: 0,
-          marginTop: '2px'
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '8px' }}>
+              <button type="button" onClick={() => navigate('/dashboard')} className="medix-btn medix-btn-secondary">
+                Cancelar
+              </button>
+              <button type="submit" disabled={subiendo} className="medix-btn medix-btn-primary">
+                {subiendo ? 'Subiendo archivo...' : 'Subir al expediente'}
+              </button>
+            </div>
+          </form>
         </div>
-        <div>
-          <strong style={{ display: 'block', fontSize: '13px', color: theme.textMain, marginBottom: '2px' }}>
-            Gestión Automatizada de Expedientes:
-          </strong>
-          El sistema agrupa automáticamente los archivos bajo el mismo DNI. Si el paciente ya existe en el sistema, el nuevo documento se anexa a su carpeta clínica sin duplicar expedientes.
-        </div>
-      </div>
-
+      )}
     </div>
   )
 }
