@@ -168,6 +168,28 @@ def inicio():
         "hospital": "Hospital San Juan de Dios de Pisco"
     })
 
+@app.route('/api/reniec/token', methods=['POST'])
+@token_required
+def configurar_token_reniec():
+    data = request.get_json() or {}
+    nuevo_token = (data.get('token') or '').strip()
+    if not nuevo_token:
+        return jsonify({"mensaje": "Debe proporcionar un token de Decolecta válido"}), 400
+    os.environ['DECOLECTA_API_TOKEN'] = nuevo_token
+    os.environ['RENIEC_API_TOKEN'] = nuevo_token
+    try:
+        env_path = os.path.join(os.path.dirname(__file__), '.env')
+        lineas = []
+        if os.path.exists(env_path):
+            with open(env_path, 'r', encoding='utf-8') as f:
+                lineas = [l for l in f.read().splitlines() if not l.startswith('DECOLECTA_API_TOKEN=') and not l.startswith('RENIEC_API_TOKEN=')]
+        lineas.append(f"DECOLECTA_API_TOKEN={nuevo_token}")
+        with open(env_path, 'w', encoding='utf-8') as f:
+            f.write('\n'.join(lineas) + '\n')
+    except Exception as e:
+        print(f"Aviso al guardar token en .env: {e}")
+    return jsonify({"mensaje": "Token de API Decolecta RENIEC configurado exitosamente"}), 200
+
 @app.route('/api/reniec/<string:dni>', methods=['GET'])
 def consultar_reniec(dni):
     import urllib.request
@@ -177,7 +199,7 @@ def consultar_reniec(dni):
     if len(dni_limpio) != 8:
         return jsonify({"mensaje": "El DNI debe contener 8 dígitos numéricos"}), 400
 
-    # 1. Intentar consulta a APIs públicas de RENIEC (apis.net.pe / apisperu)
+    # 1. Consulta prioritaria a Decolecta API RENIEC: https://api.decolecta.com/v1/reniec/dni?numero=<dni>
     nombre_api = None
     direccion_api = None
     distrito_api = None
@@ -185,34 +207,48 @@ def consultar_reniec(dni):
     departamento_api = None
     fecha_nac_api = None
     sexo_api = None
+    fuente_datos = "RENIEC (Decolecta)"
 
-    token_reniec = os.getenv('RENIEC_API_TOKEN', '').strip()
+    token_decolecta = (
+        request.args.get('api_token') or
+        os.getenv('DECOLECTA_API_TOKEN') or
+        os.getenv('RENIEC_API_TOKEN') or
+        ''
+    ).strip()
+
     urls_consulta = []
-    if token_reniec:
-        urls_consulta.append((f"https://api.apis.net.pe/v2/reniec/dni?numero={dni_limpio}", {"Authorization": f"Bearer {token_reniec}"}))
-    urls_consulta.append((f"https://api.apis.net.pe/v1/dni?numero={dni_limpio}", {}))
-    token_apisperu = os.getenv('APISPERU_TOKEN', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImRlbW9AYXBpc3BlcnUuY29tIn0.demo').strip()
-    urls_consulta.append((f"https://dniruc.apisperu.com/api/v1/dni/{dni_limpio}?token={token_apisperu}", {}))
+    headers_decolecta = {"Accept": "application/json", "User-Agent": "Medix-HospitalPisco/1.0"}
+    if token_decolecta:
+        headers_decolecta["Authorization"] = f"Bearer {token_decolecta}" if not token_decolecta.lower().startswith("bearer ") else token_decolecta
+    urls_consulta.append((f"https://api.decolecta.com/v1/reniec/dni?numero={dni_limpio}", headers_decolecta))
 
-    for url_api, extra_headers in urls_consulta:
+    if token_decolecta:
+        urls_consulta.append((f"https://api.apis.net.pe/v2/reniec/dni?numero={dni_limpio}", headers_decolecta))
+    urls_consulta.append((f"https://api.apis.net.pe/v1/dni?numero={dni_limpio}", {"Accept": "application/json", "User-Agent": "Medix-HospitalPisco/1.0"}))
+
+    for url_api, headers_req in urls_consulta:
         try:
-            headers_req = {"User-Agent": "Medix-HospitalPisco/1.0", "Accept": "application/json"}
-            headers_req.update(extra_headers)
             req = urllib.request.Request(url_api, headers=headers_req)
-            with urllib.request.urlopen(req, timeout=2.5) as resp:
+            with urllib.request.urlopen(req, timeout=3.5) as resp:
                 if resp.status == 200:
                     payload = json_lib.loads(resp.read().decode('utf-8'))
-                    nombres_pila = (payload.get('nombres') or '').strip()
-                    ap_pat = (payload.get('apellidoPaterno') or '').strip()
-                    ap_mat = (payload.get('apellidoMaterno') or '').strip()
-                    if ap_pat or nombres_pila:
-                        nombre_api = f"{ap_pat} {ap_mat} {nombres_pila}".strip().upper()
-                    direccion_api = (payload.get('direccion') or payload.get('domicilio') or '').strip() or None
-                    distrito_api = (payload.get('distrito') or '').strip() or None
-                    provincia_api = (payload.get('provincia') or '').strip() or None
-                    departamento_api = (payload.get('departamento') or '').strip() or None
-                    fecha_nac_api = (payload.get('fechaNacimiento') or payload.get('fecha_nacimiento') or '').strip() or None
-                    sexo_api = (payload.get('sexo') or '').strip() or None
+                    # Formato Decolecta (first_name, first_last_name, second_last_name, full_name)
+                    first_name = (payload.get('first_name') or payload.get('nombres') or '').strip()
+                    first_last = (payload.get('first_last_name') or payload.get('apellidoPaterno') or payload.get('apellido_paterno') or '').strip()
+                    second_last = (payload.get('second_last_name') or payload.get('apellidoMaterno') or payload.get('apellido_materno') or '').strip()
+                    full_name = (payload.get('full_name') or payload.get('nombreCompleto') or '').strip()
+
+                    if first_last or first_name:
+                        nombre_api = f"{first_last} {second_last} {first_name}".strip().upper()
+                    elif full_name:
+                        nombre_api = full_name.upper()
+
+                    direccion_api = (payload.get('address') or payload.get('direccion') or payload.get('domicilio') or '').strip() or None
+                    distrito_api = (payload.get('district') or payload.get('distrito') or '').strip() or None
+                    provincia_api = (payload.get('province') or payload.get('provincia') or '').strip() or None
+                    departamento_api = (payload.get('department') or payload.get('departamento') or '').strip() or None
+                    fecha_nac_api = (payload.get('birth_date') or payload.get('fechaNacimiento') or payload.get('fecha_nacimiento') or '').strip() or None
+                    sexo_api = (payload.get('gender') or payload.get('sexo') or '').strip() or None
                     if nombre_api:
                         break
         except Exception:
