@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
@@ -17,6 +17,56 @@ function obtenerHoraActual() {
   const hh = String(ahora.getHours()).padStart(2, '0')
   const min = String(ahora.getMinutes()).padStart(2, '0')
   return `${hh}:${min}`
+}
+
+function crearEstadoInicialEmergencia(dniInicial = '', nombreInicial = '', alergiasInicial = '', usuario = null) {
+  return {
+    codigo_atencion: `2026-${Math.floor(10000 + Math.random() * 89999)}`,
+    dni: dniInicial || '',
+    nro_historia: dniInicial ? `${dniInicial} - Manual` : '',
+    nro_cuenta: '',
+    apellidos_nombres: nombreInicial || '',
+    edad: '',
+    fecha_ingreso: obtenerFechaActualPeru(),
+    fecha_nacimiento: '',
+    hora_ingreso: obtenerHoraActual(),
+    sexo: '',
+    consultorio: 'Emergencia Medicina General',
+    medico: (usuario?.nombres_completos || usuario?.username || '').toUpperCase(),
+    gravedad: '',
+    prioridad: null,
+    telefono: '',
+    direccion: '',
+    provincia: '',
+    departamento: '',
+    distrito: '',
+    centro_poblado: '',
+    acompanante: '',
+    usuario_registro: (usuario?.username || '').toUpperCase(),
+    alergias: alergiasInicial || '',
+    // Funciones vitales
+    peso: '',
+    talla: '',
+    presion_arterial: '',
+    frec_respiratoria: '',
+    pulso: '',
+    temperatura: '',
+    frec_cardiaca: '',
+    // Cuerpo clínico
+    anamnesis: '',
+    antecedentes: '',
+    examen_fisico: '',
+    examenes_auxiliares: '',
+    plan_trabajo: '',
+    terapeutica: '',
+    // Pie de formato
+    diagnosticos: [
+      { descripcion: '', tipo: 'D', cie10: '' },
+      { descripcion: '', tipo: 'P', cie10: '' }
+    ],
+    fecha_hora_alta: '',
+    destino_alta: ''
+  }
 }
 
 function generarHtmlHistoriaEmergencia(f) {
@@ -87,8 +137,8 @@ function generarHtmlHistoriaEmergencia(f) {
   </div>
 
   <div class="filiacion-grid">
-    <div class="fila-dato"><strong>Nro Historia</strong> <span>${f.nro_historia || `${f.dni} - Manual`}</span></div>
-    <div class="fila-dato"><strong>Nro Cuenta</strong> <span>${f.nro_cuenta || 'SIS'}</span></div>
+    <div class="fila-dato"><strong>Nro Historia</strong> <span>${f.nro_historia || ''}</span></div>
+    <div class="fila-dato"><strong>Nro Cuenta</strong> <span>${f.nro_cuenta || ''}</span></div>
 
     <div class="fila-dato"><strong>Apellidos Y Nombres</strong> <span><strong>${f.apellidos_nombres}</strong></span></div>
     <div class="fila-dato"><strong>Edad</strong> <span>${f.edad}</span></div>
@@ -103,7 +153,7 @@ function generarHtmlHistoriaEmergencia(f) {
     <div class="fila-dato"><strong>DNI:</strong> <span><strong>${f.dni}</strong></span></div>
 
     <div class="fila-dato"><strong>Médico</strong> <span>${f.medico}</span></div>
-    <div class="fila-dato"><strong>GRAVEDAD:</strong> <span>${f.gravedad} (Prioridad ${f.prioridad})</span></div>
+    <div class="fila-dato"><strong>GRAVEDAD:</strong> <span>${f.gravedad || ''}${f.prioridad ? ` (Prioridad ${f.prioridad})` : ''}</span></div>
 
     <div class="fila-dato"><strong>Teléfono</strong> <span>${f.telefono || '—'}</span></div>
     <div class="fila-dato"><strong>Provincia</strong> <span>${f.provincia}</span></div>
@@ -186,60 +236,16 @@ export default function NuevaHistoriaView({
   const { theme } = useTheme()
   const { usuario, authFetch } = useAuth()
 
-  // 'formato_emergencia' (principal) | 'subir_archivo'
   const [modoRegistro, setModoRegistro] = useState('formato_emergencia')
   const [consultandoReniec, setConsultandoReniec] = useState(false)
-  const [mensajeReniec, setMensajeReniec] = useState('')
+  const [estadoReniec, setEstadoReniec] = useState({ tipo: '', texto: '' })
   const [guardandoFormato, setGuardandoFormato] = useState(false)
   const [alertaLocal, setAlertaLocal] = useState({ tipo: '', texto: '' })
+  const ultimoDniConsultadoRef = useRef('')
 
-  const [formEmergencia, setFormEmergencia] = useState(() => ({
-    codigo_atencion: `2026-${Math.floor(10000 + Math.random() * 89999)}`,
-    dni: dni || '',
-    nro_historia: dni ? `${dni} - Manual` : '',
-    nro_cuenta: '1140030 SIS',
-    apellidos_nombres: nombre || '',
-    edad: '',
-    fecha_ingreso: obtenerFechaActualPeru(),
-    fecha_nacimiento: '',
-    hora_ingreso: obtenerHoraActual(),
-    sexo: 'Femenino',
-    consultorio: 'Emergencia Medicina General',
-    medico: (usuario?.nombres_completos || usuario?.username || 'MÉDICO DE GUARDIA').toUpperCase(),
-    gravedad: 'Emerg. leve (sem=4)',
-    prioridad: 3,
-    telefono: '',
-    direccion: '',
-    provincia: 'Pisco',
-    departamento: 'Ica',
-    distrito: 'Pisco',
-    centro_poblado: 'Pisco',
-    acompanante: '',
-    usuario_registro: (usuario?.username || 'ADMIN').toUpperCase(),
-    alergias: alergias || '',
-    // Funciones vitales
-    peso: '',
-    talla: '',
-    presion_arterial: '',
-    frec_respiratoria: '',
-    pulso: '',
-    temperatura: '',
-    frec_cardiaca: '',
-    // Cuerpo clínico
-    anamnesis: '',
-    antecedentes: '',
-    examen_fisico: '',
-    examenes_auxiliares: '',
-    plan_trabajo: '',
-    terapeutica: '',
-    // Pie de formato
-    diagnosticos: [
-      { descripcion: '', tipo: 'D', cie10: '' },
-      { descripcion: '', tipo: 'P', cie10: '' }
-    ],
-    fecha_hora_alta: '',
-    destino_alta: 'DOMICILIO'
-  }))
+  const [formEmergencia, setFormEmergencia] = useState(() =>
+    crearEstadoInicialEmergencia(dni, nombre, alergias, usuario)
+  )
 
   const actualizarCampo = (campo, valor) => {
     setFormEmergencia(prev => {
@@ -267,46 +273,76 @@ export default function NuevaHistoriaView({
     })
   }
 
-  // Función de autocompletado con la API de RENIEC
-  const buscarDatosReniec = async (dniBuscar) => {
+  const limpiarFormularioEmergencia = () => {
+    ultimoDniConsultadoRef.current = ''
+    setEstadoReniec({ tipo: '', texto: '' })
+    setAlertaLocal({ tipo: '', texto: '' })
+    if (setDni) setDni('')
+    if (setNombre) setNombre('')
+    if (setAlergias) setAlergias('')
+    setFormEmergencia(crearEstadoInicialEmergencia('', '', '', usuario))
+  }
+
+  // Búsqueda mejorada de DNI (verifica primero expediente local y luego consulta API RENIEC)
+  const buscarDatosReniec = async (dniBuscar, forzar = false) => {
     const limpio = String(dniBuscar || '').replace(/\D/g, '')
     if (limpio.length !== 8) {
-      setMensajeReniec('Ingrese un DNI válido de 8 dígitos para consultar RENIEC.')
+      setEstadoReniec({ tipo: 'error', texto: 'Ingrese los 8 dígitos del DNI para realizar la búsqueda.' })
       return
     }
+    if (!forzar && ultimoDniConsultadoRef.current === limpio) {
+      return
+    }
+    ultimoDniConsultadoRef.current = limpio
     setConsultandoReniec(true)
-    setMensajeReniec('Consultando padrón RENIEC...')
+    setEstadoReniec({ tipo: 'info', texto: 'Consultando datos del DNI en RENIEC...' })
+
+    const pacLocal = pacientes.find(p => p.dni && String(p.dni).trim() === limpio)
+
     try {
       const data = await api.consultarReniec(authFetch, limpio)
+      const nombreResuelto = (pacLocal?.nombre || data.apellidos_nombres || '').trim()
+      const alergiasResueltas = (pacLocal?.alergias || data.alergias || '').trim()
+
       setFormEmergencia(prev => ({
         ...prev,
         dni: limpio,
         nro_historia: `${limpio} - Manual`,
-        apellidos_nombres: data.apellidos_nombres || prev.apellidos_nombres,
+        apellidos_nombres: nombreResuelto || prev.apellidos_nombres,
         fecha_nacimiento: data.fecha_nacimiento_Per || data.fecha_nacimiento || prev.fecha_nacimiento,
         edad: data.edad || prev.edad,
         sexo: data.sexo || prev.sexo,
         direccion: data.direccion || prev.direccion,
-        departamento: data.departamento || 'Ica',
-        provincia: data.provincia || 'Pisco',
-        distrito: data.distrito || 'Pisco',
-        centro_poblado: data.centro_poblado || data.distrito || 'Pisco'
+        departamento: data.departamento || prev.departamento,
+        provincia: data.provincia || prev.provincia,
+        distrito: data.distrito || prev.distrito,
+        centro_poblado: data.centro_poblado || data.distrito || prev.centro_poblado,
+        alergias: alergiasResueltas || prev.alergias
       }))
       if (setDni) setDni(limpio)
-      if (setNombre && data.apellidos_nombres) setNombre(data.apellidos_nombres)
-      setMensajeReniec(`Datos RENIEC cargados automáticamente para DNI ${limpio}.`)
+      if (setNombre && nombreResuelto) setNombre(nombreResuelto)
+      if (setAlergias && alergiasResueltas) setAlergias(alergiasResueltas)
+
+      setEstadoReniec({
+        tipo: 'exito',
+        texto: pacLocal
+          ? `Expediente existente encontrado y datos RENIEC completados (DNI ${limpio}).`
+          : `Datos filiatorios cargados desde RENIEC para el DNI ${limpio}.`
+      })
     } catch (err) {
-      setMensajeReniec(err.message || 'No se pudo conectar con RENIEC.')
+      setEstadoReniec({ tipo: 'error', texto: err.message || 'No se pudo consultar el DNI.' })
     } finally {
       setConsultandoReniec(false)
     }
   }
 
-  // Autocompletar automáticamente cuando el médico termina de escribir los 8 dígitos del DNI
   useEffect(() => {
     const limpio = String(formEmergencia.dni || '').replace(/\D/g, '')
-    if (limpio.length === 8) {
-      buscarDatosReniec(limpio)
+    if (limpio.length === 8 && ultimoDniConsultadoRef.current !== limpio) {
+      buscarDatosReniec(limpio, false)
+    } else if (limpio.length < 8) {
+      ultimoDniConsultadoRef.current = ''
+      setEstadoReniec({ tipo: '', texto: '' })
     }
   }, [formEmergencia.dni])
 
@@ -345,7 +381,6 @@ export default function NuevaHistoriaView({
     setGuardandoFormato(true)
     setAlertaLocal({ tipo: '', texto: '' })
     try {
-      // 1. Generar el archivo HTML con el formato oficial de Historia Clínica de Emergencia y subirlo
       const htmlString = generarHtmlHistoriaEmergencia(formEmergencia)
       const blob = new Blob([htmlString], { type: 'text/html' })
       const nombreArchivo = `HC_Emergencia_${dniLimpio}_${formEmergencia.codigo_atencion}.html`
@@ -362,7 +397,6 @@ export default function NuevaHistoriaView({
       const resDoc = await api.subirDocumento(authFetch, formData)
       const pacienteId = resDoc?.documento?.paciente_id
 
-      // 2. Si hay funciones vitales registradas, guardarlas también en SignosVitales
       if (
         pacienteId &&
         (formEmergencia.presion_arterial || formEmergencia.temperatura || formEmergencia.frec_cardiaca || formEmergencia.peso || formEmergencia.talla)
@@ -382,11 +416,10 @@ export default function NuevaHistoriaView({
         }
       }
 
-      // 3. Registrar resumen en Notas Médicas
       if (pacienteId && (formEmergencia.anamnesis || formEmergencia.examen_fisico || formEmergencia.plan_trabajo || formEmergencia.terapeutica)) {
         const partesNota = [
           `[HISTORIA CLÍNICA DE EMERGENCIA ${formEmergencia.codigo_atencion}]`,
-          `Consultorio: ${formEmergencia.consultorio} | Edad: ${formEmergencia.edad} | Prioridad: ${formEmergencia.prioridad}`,
+          `Consultorio: ${formEmergencia.consultorio} | Edad: ${formEmergencia.edad || 'N/R'}${formEmergencia.prioridad ? ` | Prioridad: ${formEmergencia.prioridad}` : ''}`,
           formEmergencia.anamnesis ? `Anamnesis: ${formEmergencia.anamnesis}` : '',
           formEmergencia.antecedentes ? `Antecedentes: ${formEmergencia.antecedentes}` : '',
           formEmergencia.examen_fisico ? `Examen Físico: ${formEmergencia.examen_fisico}` : '',
@@ -406,7 +439,7 @@ export default function NuevaHistoriaView({
 
       setAlertaLocal({
         tipo: 'exito',
-        texto: `Historia Clínica de Emergencia (${formEmergencia.codigo_atencion}) guardada exitosamente en el expediente de ${formEmergencia.apellidos_nombres}.`
+        texto: `Historia Clínica de Emergencia (${formEmergencia.codigo_atencion}) guardada exitosamente.`
       })
       setTimeout(() => {
         window.location.href = '/dashboard'
@@ -423,12 +456,11 @@ export default function NuevaHistoriaView({
 
   return (
     <div style={{ maxWidth: '1040px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '32px' }}>
-      {/* Cabecera de la vista con selector de modo */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 className="medix-page-title">Historia Clínica de Emergencia</h1>
           <p className="medix-page-subtitle">
-            Formato oficial SISGALENPLUS — Hospital San Juan de Dios de Pisco con autocompletado RENIEC
+            Formato oficial SISGALENPLUS — Hospital San Juan de Dios de Pisco
           </p>
         </div>
 
@@ -519,7 +551,7 @@ export default function NuevaHistoriaView({
             </div>
           </div>
 
-          {/* BARRA RÁPIDA DE CONSULTA RENIEC POR DNI */}
+          {/* BUSCADOR DE DNI CON CONSULTA AUTOMÁTICA A RENIEC */}
           <div
             style={{
               backgroundColor: theme.bgSubtle,
@@ -533,34 +565,64 @@ export default function NuevaHistoriaView({
               gap: '12px'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: '1 1 420px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flex: '1 1 460px' }}>
               <label htmlFor="hc-dni-reniec" style={{ fontSize: '12px', fontWeight: 700, color: theme.textHeading }}>
-                DNI del Paciente (Autocompletado RENIEC):
+                Buscar por DNI (RENIEC):
               </label>
-              <input
-                id="hc-dni-reniec"
-                type="text"
-                className="medix-input"
-                maxLength={8}
-                placeholder="Ej. 76060095"
-                value={formEmergencia.dni}
-                onChange={(e) => actualizarCampo('dni', e.target.value.replace(/\D/g, ''))}
-                style={{ width: '150px', fontWeight: 700 }}
-                required
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <input
+                  id="hc-dni-reniec"
+                  type="text"
+                  inputMode="numeric"
+                  className="medix-input"
+                  maxLength={8}
+                  placeholder="Ingrese 8 dígitos"
+                  value={formEmergencia.dni}
+                  onChange={(e) => actualizarCampo('dni', e.target.value.replace(/\D/g, ''))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      buscarDatosReniec(formEmergencia.dni, true)
+                    }
+                  }}
+                  style={{ width: '160px', fontWeight: 700 }}
+                />
+                <span style={{ fontSize: '11px', color: theme.textSecondary, minWidth: '34px' }}>
+                  {formEmergencia.dni.length}/8
+                </span>
+              </div>
+
               <button
                 type="button"
-                onClick={() => buscarDatosReniec(formEmergencia.dni)}
-                disabled={consultandoReniec}
+                onClick={() => buscarDatosReniec(formEmergencia.dni, true)}
+                disabled={consultandoReniec || formEmergencia.dni.length !== 8}
                 className="medix-btn medix-btn-primary medix-btn-sm"
               >
-                {consultandoReniec ? 'Consultando...' : 'Consultar RENIEC'}
+                {consultandoReniec ? 'Buscando...' : 'Buscar en RENIEC'}
               </button>
+
+              {formEmergencia.dni && (
+                <button
+                  type="button"
+                  onClick={limpiarFormularioEmergencia}
+                  className="medix-btn medix-btn-secondary medix-btn-sm"
+                >
+                  Limpiar datos
+                </button>
+              )}
             </div>
 
-            {mensajeReniec && (
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-primary)' }}>
-                {mensajeReniec}
+            {estadoReniec.texto && (
+              <span
+                className={
+                  estadoReniec.tipo === 'error'
+                    ? 'medix-badge medix-badge-alert'
+                    : estadoReniec.tipo === 'exito'
+                    ? 'medix-badge medix-badge-status'
+                    : 'medix-badge medix-badge-neutral'
+                }
+              >
+                {estadoReniec.texto}
               </span>
             )}
           </div>
@@ -577,7 +639,6 @@ export default function NuevaHistoriaView({
                   className="medix-input"
                   value={formEmergencia.nro_historia}
                   onChange={(e) => actualizarCampo('nro_historia', e.target.value)}
-                  placeholder="76060095 - Manual"
                 />
               </div>
 
@@ -589,7 +650,6 @@ export default function NuevaHistoriaView({
                   className="medix-input"
                   value={formEmergencia.apellidos_nombres}
                   onChange={(e) => actualizarCampo('apellidos_nombres', e.target.value)}
-                  placeholder="GUTIERREZ YAVAR RUTH KARINA"
                   required
                 />
               </div>
@@ -651,7 +711,6 @@ export default function NuevaHistoriaView({
                   className="medix-input"
                   value={formEmergencia.telefono}
                   onChange={(e) => actualizarCampo('telefono', e.target.value)}
-                  placeholder="Opcional"
                 />
               </div>
 
@@ -663,7 +722,6 @@ export default function NuevaHistoriaView({
                   className="medix-input"
                   value={formEmergencia.direccion}
                   onChange={(e) => actualizarCampo('direccion', e.target.value)}
-                  placeholder="Autocompletado por RENIEC"
                 />
               </div>
 
@@ -697,7 +755,6 @@ export default function NuevaHistoriaView({
                   className="medix-input"
                   value={formEmergencia.acompanante}
                   onChange={(e) => actualizarCampo('acompanante', e.target.value)}
-                  placeholder="Nombre del acompañante"
                 />
               </div>
             </div>
@@ -723,7 +780,6 @@ export default function NuevaHistoriaView({
                   className="medix-input"
                   value={formEmergencia.edad}
                   onChange={(e) => actualizarCampo('edad', e.target.value)}
-                  placeholder="Ej. 22 Años"
                 />
               </div>
 
@@ -735,7 +791,6 @@ export default function NuevaHistoriaView({
                   className="medix-input"
                   value={formEmergencia.fecha_nacimiento}
                   onChange={(e) => actualizarCampo('fecha_nacimiento', e.target.value)}
-                  placeholder="DD/MM/AAAA"
                 />
               </div>
 
@@ -747,6 +802,7 @@ export default function NuevaHistoriaView({
                   value={formEmergencia.sexo}
                   onChange={(e) => actualizarCampo('sexo', e.target.value)}
                 >
+                  <option value="">Seleccionar</option>
                   <option value="Femenino">Femenino</option>
                   <option value="Masculino">Masculino</option>
                 </select>
@@ -754,17 +810,34 @@ export default function NuevaHistoriaView({
 
               <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
                 <label htmlFor="hc-dni-col" className="medix-label" style={{ marginBottom: 0 }}>DNI</label>
-                <input
-                  id="hc-dni-col"
-                  type="text"
-                  maxLength={8}
-                  className="medix-input"
-                  style={{ fontWeight: 700 }}
-                  placeholder="Ej. 76060095"
-                  value={formEmergencia.dni}
-                  onChange={(e) => actualizarCampo('dni', e.target.value.replace(/\D/g, ''))}
-                  required
-                />
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <input
+                    id="hc-dni-col"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={8}
+                    className="medix-input"
+                    style={{ fontWeight: 700 }}
+                    value={formEmergencia.dni}
+                    onChange={(e) => actualizarCampo('dni', e.target.value.replace(/\D/g, ''))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        buscarDatosReniec(formEmergencia.dni, true)
+                      }
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => buscarDatosReniec(formEmergencia.dni, true)}
+                    disabled={consultandoReniec || formEmergencia.dni.length !== 8}
+                    className="medix-btn medix-btn-secondary medix-btn-sm"
+                    style={{ height: '38px', flexShrink: 0 }}
+                  >
+                    RENIEC
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', alignItems: 'center', gap: '8px' }}>
@@ -850,7 +923,6 @@ export default function NuevaHistoriaView({
                   className="medix-input"
                   value={formEmergencia.alergias}
                   onChange={(e) => actualizarCampo('alergias', e.target.value)}
-                  placeholder="Ej. Penicilina o Ninguna"
                 />
               </div>
             </div>
@@ -870,7 +942,6 @@ export default function NuevaHistoriaView({
                     type="text"
                     className="medix-input"
                     style={{ width: '80px', height: '32px' }}
-                    placeholder="78"
                     value={formEmergencia.peso}
                     onChange={(e) => actualizarCampo('peso', e.target.value)}
                   />
@@ -882,7 +953,6 @@ export default function NuevaHistoriaView({
                     type="text"
                     className="medix-input"
                     style={{ width: '80px', height: '32px' }}
-                    placeholder="1.55"
                     value={formEmergencia.talla}
                     onChange={(e) => actualizarCampo('talla', e.target.value)}
                   />
@@ -909,7 +979,6 @@ export default function NuevaHistoriaView({
                         aria-label="Presión arterial"
                         className="medix-input"
                         style={{ textAlign: 'center', height: '34px' }}
-                        placeholder="100/60"
                         value={formEmergencia.presion_arterial}
                         onChange={(e) => actualizarCampo('presion_arterial', e.target.value)}
                       />
@@ -920,7 +989,6 @@ export default function NuevaHistoriaView({
                         aria-label="Frecuencia respiratoria"
                         className="medix-input"
                         style={{ textAlign: 'center', height: '34px' }}
-                        placeholder="19 x'"
                         value={formEmergencia.frec_respiratoria}
                         onChange={(e) => actualizarCampo('frec_respiratoria', e.target.value)}
                       />
@@ -931,7 +999,6 @@ export default function NuevaHistoriaView({
                         aria-label="Pulso"
                         className="medix-input"
                         style={{ textAlign: 'center', height: '34px' }}
-                        placeholder="78 x'"
                         value={formEmergencia.pulso}
                         onChange={(e) => actualizarCampo('pulso', e.target.value)}
                       />
@@ -942,7 +1009,6 @@ export default function NuevaHistoriaView({
                         aria-label="Temperatura"
                         className="medix-input"
                         style={{ textAlign: 'center', height: '34px' }}
-                        placeholder="36.8 °C"
                         value={formEmergencia.temperatura}
                         onChange={(e) => actualizarCampo('temperatura', e.target.value)}
                       />
@@ -953,7 +1019,6 @@ export default function NuevaHistoriaView({
                         aria-label="Frecuencia cardíaca"
                         className="medix-input"
                         style={{ textAlign: 'center', height: '34px' }}
-                        placeholder="78 lpm"
                         value={formEmergencia.frec_cardiaca}
                         onChange={(e) => actualizarCampo('frec_cardiaca', e.target.value)}
                       />
@@ -967,12 +1032,12 @@ export default function NuevaHistoriaView({
           {/* BLOQUE 3: SECCIONES CLÍNICAS DEL FORMATO */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: theme.border, paddingTop: '14px' }}>
             {[
-              { id: 'anamnesis', label: 'Anamnesis', placeholder: 'Motivo de ingreso, tiempo de enfermedad, relato cronológico...' },
-              { id: 'antecedentes', label: 'Antecedentes', placeholder: 'Antecedentes médicos, quirúrgicos, gineco-obstétricos, farmacológicos...' },
-              { id: 'examen_fisico', label: 'Examen Físico', placeholder: 'Estado general, hallazgos clínicos por aparatos y sistemas...' },
-              { id: 'examenes_auxiliares', label: 'Examenes Auxiliares', placeholder: 'Laboratorio, ecografía, radiografía, monitoreo solicitado...' },
-              { id: 'plan_trabajo', label: 'Plan de Trabajo', placeholder: 'Conducta médica, observación, interconsultas, procedimientos...' },
-              { id: 'terapeutica', label: 'Terapeutica a seguir', placeholder: 'Indicaciones farmacológicas, fluidoterapia, dosis y vía...' }
+              { id: 'anamnesis', label: 'Anamnesis' },
+              { id: 'antecedentes', label: 'Antecedentes' },
+              { id: 'examen_fisico', label: 'Examen Físico' },
+              { id: 'examenes_auxiliares', label: 'Examenes Auxiliares' },
+              { id: 'plan_trabajo', label: 'Plan de Trabajo' },
+              { id: 'terapeutica', label: 'Terapeutica a seguir' }
             ].map((sec) => (
               <div key={sec.id} style={{ display: 'grid', gridTemplateColumns: '150px 1fr', alignItems: 'flex-start', gap: '12px' }}>
                 <label htmlFor={`hc-${sec.id}`} style={{ fontSize: '13px', fontWeight: 700, color: theme.textHeading, paddingTop: '8px' }}>
@@ -983,7 +1048,6 @@ export default function NuevaHistoriaView({
                   rows={2}
                   className="medix-input"
                   style={{ height: 'auto', padding: '8px 12px', resize: 'vertical' }}
-                  placeholder={sec.placeholder}
                   value={formEmergencia[sec.id]}
                   onChange={(e) => actualizarCampo(sec.id, e.target.value)}
                 />
@@ -1003,7 +1067,7 @@ export default function NuevaHistoriaView({
                     <input
                       type="text"
                       className="medix-input"
-                      placeholder={`${idx + 1}... Diagnóstico clínico`}
+                      placeholder={`${idx + 1}...`}
                       value={diag.descripcion}
                       onChange={(e) => actualizarDiagnostico(idx, 'descripcion', e.target.value)}
                     />
@@ -1033,14 +1097,12 @@ export default function NuevaHistoriaView({
                   id="hc-alta"
                   type="text"
                   className="medix-input"
-                  placeholder="Ej. 02/11/2026 08:30"
                   value={formEmergencia.fecha_hora_alta}
                   onChange={(e) => actualizarCampo('fecha_hora_alta', e.target.value)}
                 />
               </div>
             </div>
 
-            {/* Destino al pie del formato */}
             <div
               style={{
                 backgroundColor: theme.bgSubtle,
@@ -1104,11 +1166,11 @@ export default function NuevaHistoriaView({
               <input
                 id="upload-dni"
                 type="text"
+                inputMode="numeric"
                 className="medix-input"
-                placeholder="Ej. 76060095"
                 value={dni}
-                onChange={(e) => setDni(e.target.value)}
-                maxLength={12}
+                onChange={(e) => setDni(e.target.value.replace(/\D/g, ''))}
+                maxLength={8}
                 required
               />
               {dniLimpio.length > 0 && (
@@ -1126,7 +1188,6 @@ export default function NuevaHistoriaView({
                 id="upload-nombre"
                 type="text"
                 className="medix-input"
-                placeholder="Ej. GUTIERREZ YAVAR RUTH KARINA"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
               />
@@ -1138,7 +1199,6 @@ export default function NuevaHistoriaView({
                 id="upload-alergias"
                 type="text"
                 className="medix-input"
-                placeholder="Ej. Penicilina o Ninguna"
                 value={alergias}
                 onChange={(e) => setAlergias(e.target.value)}
               />

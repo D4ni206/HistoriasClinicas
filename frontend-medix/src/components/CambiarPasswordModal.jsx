@@ -105,7 +105,7 @@ export default function CambiarPasswordModal({ onCerrar, notificar }) {
               justifyContent: 'center',
               fontSize: '18px'
             }}>
-              {debeCambiarPassword ? '⚠️' : '🔒'}
+              
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: theme.textMain }}>
@@ -129,7 +129,7 @@ export default function CambiarPasswordModal({ onCerrar, notificar }) {
                 padding: '4px 8px'
               }}
             >
-              ✕
+              Cerrar
             </button>
           )}
         </div>

@@ -232,7 +232,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                           padding: '1px 6px',
                           borderRadius: '4px'
                         }}>
-                          ⚠️ Alergia: {p.alergias}
+                          Alergia: {p.alergias}
                         </div>
                       )}
                     </div>
@@ -276,7 +276,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                   </p>
                   {pacienteSeleccionado.alergias && (
                     <div style={{ marginTop: '4px', fontSize: '11px', color: '#dc2626', fontWeight: '700' }}>
-                      ⚠️ Alergias registradas: {pacienteSeleccionado.alergias}
+                      Alergias registradas: {pacienteSeleccionado.alergias}
                     </div>
                   )}
                 </div>
@@ -302,7 +302,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                     </label>
                     <input
                       type="text"
-                      placeholder="Ej: 120/80 mmHg"
+                      placeholder=""
                       value={formData.presion_arterial}
                       onChange={(e) => setFormData({ ...formData, presion_arterial: e.target.value })}
                       style={{
@@ -326,7 +326,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                     </label>
                     <input
                       type="text"
-                      placeholder="Ej: 70.5 kg"
+                      placeholder=""
                       value={formData.peso}
                       onChange={(e) => setFormData({ ...formData, peso: e.target.value })}
                       style={{
@@ -350,7 +350,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                     </label>
                     <input
                       type="text"
-                      placeholder="Ej: 168 cm"
+                      placeholder=""
                       value={formData.talla}
                       onChange={(e) => setFormData({ ...formData, talla: e.target.value })}
                       style={{
@@ -374,7 +374,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                     </label>
                     <input
                       type="text"
-                      placeholder="Ej: 36.8 °C"
+                      placeholder=""
                       value={formData.temperatura}
                       onChange={(e) => setFormData({ ...formData, temperatura: e.target.value })}
                       style={{
@@ -398,7 +398,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                     </label>
                     <input
                       type="text"
-                      placeholder="Ej: 72 lpm"
+                      placeholder=""
                       value={formData.frecuencia_cardiaca}
                       onChange={(e) => setFormData({ ...formData, frecuencia_cardiaca: e.target.value })}
                       style={{
@@ -422,7 +422,7 @@ export default function SignosVitalesView({ pacientes, usuario, notificar, carga
                     </label>
                     <input
                       type="text"
-                      placeholder="Ej: 98 %"
+                      placeholder=""
                       value={formData.saturacion_oxigeno}
                       onChange={(e) => setFormData({ ...formData, saturacion_oxigeno: e.target.value })}
                       style={{

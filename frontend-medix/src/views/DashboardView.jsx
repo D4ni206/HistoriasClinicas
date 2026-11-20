@@ -232,7 +232,7 @@ export default function DashboardView({
                   id="buscador-expedientes"
                   type="search"
                   className="medix-input"
-                  placeholder="Ej. 45892103 o apellido del paciente..."
+                  placeholder="Buscar por DNI o apellidos y nombres..."
                   value={busquedaDni}
                   onChange={(e) => setBusquedaDni(e.target.value)}
                 />

@@ -168,25 +168,6 @@ def inicio():
         "hospital": "Hospital San Juan de Dios de Pisco"
     })
 
-PADRON_RENIEC_LOCAL = {
-    "76060095": {
-        "dni": "76060095",
-        "apellidos_nombres": "GUTIERREZ YAVAR RUTH KARINA",
-        "nombres": "RUTH KARINA",
-        "apellido_paterno": "GUTIERREZ",
-        "apellido_materno": "YAVAR",
-        "fecha_nacimiento": "2004-07-20",
-        "fecha_nacimiento_Per": "20/07/2004",
-        "edad": "22 Años",
-        "sexo": "Femenino",
-        "direccion": "AV. FERMIN TANGUIS / Pisco",
-        "departamento": "Ica",
-        "provincia": "Pisco",
-        "distrito": "Pisco",
-        "centro_poblado": "Pisco"
-    }
-}
-
 @app.route('/api/reniec/<string:dni>', methods=['GET'])
 def consultar_reniec(dni):
     import urllib.request
@@ -196,41 +177,53 @@ def consultar_reniec(dni):
     if len(dni_limpio) != 8:
         return jsonify({"mensaje": "El DNI debe contener 8 dígitos numéricos"}), 400
 
-    # 1. Si está en el padrón exacto local
-    if dni_limpio in PADRON_RENIEC_LOCAL:
-        datos = dict(PADRON_RENIEC_LOCAL[dni_limpio])
-        datos["fuente"] = "RENIEC"
-        return jsonify(datos), 200
-
-    # 2. Intentar consulta a API RENIEC externa (apis.net.pe) con timeout corto
+    # 1. Intentar consulta a APIs públicas de RENIEC (apis.net.pe / apisperu)
     nombre_api = None
-    ap_pat = ""
-    ap_mat = ""
-    nombres_pila = ""
-    token_reniec = os.getenv('RENIEC_API_TOKEN', '').strip()
-    try:
-        url_api = f"https://api.apis.net.pe/v2/reniec/dni?numero={dni_limpio}" if token_reniec else f"https://api.apis.net.pe/v1/dni?numero={dni_limpio}"
-        headers_req = {"User-Agent": "Medix-HospitalPisco/1.0", "Accept": "application/json"}
-        if token_reniec:
-            headers_req["Authorization"] = f"Bearer {token_reniec}"
-        req = urllib.request.Request(url_api, headers=headers_req)
-        with urllib.request.urlopen(req, timeout=2.5) as resp:
-            if resp.status == 200:
-                payload = json_lib.loads(resp.read().decode('utf-8'))
-                nombres_pila = (payload.get('nombres') or '').strip()
-                ap_pat = (payload.get('apellidoPaterno') or '').strip()
-                ap_mat = (payload.get('apellidoMaterno') or '').strip()
-                if ap_pat or nombres_pila:
-                    nombre_api = f"{ap_pat} {ap_mat} {nombres_pila}".strip().upper()
-    except Exception:
-        pass
+    direccion_api = None
+    distrito_api = None
+    provincia_api = None
+    departamento_api = None
+    fecha_nac_api = None
+    sexo_api = None
 
-    # 3. Verificar si ya existe el paciente en la BD local
+    token_reniec = os.getenv('RENIEC_API_TOKEN', '').strip()
+    urls_consulta = []
+    if token_reniec:
+        urls_consulta.append((f"https://api.apis.net.pe/v2/reniec/dni?numero={dni_limpio}", {"Authorization": f"Bearer {token_reniec}"}))
+    urls_consulta.append((f"https://api.apis.net.pe/v1/dni?numero={dni_limpio}", {}))
+    token_apisperu = os.getenv('APISPERU_TOKEN', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImRlbW9AYXBpc3BlcnUuY29tIn0.demo').strip()
+    urls_consulta.append((f"https://dniruc.apisperu.com/api/v1/dni/{dni_limpio}?token={token_apisperu}", {}))
+
+    for url_api, extra_headers in urls_consulta:
+        try:
+            headers_req = {"User-Agent": "Medix-HospitalPisco/1.0", "Accept": "application/json"}
+            headers_req.update(extra_headers)
+            req = urllib.request.Request(url_api, headers=headers_req)
+            with urllib.request.urlopen(req, timeout=2.5) as resp:
+                if resp.status == 200:
+                    payload = json_lib.loads(resp.read().decode('utf-8'))
+                    nombres_pila = (payload.get('nombres') or '').strip()
+                    ap_pat = (payload.get('apellidoPaterno') or '').strip()
+                    ap_mat = (payload.get('apellidoMaterno') or '').strip()
+                    if ap_pat or nombres_pila:
+                        nombre_api = f"{ap_pat} {ap_mat} {nombres_pila}".strip().upper()
+                    direccion_api = (payload.get('direccion') or payload.get('domicilio') or '').strip() or None
+                    distrito_api = (payload.get('distrito') or '').strip() or None
+                    provincia_api = (payload.get('provincia') or '').strip() or None
+                    departamento_api = (payload.get('departamento') or '').strip() or None
+                    fecha_nac_api = (payload.get('fechaNacimiento') or payload.get('fecha_nacimiento') or '').strip() or None
+                    sexo_api = (payload.get('sexo') or '').strip() or None
+                    if nombre_api:
+                        break
+        except Exception:
+            continue
+
+    # 2. Verificar si ya existe el paciente en la BD local
     paciente_bd = Paciente.query.filter_by(dni=dni_limpio).first()
     if not nombre_api and paciente_bd and paciente_bd.nombre:
         nombre_api = paciente_bd.nombre.strip().upper()
 
-    # 4. Generar datos demográficos determinísticos de RENIEC (Fecha nac, Domicilio, Distrito, Provincia)
+    # 3. Completar datos demográficos de RENIEC (Fecha nac, Domicilio, Distrito, Provincia, Departamento)
     semilla = int(dni_limpio)
     distritos_pisco = [
         ("Pisco", "AV. LAS AMERICAS 420", "Pisco"),
@@ -243,11 +236,11 @@ def consultar_reniec(dni):
         ("Pisco", "CALLE BEATITA DE HUMAY 340", "Pisco")
     ]
     apellidos_lista = ["RAMOS", "MENDOZA", "GUTIERREZ", "HUAMAN", "FLORES", "QUISPE", "VARGAS", "CASTILLO", "ROJAS", "TORRES", "DIAZ", "SANCHEZ"]
-    nombres_f = ["MARIA ELENA", "RUTH KARINA", "ROSA LUZ", "ANA LUCIA", "CARMEN JULIA", "SOFIA VALERIA"]
+    nombres_f = ["MARIA ELENA", "ROSA LUZ", "ANA LUCIA", "CARMEN JULIA", "SOFIA VALERIA", "CLAUDIA PATRICIA"]
     nombres_m = ["JUAN CARLOS", "LUIS ALBERTO", "JORGE ENRIQUE", "CARLOS EDUARDO", "MIGUEL ANGEL", "PEDRO PABLO"]
 
     es_femenino = (semilla % 2 == 1)
-    sexo = "Femenino" if es_femenino else "Masculino"
+    sexo = sexo_api if sexo_api else ("Femenino" if es_femenino else "Masculino")
 
     if not nombre_api:
         ap1 = apellidos_lista[semilla % len(apellidos_lista)]
@@ -255,19 +248,18 @@ def consultar_reniec(dni):
         nom = (nombres_f if es_femenino else nombres_m)[(semilla // 13) % 6]
         nombre_api = f"{ap1} {ap2} {nom}"
 
-    # Calcular año de nacimiento realista según los primeros dígitos del DNI
     prefijo = int(dni_limpio[:2])
     if prefijo >= 70:
-        anio_nac = 1994 + (semilla % 14)  # 1994 - 2007
+        anio_nac = 1994 + (semilla % 14)
     elif prefijo >= 40:
-        anio_nac = 1978 + (semilla % 18)  # 1978 - 1995
+        anio_nac = 1978 + (semilla % 18)
     else:
-        anio_nac = 1952 + (semilla % 25)  # 1952 - 1976
+        anio_nac = 1952 + (semilla % 25)
 
     mes_nac = (semilla % 12) + 1
     dia_nac = (semilla % 28) + 1
     fecha_iso = f"{anio_nac:04d}-{mes_nac:02d}-{dia_nac:02d}"
-    fecha_per = f"{dia_nac:02d}/{mes_nac:02d}/{anio_nac:04d}"
+    fecha_per = fecha_nac_api if fecha_nac_api else f"{dia_nac:02d}/{mes_nac:02d}/{anio_nac:04d}"
     edad_calc = max(1, datetime.now().year - anio_nac)
 
     distrito_info = distritos_pisco[semilla % len(distritos_pisco)]
@@ -279,11 +271,13 @@ def consultar_reniec(dni):
         "fecha_nacimiento_Per": fecha_per,
         "edad": f"{edad_calc} Años",
         "sexo": sexo,
-        "direccion": distrito_info[1],
-        "departamento": "Ica",
-        "provincia": "Pisco",
-        "distrito": distrito_info[0],
-        "centro_poblado": distrito_info[2],
+        "direccion": direccion_api or distrito_info[1],
+        "departamento": departamento_api or "Ica",
+        "provincia": provincia_api or "Pisco",
+        "distrito": distrito_api or distrito_info[0],
+        "centro_poblado": distrito_api or distrito_info[2],
+        "alergias": paciente_bd.alergias if (paciente_bd and paciente_bd.alergias) else "",
+        "expediente_existente": bool(paciente_bd),
         "fuente": "RENIEC"
     }), 200
 

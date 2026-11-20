@@ -160,7 +160,7 @@ export default function UsuariosView({
               </label>
               <input
                 type="text"
-                placeholder="Ej: Dr. Roberto Gómez"
+                placeholder="Nombres y apellidos"
                 value={formUsuario.nombres_completos || ''}
                 onChange={(e) => setFormUsuario({ ...formUsuario, nombres_completos: e.target.value })}
                 style={{
@@ -193,7 +193,7 @@ export default function UsuariosView({
               </label>
               <input
                 type="text"
-                placeholder="Ej: rgomez"
+                placeholder="Usuario de acceso"
                 value={formUsuario.username}
                 onChange={(e) => setFormUsuario({ ...formUsuario, username: e.target.value })}
                 required
@@ -276,14 +276,14 @@ export default function UsuariosView({
               <div style={{ position: 'relative' }}>
                 <input
                   type="tel"
-                  placeholder="Ej: 956123456"
+                  placeholder="Número de teléfono"
                   value={formUsuario.telefono || ''}
                   onChange={(e) => setFormUsuario({ ...formUsuario, telefono: e.target.value })}
                   required
                   style={{
                     width: '100%',
                     boxSizing: 'border-box',
-                    padding: '10px 12px 10px 34px',
+                    padding: '10px 12px',
                     borderRadius: '8px',
                     border: `1px solid ${theme.borderInput}`,
                     fontSize: '13px',
@@ -301,9 +301,6 @@ export default function UsuariosView({
                     e.target.style.boxShadow = 'none'
                   }}
                 />
-                <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: theme.textMuted }}>
-                  📱
-                </span>
               </div>
             </div>
 
@@ -314,7 +311,7 @@ export default function UsuariosView({
               </label>
               <input
                 type="email"
-                placeholder="Ej: usuario@hospitalpisco.gob.pe"
+                placeholder="Correo electrónico"
                 value={formUsuario.correo || ''}
                 onChange={(e) => setFormUsuario({ ...formUsuario, correo: e.target.value })}
                 style={{
@@ -682,9 +679,8 @@ export default function UsuariosView({
                         {/* Teléfono SMS */}
                         <td style={{ padding: '12px 14px' }}>
                           {u.telefono ? (
-                            <span style={{ fontSize: '12.5px', color: theme.textSecondary, fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                              <span style={{ fontSize: '12px' }}>📱</span>
-                              <span>{u.telefono}</span>
+                            <span style={{ fontSize: '12.5px', color: theme.textSecondary, fontWeight: '500' }}>
+                              {u.telefono}
                             </span>
                           ) : (
                             <span style={{ fontSize: '12px', color: theme.textMuted, fontStyle: 'italic' }}>

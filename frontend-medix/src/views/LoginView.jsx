@@ -410,7 +410,7 @@ export default function LoginView({ onLoginSuccess }) {
                     className="medix-input"
                     value={identificadorSms}
                     onChange={(e) => setIdentificadorSms(e.target.value)}
-                    placeholder="Ej. admin o correo institucional"
+                    placeholder="Usuario, correo o teléfono"
                     style={{ backgroundColor: '#FFFFFF', color: '#1F2937', borderColor: '#D9DEE5' }}
                   />
                 </div>

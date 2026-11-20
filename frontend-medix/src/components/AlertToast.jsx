@@ -272,34 +272,8 @@ export default function AlertToast({ alerta, onClose }) {
           </p>
         </div>
 
-        {/* Botón superior derecho: 'X' para cerrar + toggle de tema sutil */}
+        {/* Botón superior derecho: cerrar */}
         <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-          {/* Botón de alternar Tema Claro / Oscuro directamente en la alerta */}
-          <button
-            onClick={() => toggleTema()}
-            title={temaOscuro ? "Cambiar aplicación a Modo Claro" : "Cambiar aplicación a Modo Oscuro"}
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: styles.closeColor,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 0,
-              fontSize: '12px',
-              opacity: 0.75,
-              transition: 'opacity 0.15s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = '0.75'}
-          >
-            {temaOscuro ? '☀' : '🌙'}
-          </button>
-
           {/* Botón de Cierre 'X' circular */}
           <button
             onClick={onClose}

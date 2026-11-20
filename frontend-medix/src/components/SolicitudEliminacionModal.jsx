@@ -130,7 +130,7 @@ export default function SolicitudEliminacionModal({
             }}
             title="Cerrar modal"
           >
-            ✕
+            Cerrar
           </button>
         </div>
 

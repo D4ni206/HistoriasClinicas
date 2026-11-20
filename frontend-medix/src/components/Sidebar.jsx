@@ -26,7 +26,6 @@ export default function Sidebar({
 
   const esDashboard = currentPath === '/dashboard' || currentPath === '/'
   const esNuevaHistoria = currentPath === '/agregarhistoria' || currentPath === '/nueva-historia'
-  const esSignosVitales = currentPath === '/signosvitales' || currentPath === '/triaje'
   const esUsuarios = currentPath === '/usuarios'
   const esSolicitudes = currentPath === '/solicitudes'
   const esConfiguracion = currentPath === '/configuracion'
@@ -34,7 +33,6 @@ export default function Sidebar({
   const menuItems = [
     { id: 'dashboard', nombre: 'Historias Clínicas', ruta: '/dashboard', activo: esDashboard, visible: esAdmin || esMedico || !esEnfermera },
     { id: 'nueva_historia', nombre: 'Nueva Historia', ruta: '/agregarhistoria', activo: esNuevaHistoria, visible: esAdmin || esMedico },
-    { id: 'signos_vitales', nombre: 'Signos Vitales', ruta: '/signosvitales', activo: esSignosVitales, visible: esAdmin || esEnfermera },
     { id: 'solicitudes', nombre: 'Solicitudes', ruta: '/solicitudes', activo: esSolicitudes, contador: totalSolicitudesPendientes, visible: esAdmin },
     { id: 'usuarios', nombre: 'Usuarios', ruta: '/usuarios', activo: esUsuarios, visible: esAdmin },
     { id: 'configuracion', nombre: 'Configuración', ruta: '/configuracion', activo: esConfiguracion, visible: esAdmin }
@@ -76,7 +74,7 @@ export default function Sidebar({
               className="medix-sidebar-footer-btn"
               style={{ width: '28px', height: '28px', padding: 0, textAlign: 'center', color: '#FFFFFF' }}
             >
-              ✕
+              Cerrar
             </button>
           )}
         </div>
