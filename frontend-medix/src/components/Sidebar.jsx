@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
+import logoHospitalSidebar from '../assets/logo-hospital-sidebar.png'
 
 export default function Sidebar({
   usuario,
@@ -58,10 +59,12 @@ export default function Sidebar({
       <div style={{ padding: '20px 16px 12px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', paddingBottom: '14px', borderBottom: '1px solid var(--sidebar-border)' }}>
           <div>
-            <div style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', lineHeight: 1.2 }}>
-              Medix
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--sidebar-muted)', marginTop: '3px', lineHeight: 1.35 }}>
+            <img
+              src={logoHospitalSidebar}
+              alt="Logo Hospital San Juan de Dios de Pisco"
+              style={{ height: '42px', width: 'auto', objectFit: 'contain', display: 'block' }}
+            />
+            <div style={{ fontSize: '12px', color: 'var(--sidebar-muted)', marginTop: '4px', lineHeight: 1.35 }}>
               Hospital San Juan de Dios de Pisco
             </div>
           </div>
