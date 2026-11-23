@@ -57,14 +57,14 @@ export default function Sidebar({
       }}
     >
       <div style={{ padding: '20px 16px 12px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', paddingBottom: '14px', borderBottom: '1px solid var(--sidebar-border)' }}>
-          <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', paddingBottom: '14px', borderBottom: '1px solid var(--sidebar-border)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }}>
             <img
               src={logoHospitalSidebar}
               alt="Logo Hospital San Juan de Dios de Pisco"
-              style={{ height: '42px', width: 'auto', objectFit: 'contain', display: 'block' }}
+              style={{ height: '66px', width: 'auto', objectFit: 'contain', display: 'block', margin: '0 auto' }}
             />
-            <div style={{ fontSize: '12px', color: 'var(--sidebar-muted)', marginTop: '4px', lineHeight: 1.35 }}>
+            <div style={{ fontSize: '12px', color: 'var(--sidebar-muted)', marginTop: '6px', lineHeight: 1.35 }}>
               Hospital San Juan de Dios de Pisco
             </div>
           </div>
@@ -75,7 +75,7 @@ export default function Sidebar({
               onClick={onCloseMobile}
               aria-label="Cerrar menú lateral"
               className="medix-sidebar-footer-btn"
-              style={{ width: '28px', height: '28px', padding: 0, textAlign: 'center', color: '#FFFFFF' }}
+              style={{ position: 'absolute', top: 0, right: 0, width: '48px', height: '28px', padding: 0, textAlign: 'center', color: '#FFFFFF' }}
             >
               Cerrar
             </button>
