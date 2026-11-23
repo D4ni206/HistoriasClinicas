@@ -3,7 +3,6 @@ import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import DocxViewer from './DocxViewer'
 import TextViewer from './TextViewer'
-import ManiquiAnatomico from './ManiquiAnatomico'
 import { esPdf, esDocx, esImagen, esTexto } from '../utils/fileHelpers'
 import { API_BASE } from '../api/config'
 
@@ -327,8 +326,7 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
           >
             {[
               { id: 'documento', label: 'Documento' },
-              { id: 'notas', label: `Notas (${notas.length})` },
-              { id: 'anatomia', label: 'Anatomía' }
+              { id: 'notas', label: `Notas (${notas.length})` }
             ].map((tab) => {
               const activa = pestanaActiva === tab.id
               return (
@@ -440,14 +438,6 @@ export default function VisorLateral({ documentoEnVista, paciente, onCerrar, onS
                   ))
                 )}
               </div>
-            )}
-
-            {pestanaActiva === 'anatomia' && (
-              <ManiquiAnatomico
-                paciente={pacienteFinal}
-                documentoActual={docActivo}
-                modoCompacto={true}
-              />
             )}
           </div>
         </div>
