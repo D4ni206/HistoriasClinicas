@@ -25,8 +25,9 @@ export default function Sidebar({
   const esMedico = rolRaw.includes('medico')
   const esEnfermera = rolRaw.includes('enfermer')
 
+  const esModoEscanear = currentPath === '/agregarhistoria' && location.search.includes('modo=escanear')
   const esDashboard = currentPath === '/dashboard' || currentPath === '/'
-  const esNuevaHistoria = currentPath === '/agregarhistoria' || currentPath === '/nueva-historia'
+  const esNuevaHistoria = (currentPath === '/agregarhistoria' || currentPath === '/nueva-historia') && !esModoEscanear
   const esUsuarios = currentPath === '/usuarios'
   const esSolicitudes = currentPath === '/solicitudes'
   const esConfiguracion = currentPath === '/configuracion'
@@ -34,6 +35,7 @@ export default function Sidebar({
   const menuItems = [
     { id: 'dashboard', nombre: 'Historias Clínicas', ruta: '/dashboard', activo: esDashboard, visible: esAdmin || esMedico || !esEnfermera },
     { id: 'nueva_historia', nombre: 'Nueva Historia', ruta: '/agregarhistoria', activo: esNuevaHistoria, visible: esAdmin || esMedico },
+    { id: 'escanear_celular', nombre: 'Escanear con Celular', ruta: '/agregarhistoria?modo=escanear', activo: esModoEscanear, visible: esAdmin || esMedico },
     { id: 'solicitudes', nombre: 'Solicitudes', ruta: '/solicitudes', activo: esSolicitudes, contador: totalSolicitudesPendientes, visible: esAdmin },
     { id: 'usuarios', nombre: 'Usuarios', ruta: '/usuarios', activo: esUsuarios, visible: esAdmin },
     { id: 'configuracion', nombre: 'Configuración', ruta: '/configuracion', activo: esConfiguracion, visible: esAdmin }

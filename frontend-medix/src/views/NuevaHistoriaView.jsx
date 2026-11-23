@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
 import * as api from '../api/pacientesService'
@@ -233,10 +233,31 @@ export default function NuevaHistoriaView({
   handleUpload
 }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { theme } = useTheme()
   const { usuario, authFetch } = useAuth()
 
-  const [modoRegistro, setModoRegistro] = useState('formato_emergencia')
+  const [modoRegistro, setModoRegistro] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('modo') === 'escanear' ? 'escanear_celular' : 'formato_emergencia'
+  })
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('modo') === 'escanear') {
+      setModoRegistro('escanear_celular')
+    }
+  }, [location.search])
+
+  // Estados del Escáner Móvil por Cámara de Celular
+  const [paginasEscaneadas, setPaginasEscaneadas] = useState([]) // [{ id, originalUrl, processedUrl, rotacion }]
+  const [filtroEscaner, setFiltroEscaner] = useState('documento') // 'documento' (alto contraste) | 'color'
+  const [camaraVivaActiva, setCamaraVivaActiva] = useState(false)
+  const [subiendoEscaneo, setSubiendoEscaneo] = useState(false)
+  const videoRef = useRef(null)
+  const streamRef = useRef(null)
+  const inputCamaraMovilRef = useRef(null)
+  const inputGaleriaMovilRef = useRef(null)
   const [consultandoReniec, setConsultandoReniec] = useState(false)
   const [estadoReniec, setEstadoReniec] = useState({ tipo: '', texto: '' })
   const [guardandoFormato, setGuardandoFormato] = useState(false)
@@ -483,6 +504,269 @@ export default function NuevaHistoriaView({
     }
   }
 
+  // =========================================================================
+  // LÓGICA DEL ESCÁNER MÓVIL CON CÁMARA DEL CELULAR
+  // =========================================================================
+  const procesarImagenEnCanvas = (imgSourceUrl, rotacionGrados = 0, modoFiltro = filtroEscaner) => {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const maxDim = 1800
+        let w = img.width
+        let h = img.height
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w)
+            w = maxDim
+          } else {
+            w = Math.round((w * maxDim) / h)
+            h = maxDim
+          }
+        }
+
+        const rot = ((rotacionGrados % 360) + 360) % 360
+        if (rot === 90 || rot === 270) {
+          canvas.width = h
+          canvas.height = w
+        } else {
+          canvas.width = w
+          canvas.height = h
+        }
+
+        const ctx = canvas.getContext('2d')
+        ctx.save()
+        ctx.translate(canvas.width / 2, canvas.height / 2)
+        ctx.rotate((rot * Math.PI) / 180)
+        ctx.drawImage(img, -w / 2, -h / 2, w, h)
+        ctx.restore()
+
+        // Si el filtro es 'documento', aplicar mejora de contraste tipo escáner clínico
+        if (modoFiltro === 'documento') {
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+          const d = imgData.data
+          for (let i = 0; i < d.length; i += 4) {
+            const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
+            // Aclarar el fondo del papel (>175 -> blanco) y oscurecer trazos/texto
+            let val
+            if (lum > 182) {
+              val = 255
+            } else if (lum < 75) {
+              val = Math.max(0, lum * 0.55)
+            } else {
+              val = ((lum - 75) / (182 - 75)) * 235 + 10
+            }
+            d[i] = val
+            d[i + 1] = val
+            d[i + 2] = val
+          }
+          ctx.putImageData(imgData, 0, 0)
+        }
+
+        resolve(canvas.toDataURL('image/jpeg', 0.88))
+      }
+      img.onerror = () => resolve(imgSourceUrl)
+      img.src = imgSourceUrl
+    })
+  }
+
+  const agregarArchivosAlEscaner = async (fileList) => {
+    if (!fileList || fileList.length === 0) return
+    const nuevas = []
+    for (let i = 0; i < fileList.length; i++) {
+      const f = fileList[i]
+      if (!f.type.startsWith('image/')) continue
+      const dataUrl = await new Promise((res) => {
+        const reader = new FileReader()
+        reader.onload = (ev) => res(ev.target.result)
+        reader.readAsDataURL(f)
+      })
+      const procesada = await procesarImagenEnCanvas(dataUrl, 0, filtroEscaner)
+      nuevas.push({
+        id: `${Date.now()}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+        originalUrl: dataUrl,
+        processedUrl: procesada,
+        rotacion: 0
+      })
+    }
+    if (nuevas.length > 0) {
+      setPaginasEscaneadas(prev => [...prev, ...nuevas])
+    }
+  }
+
+  const cambiarFiltroEscaner = async (nuevoFiltro) => {
+    setFiltroEscaner(nuevoFiltro)
+    if (paginasEscaneadas.length === 0) return
+    const actualizadas = await Promise.all(
+      paginasEscaneadas.map(async (p) => ({
+        ...p,
+        processedUrl: await procesarImagenEnCanvas(p.originalUrl, p.rotacion, nuevoFiltro)
+      }))
+    )
+    setPaginasEscaneadas(actualizadas)
+  }
+
+  const rotarPaginaEscaneada = async (idPagina) => {
+    const actualizadas = await Promise.all(
+      paginasEscaneadas.map(async (p) => {
+        if (p.id !== idPagina) return p
+        const nuevaRot = (p.rotacion + 90) % 360
+        return {
+          ...p,
+          rotacion: nuevaRot,
+          processedUrl: await procesarImagenEnCanvas(p.originalUrl, nuevaRot, filtroEscaner)
+        }
+      })
+    )
+    setPaginasEscaneadas(actualizadas)
+  }
+
+  const eliminarPaginaEscaneada = (idPagina) => {
+    setPaginasEscaneadas(prev => prev.filter(p => p.id !== idPagina))
+  }
+
+  const detenerCamaraViva = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop())
+      streamRef.current = null
+    }
+    setCamaraVivaActiva(false)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop())
+      }
+    }
+  }, [])
+
+  const iniciarCamaraViva = async () => {
+    setAlertaLocal({ tipo: '', texto: '' })
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      // Si el navegador móvil bloquea getUserMedia por HTTP, abrir directamente la cámara nativa del celular
+      if (inputCamaraMovilRef.current) inputCamaraMovilRef.current.click()
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false
+      })
+      streamRef.current = stream
+      setCamaraVivaActiva(true)
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          videoRef.current.play().catch(() => {})
+        }
+      }, 80)
+    } catch {
+      // Fallback directo a la app de cámara nativa del celular
+      if (inputCamaraMovilRef.current) inputCamaraMovilRef.current.click()
+    }
+  }
+
+  const capturarDesdeCamaraViva = async () => {
+    if (!videoRef.current) return
+    const v = videoRef.current
+    const canvas = document.createElement('canvas')
+    canvas.width = v.videoWidth || 1280
+    canvas.height = v.videoHeight || 720
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(v, 0, 0, canvas.width, canvas.height)
+    const originalUrl = canvas.toDataURL('image/jpeg', 0.92)
+    const processedUrl = await procesarImagenEnCanvas(originalUrl, 0, filtroEscaner)
+    setPaginasEscaneadas(prev => [
+      ...prev,
+      {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        originalUrl,
+        processedUrl,
+        rotacion: 0
+      }
+    ])
+  }
+
+  const dataUrlToBlob = (dataUrl) => {
+    const arr = dataUrl.split(',')
+    const mime = arr[0].match(/:(.*?);/)[1]
+    const bstr = atob(arr[1])
+    let n = bstr.length
+    const u8arr = new Uint8Array(n)
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n)
+    }
+    return new Blob([u8arr], { type: mime })
+  }
+
+  const handleGuardarEscaneoMovil = async (e) => {
+    e.preventDefault()
+    const dniGuardar = String(formEmergencia.dni || dni || '').replace(/\D/g, '')
+    if (dniGuardar.length !== 8) {
+      setAlertaLocal({ tipo: 'error', texto: 'Ingrese el DNI del paciente (8 dígitos) antes de guardar el escaneo.' })
+      return
+    }
+    if (paginasEscaneadas.length === 0) {
+      setAlertaLocal({ tipo: 'error', texto: 'Capture al menos una foto de la historia clínica con el celular.' })
+      return
+    }
+
+    setSubiendoEscaneo(true)
+    setAlertaLocal({ tipo: '', texto: '' })
+    try {
+      const nombrePacienteGuardar = (formEmergencia.apellidos_nombres || nombre || '').trim()
+      const alergiasGuardar = (formEmergencia.alergias || alergias || '').trim()
+      const fechaTag = new Date().toISOString().slice(0, 10)
+
+      if (paginasEscaneadas.length === 1) {
+        // 1 sola hoja: subir como imagen JPG optimizada de alta nitidez
+        const blobImg = dataUrlToBlob(paginasEscaneadas[0].processedUrl)
+        const fileImg = new File([blobImg], `Escaneo_Celular_${dniGuardar}_${fechaTag}.jpg`, { type: 'image/jpeg' })
+        const fd = new FormData()
+        fd.append('dni', dniGuardar)
+        if (nombrePacienteGuardar) fd.append('nombre', nombrePacienteGuardar)
+        if (alergiasGuardar) fd.append('alergias', alergiasGuardar)
+        fd.append('archivo', fileImg)
+        await api.subirDocumento(authFetch, fd)
+      } else {
+        // Múltiples hojas escaneadas: consolidar en un documento multi-página visualizable e imprimible
+        const imgsHtml = paginasEscaneadas
+          .map((p, idx) => `
+            <div style="page-break-after:always;margin:0 auto 18px auto;max-width:840px;text-align:center;">
+              <div style="font-family:Arial,sans-serif;font-size:11px;color:#555;margin-bottom:4px;text-align:right;">
+                DNI ${dniGuardar} ${nombrePacienteGuardar ? `- ${nombrePacienteGuardar}` : ''} · Página ${idx + 1} de ${paginasEscaneadas.length}
+              </div>
+              <img src="${p.processedUrl}" alt="Página ${idx + 1}" style="width:100%;height:auto;border:1px solid #ccc;" />
+            </div>
+          `)
+          .join('')
+        const docHtml = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><title>Escaneo Móvil DNI ${dniGuardar}</title></head><body style="background:#f4f6f9;margin:16px;">${imgsHtml}</body></html>`
+        const blobHtml = new Blob([docHtml], { type: 'text/html' })
+        const fileHtml = new File([blobHtml], `Escaneo_Celular_${dniGuardar}_${paginasEscaneadas.length}pags_${fechaTag}.html`, { type: 'text/html' })
+        const fd = new FormData()
+        fd.append('dni', dniGuardar)
+        if (nombrePacienteGuardar) fd.append('nombre', nombrePacienteGuardar)
+        if (alergiasGuardar) fd.append('alergias', alergiasGuardar)
+        fd.append('archivo', fileHtml)
+        await api.subirDocumento(authFetch, fd)
+      }
+
+      detenerCamaraViva()
+      setAlertaLocal({
+        tipo: 'exito',
+        texto: `Escaneo móvil (${paginasEscaneadas.length} página${paginasEscaneadas.length !== 1 ? 's' : ''}) guardado exitosamente en el expediente DNI ${dniGuardar}.`
+      })
+      setTimeout(() => {
+        window.location.href = '/dashboard'
+      }, 850)
+    } catch (err) {
+      setAlertaLocal({ tipo: 'error', texto: err.message || 'Error al subir el documento escaneado.' })
+    } finally {
+      setSubiendoEscaneo(false)
+    }
+  }
+
   const dniLimpio = (dni || '').trim()
   const pacienteDetectado = pacientes.find(p => p.dni && p.dni.trim() === dniLimpio)
 
@@ -490,17 +774,21 @@ export default function NuevaHistoriaView({
     <div style={{ maxWidth: '1040px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 className="medix-page-title">Historia Clínica de Emergencia</h1>
+          <h1 className="medix-page-title">
+            {modoRegistro === 'escanear_celular' ? 'Escáner Móvil de Historias Clínicas' : 'Historia Clínica de Emergencia'}
+          </h1>
           <p className="medix-page-subtitle">
-            Formato oficial SISGALENPLUS — Hospital San Juan de Dios de Pisco
+            {modoRegistro === 'escanear_celular'
+              ? 'Digitalización rápida con la cámara del celular sin esperar al escáner de impresora'
+              : 'Formato oficial SISGALENPLUS — Hospital San Juan de Dios de Pisco'}
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <div className="medix-card" style={{ display: 'inline-flex', padding: '3px', gap: '4px', borderRadius: '8px' }}>
+          <div className="medix-card" style={{ display: 'inline-flex', padding: '3px', gap: '4px', borderRadius: '8px', flexWrap: 'wrap' }}>
             <button
               type="button"
-              onClick={() => setModoRegistro('formato_emergencia')}
+              onClick={() => { detenerCamaraViva(); setModoRegistro('formato_emergencia') }}
               className="medix-btn medix-btn-sm"
               style={{
                 backgroundColor: modoRegistro === 'formato_emergencia' ? 'var(--color-navy)' : 'transparent',
@@ -511,7 +799,18 @@ export default function NuevaHistoriaView({
             </button>
             <button
               type="button"
-              onClick={() => setModoRegistro('subir_archivo')}
+              onClick={() => setModoRegistro('escanear_celular')}
+              className="medix-btn medix-btn-sm"
+              style={{
+                backgroundColor: modoRegistro === 'escanear_celular' ? 'var(--color-navy)' : 'transparent',
+                color: modoRegistro === 'escanear_celular' ? '#FFFFFF' : theme.textSecondary
+              }}
+            >
+              Escanear con Celular
+            </button>
+            <button
+              type="button"
+              onClick={() => { detenerCamaraViva(); setModoRegistro('subir_archivo') }}
               className="medix-btn medix-btn-sm"
               style={{
                 backgroundColor: modoRegistro === 'subir_archivo' ? 'var(--color-navy)' : 'transparent',
@@ -1261,6 +1560,303 @@ export default function NuevaHistoriaView({
               </button>
               <button type="submit" disabled={subiendo} className="medix-btn medix-btn-primary">
                 {subiendo ? 'Subiendo archivo...' : 'Subir al expediente'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* MODO 3: ESCANEAR HISTORIA CLÍNICA CON LA CÁMARA DEL CELULAR */}
+      {/* =================================================================== */}
+      {modoRegistro === 'escanear_celular' && (
+        <div className="medix-card" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <form onSubmit={handleGuardarEscaneoMovil} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Paso 1: Identificación rápida del paciente con RENIEC */}
+            <div
+              style={{
+                backgroundColor: theme.bgSubtle,
+                border: theme.border,
+                borderRadius: '8px',
+                padding: '14px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}
+            >
+              <div style={{ fontSize: '13px', fontWeight: 700, color: theme.textHeading }}>
+                1. Datos del Paciente (Autocompletado RENIEC)
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                <div>
+                  <label htmlFor="scan-dni" className="medix-label">DNI del Paciente (8 dígitos) *</label>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <input
+                      id="scan-dni"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={8}
+                      className="medix-input"
+                      style={{ fontWeight: 700 }}
+                      value={formEmergencia.dni}
+                      onChange={(e) => actualizarCampo('dni', e.target.value.replace(/\D/g, ''))}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => buscarDatosReniec(formEmergencia.dni, true)}
+                      disabled={consultandoReniec || formEmergencia.dni.length !== 8}
+                      className="medix-btn medix-btn-primary medix-btn-sm"
+                      style={{ height: '38px', flexShrink: 0 }}
+                    >
+                      {consultandoReniec ? '...' : 'RENIEC'}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="scan-nombre" className="medix-label">Apellidos y Nombres</label>
+                  <input
+                    id="scan-nombre"
+                    type="text"
+                    className="medix-input"
+                    value={formEmergencia.apellidos_nombres}
+                    onChange={(e) => actualizarCampo('apellidos_nombres', e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="scan-alergias" className="medix-label">Alergias (Opcional)</label>
+                  <input
+                    id="scan-alergias"
+                    type="text"
+                    className="medix-input"
+                    value={formEmergencia.alergias}
+                    onChange={(e) => actualizarCampo('alergias', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {estadoReniec.texto && (
+                <div>
+                  <span
+                    className={
+                      estadoReniec.tipo === 'error'
+                        ? 'medix-badge medix-badge-alert'
+                        : estadoReniec.tipo === 'exito'
+                        ? 'medix-badge medix-badge-status'
+                        : 'medix-badge medix-badge-neutral'
+                    }
+                  >
+                    {estadoReniec.texto}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Paso 2: Captura con Cámara del Celular */}
+            <div
+              style={{
+                border: '1.5px dashed var(--border-color)',
+                borderRadius: '10px',
+                padding: '18px 16px',
+                backgroundColor: theme.bgApp,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '14px',
+                textAlign: 'center'
+              }}
+            >
+              <div style={{ fontSize: '14px', fontWeight: 700, color: theme.textHeading }}>
+                2. Escanear Hoja con la Cámara del Celular
+              </div>
+              <p style={{ fontSize: '12px', color: theme.textSecondary, maxWidth: '520px' }}>
+                Tome una foto directa de la historia clínica física. El sistema aplicará automáticamente un filtro de alto contraste tipo escáner para limpiar sombras del papel.
+              </p>
+
+              {/* Inputs ocultos para cámara nativa móvil y galería */}
+              <input
+                ref={inputCamaraMovilRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => {
+                  agregarArchivosAlEscaner(e.target.files)
+                  e.target.value = ''
+                }}
+                style={{ display: 'none' }}
+              />
+              <input
+                ref={inputGaleriaMovilRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  agregarArchivosAlEscaner(e.target.files)
+                  e.target.value = ''
+                }}
+                style={{ display: 'none' }}
+              />
+
+              {/* Botones grandes adaptados para pantalla táctil de celular */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', width: '100%' }}>
+                <button
+                  type="button"
+                  onClick={() => inputCamaraMovilRef.current && inputCamaraMovilRef.current.click()}
+                  className="medix-btn medix-btn-primary"
+                  style={{ height: '44px', padding: '0 20px', flex: '1 1 220px', maxWidth: '320px' }}
+                >
+                  Abrir Cámara del Celular
+                </button>
+
+                {!camaraVivaActiva ? (
+                  <button
+                    type="button"
+                    onClick={iniciarCamaraViva}
+                    className="medix-btn medix-btn-secondary"
+                    style={{ height: '44px', padding: '0 16px', flex: '1 1 180px', maxWidth: '240px' }}
+                  >
+                    Visor de Cámara en Vivo
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={detenerCamaraViva}
+                    className="medix-btn medix-btn-danger"
+                    style={{ height: '44px', padding: '0 16px' }}
+                  >
+                    Cerrar Visor en Vivo
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => inputGaleriaMovilRef.current && inputGaleriaMovilRef.current.click()}
+                  className="medix-btn medix-btn-secondary"
+                  style={{ height: '44px', padding: '0 16px', flex: '1 1 180px', maxWidth: '240px' }}
+                >
+                  Elegir de Galería
+                </button>
+              </div>
+
+              {/* Visor de cámara WebRTC en vivo si está activo */}
+              {camaraVivaActiva && (
+                <div style={{ width: '100%', maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+                  <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', border: '2px solid var(--color-primary)', backgroundColor: '#000' }}>
+                    <video
+                      ref={videoRef}
+                      playsInline
+                      muted
+                      style={{ width: '100%', maxHeight: '420px', display: 'block', objectFit: 'cover' }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={capturarDesdeCamaraViva}
+                    className="medix-btn medix-btn-primary"
+                    style={{ height: '42px', width: '100%' }}
+                  >
+                    Capturar Página Ahora
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Paso 3: Páginas escaneadas, filtro de contraste y rotación */}
+            {paginasEscaneadas.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: theme.textHeading }}>
+                    3. Hojas Capturadas ({paginasEscaneadas.length})
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '12px', color: theme.textSecondary, fontWeight: 600 }}>Modo de imagen:</span>
+                    <button
+                      type="button"
+                      onClick={() => cambiarFiltroEscaner('documento')}
+                      className="medix-btn medix-btn-sm"
+                      style={{
+                        backgroundColor: filtroEscaner === 'documento' ? 'var(--color-navy)' : theme.bgSubtle,
+                        color: filtroEscaner === 'documento' ? '#FFFFFF' : theme.textSecondary
+                      }}
+                    >
+                      Escáner B/N (Nitidez)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => cambiarFiltroEscaner('color')}
+                      className="medix-btn medix-btn-sm"
+                      style={{
+                        backgroundColor: filtroEscaner === 'color' ? 'var(--color-navy)' : theme.bgSubtle,
+                        color: filtroEscaner === 'color' ? '#FFFFFF' : theme.textSecondary
+                      }}
+                    >
+                      Color Original
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '14px' }}>
+                  {paginasEscaneadas.map((pag, idx) => (
+                    <div
+                      key={pag.id}
+                      className="medix-card"
+                      style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: theme.textHeading }}>
+                          Página {idx + 1}
+                        </span>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            type="button"
+                            onClick={() => rotarPaginaEscaneada(pag.id)}
+                            className="medix-btn medix-btn-secondary medix-btn-sm"
+                          >
+                            Rotar 90°
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => eliminarPaginaEscaneada(pag.id)}
+                            className="medix-btn medix-btn-danger medix-btn-sm"
+                          >
+                            Quitar
+                          </button>
+                        </div>
+                      </div>
+
+                      <div style={{ backgroundColor: theme.bgSubtle, borderRadius: '6px', overflow: 'hidden', border: theme.border, height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <img
+                          src={pag.processedUrl}
+                          alt={`Página escaneada ${idx + 1}`}
+                          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '10px', borderTop: theme.border, flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => { detenerCamaraViva(); navigate('/dashboard') }}
+                className="medix-btn medix-btn-secondary"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={subiendoEscaneo || paginasEscaneadas.length === 0}
+                className="medix-btn medix-btn-primary"
+              >
+                {subiendoEscaneo
+                  ? 'Guardando escaneo en expediente...'
+                  : `Guardar Escaneo en el Expediente (${paginasEscaneadas.length})`}
               </button>
             </div>
           </form>

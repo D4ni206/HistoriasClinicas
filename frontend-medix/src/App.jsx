@@ -574,8 +574,17 @@ function AppContent() {
           </button>
 
           <span style={{ fontSize: '15px', fontWeight: '800', color: theme.textMain }}>
-            Medix Pisco
+            Hospital Pisco
           </span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => navigate('/agregarhistoria?modo=escanear')}
+              className="medix-btn medix-btn-primary medix-btn-sm"
+            >
+              Escanear
+            </button>
 
           <div
             onClick={abrirModalPassword}
@@ -592,6 +601,7 @@ function AppContent() {
             title="Haga clic para cambiar contraseña"
           >
             {usuario?.username || 'admin'}
+          </div>
           </div>
         </header>
       )}
