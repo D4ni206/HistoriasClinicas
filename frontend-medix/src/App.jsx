@@ -275,7 +275,7 @@ function AppContent() {
         setCarpetasAbiertas(prev => new Set([...prev, pacId]))
       }
       cargarDiagnostico()
-      navigate(/dashboard?dni=${encodeURIComponent(dniLimpio)})
+      navigate('/dashboard?dni=' + encodeURIComponent(dniLimpio))
     } catch (error) {
       notificar('error', error.message || 'Error al subir el documento.')
     } finally {

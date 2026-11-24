@@ -1621,126 +1621,149 @@ export default function NuevaHistoriaView({
       )}
 
       {/* =================================================================== */}
-      {/* MODO 2: ADJUNTAR ARCHIVO ESCANEADO EXTERNO */}
+      {/* MODO 2: ADJUNTAR ARCHIVO ESCANEADO POR IMPRESORA (CON PYTHON OCR)   */}
       {/* =================================================================== */}
       {modoRegistro === 'subir_archivo' && (
         <div className="medix-card" style={{ padding: '24px 28px' }}>
-          <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label htmlFor="upload-dni" className="medix-label">DNI del Paciente *</label>
-              <input
-                id="upload-dni"
-                type="text"
-                inputMode="numeric"
-                className="medix-input"
-                value={dni}
-                onChange={(e) => setDni(e.target.value.replace(/\D/g, ''))}
-                maxLength={8}
-                required
-              />
-              {dniLimpio.length > 0 && (
-                <div style={{ marginTop: '6px', fontSize: '12px', color: theme.textSecondary }}>
-                  {pacienteDetectado
-                    ? `Carpeta existente: ${pacienteDetectado.nombre || pacienteDetectado.dni} (${(pacienteDetectado.documentos || []).length} documentos)`
-                    : `Se creará un nuevo expediente para el DNI ${dniLimpio}.`}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="upload-nombre" className="medix-label">Apellidos y Nombres del Paciente</label>
-              <input
-                id="upload-nombre"
-                type="text"
-                className="medix-input"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="upload-alergias" className="medix-label">Alergias conocidas</label>
-              <input
-                id="upload-alergias"
-                type="text"
-                className="medix-input"
-                value={alergias}
-                onChange={(e) => setAlergias(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="upload-file" className="medix-label">Archivo digitalizado (PDF, Word, Imagen, Texto) *</label>
-              <input
-                id="upload-file"
-                ref={fileInputRef}
-                type="file"
-                className="medix-input"
-                style={{ padding: '6px 10px', height: 'auto' }}
-                accept="application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/msword, image/*, text/plain"
-                onChange={(e) => setFile(e.target.files[0])}
-                required
-              />
-              {file && (
-                <div style={{ marginTop: '6px', fontSize: '12px', color: theme.textSecondary }}>
-                  Archivo seleccionado: <strong>{file.name}</strong> ({(file.size / 1024).toFixed(1)} KB)
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '8px' }}>
-              <button type="button" onClick={() => navigate('/dashboard')} className="medix-btn medix-btn-secondary">
-                Cancelar
-              </button>
-              <button type="submit" disabled={subiendo} className="medix-btn medix-btn-primary">
-                {subiendo ? 'Subiendo archivo...' : 'Subir al expediente'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* =================================================================== */}
-      {/* MODO 3: ESCANEAR HISTORIA CLÍNICA CON LA CÁMARA DEL CELULAR */}
-      {/* =================================================================== */}
-      {modoRegistro === 'escanear_celular' && (
-        <div className="medix-card" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <form onSubmit={handleGuardarEscaneoMovil} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Paso 1: Identificación rápida del paciente con RENIEC */}
+          <form onSubmit={handleSubmitArchivoEscaneado} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {/* Paso 1: Subir el archivo escaneado por impresora para que Python identifique al paciente */}
             <div
               style={{
                 backgroundColor: theme.bgSubtle,
                 border: theme.border,
                 borderRadius: '8px',
-                padding: '14px 16px',
+                padding: '16px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '12px'
+                gap: '10px'
               }}
             >
-              <div style={{ fontSize: '13px', fontWeight: 700, color: theme.textHeading }}>
-                1. Datos del Paciente (Autocompletado RENIEC)
+              <label htmlFor="upload-file" style={{ fontSize: '13px', fontWeight: 700, color: theme.textHeading }}>
+                1. Archivo Escaneado por Impresora (PDF, Word, Imagen, Texto) *
+              </label>
+              <p style={{ fontSize: '12px', color: theme.textSecondary, margin: 0 }}>
+                Al seleccionar el archivo escaneado, la librería de Python identificará automáticamente el nombre y DNI del paciente para asignarlo a su carpeta.
+              </p>
+              <input
+                id="upload-file"
+                ref={fileInputRef}
+                type="file"
+                className="medix-input"
+                style={{ padding: '6px 10px', height: 'auto', backgroundColor: theme.bgSurface }}
+                accept="application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/msword, image/*, text/plain"
+                onChange={(e) => {
+                  const archivoElegido = e.target.files[0]
+                  setFile(archivoElegido)
+                  if (archivoElegido) {
+                    ejecutarIdentificacionPython(archivoElegido)
+                  }
+                }}
+                required
+              />
+              {file && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: '12px', color: theme.textSecondary }}>
+                  <span>
+                    Archivo seleccionado: <strong>{file.name}</strong> ({(file.size / 1024).toFixed(1)} KB)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => ejecutarIdentificacionPython(file)}
+                    disabled={analizandoPython}
+                    className="medix-btn medix-btn-secondary medix-btn-sm"
+                    style={{ height: '28px', fontSize: '11.5px' }}
+                  >
+                    {analizandoPython ? 'Analizando con Python...' : 'Volver a identificar con Python'}
+                  </button>
+                </div>
+              )}
+
+              {analizandoPython && (
+                <div className="medix-badge medix-badge-neutral" style={{ padding: '10px 12px', fontSize: '12.5px', fontWeight: 600 }}>
+                  Analizando documento con librería de Python (RapidOCR / PyPDF) para identificar el nombre y DNI del paciente...
+                </div>
+              )}
+
+              {!analizandoPython && resultadoPython && (
+                <div
+                  className={resultadoPython.detectado ? 'medix-badge-status' : 'medix-badge-alert'}
+                  style={{ padding: '10px 14px', borderRadius: '6px', fontSize: '12.5px', fontWeight: 600 }}
+                >
+                  <div>{resultadoPython.mensaje}</div>
+                  <div style={{ fontSize: '11.5px', fontWeight: 500, marginTop: '3px', opacity: 0.9 }}>
+                    {resultadoPython.detectado
+                      ? 'Verifique la Carpeta de Destino abajo. Si hubo algún error en la lectura, puede cambiar el destino antes de guardar.'
+                      : 'Por favor seleccione o corrija manualmente la Carpeta de Destino obligatoria abajo.'}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Paso 2: Carpeta de Destino Obligatoria (Permite cambiar el destino si hay un error) */}
+            <div
+              style={{
+                backgroundColor: theme.bgSubtle,
+                border: '1.5px solid var(--color-primary)',
+                borderRadius: '8px',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ fontSize: '13.5px', fontWeight: 700, color: theme.textHeading }}>
+                  2. Carpeta de Destino de la Historia Clínica (Campo Obligatorio) *
+                </div>
+                <span className="medix-badge medix-badge-primary">Destino Obligatorio</span>
+              </div>
+
+              <div>
+                <label htmlFor="upload-carpeta-destino" className="medix-label">
+                  Seleccionar o Cambiar Carpeta de Destino *
+                </label>
+                <select
+                  id="upload-carpeta-destino"
+                  className="medix-select"
+                  value={destinoSeleccionado}
+                  onChange={(e) => handleSeleccionarCarpetaDestino(e.target.value)}
+                  required
+                >
+                  <option value="">-- Seleccione la carpeta del paciente de destino (Obligatorio) --</option>
+                  {pacientes.map((p) => (
+                    <option key={p.id} value={String(p.dni).trim()}>
+                      Carpeta #{p.id} — {p.nombre || 'Paciente registrado'} (DNI: {p.dni}) · {(p.documentos || []).length} archivo(s)
+                    </option>
+                  ))}
+                  <option value="__NUEVA_CARPETA__">
+                    {pacienteDetectado
+                      ? `Usar carpeta existente de: ${pacienteDetectado.nombre || nombre || 'Paciente'} (DNI: ${dniLimpio})`
+                      : `Crear nueva carpeta de paciente con los datos de destino abajo${dniLimpio ? ` (DNI: ${dniLimpio})` : ''}`}
+                  </option>
+                </select>
+                <div style={{ marginTop: '5px', fontSize: '11.5px', color: theme.textSecondary }}>
+                  Si la identificación automática tuvo algún error, elija otra carpeta de la lista o corrija el DNI y Nombre de destino a continuación.
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
                 <div>
-                  <label htmlFor="scan-dni" className="medix-label">DNI del Paciente (8 dígitos) *</label>
+                  <label htmlFor="upload-dni" className="medix-label">DNI de Destino (8 dígitos) *</label>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <input
-                      id="scan-dni"
+                      id="upload-dni"
                       type="text"
                       inputMode="numeric"
-                      maxLength={8}
                       className="medix-input"
                       style={{ fontWeight: 700 }}
-                      value={formEmergencia.dni}
+                      value={dni}
                       onChange={(e) => actualizarCampo('dni', e.target.value.replace(/\D/g, ''))}
+                      maxLength={8}
                       required
                     />
                     <button
                       type="button"
-                      onClick={() => buscarDatosReniec(formEmergencia.dni, true)}
-                      disabled={consultandoReniec || formEmergencia.dni.length !== 8}
+                      onClick={() => buscarDatosReniec(dni, true)}
+                      disabled={consultandoReniec || String(dni || '').replace(/\D/g, '').length !== 8}
                       className="medix-btn medix-btn-primary medix-btn-sm"
                       style={{ height: '38px', flexShrink: 0 }}
                     >
@@ -1750,46 +1773,57 @@ export default function NuevaHistoriaView({
                 </div>
 
                 <div>
-                  <label htmlFor="scan-nombre" className="medix-label">Apellidos y Nombres</label>
+                  <label htmlFor="upload-nombre" className="medix-label">Nombre del Paciente de Destino *</label>
                   <input
-                    id="scan-nombre"
+                    id="upload-nombre"
                     type="text"
                     className="medix-input"
-                    value={formEmergencia.apellidos_nombres}
+                    value={nombre}
                     onChange={(e) => actualizarCampo('apellidos_nombres', e.target.value)}
+                    required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="scan-alergias" className="medix-label">Alergias (Opcional)</label>
+                  <label htmlFor="upload-alergias" className="medix-label">Alergias conocidas (Opcional)</label>
                   <input
-                    id="scan-alergias"
+                    id="upload-alergias"
                     type="text"
                     className="medix-input"
-                    value={formEmergencia.alergias}
+                    value={alergias}
                     onChange={(e) => actualizarCampo('alergias', e.target.value)}
                   />
                 </div>
               </div>
 
-              {estadoReniec.texto && (
-                <div>
-                  <span
-                    className={
-                      estadoReniec.tipo === 'error'
-                        ? 'medix-badge medix-badge-alert'
-                        : estadoReniec.tipo === 'exito'
-                        ? 'medix-badge medix-badge-status'
-                        : 'medix-badge medix-badge-neutral'
-                    }
-                  >
-                    {estadoReniec.texto}
-                  </span>
+              {dniLimpio.length === 8 && (
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-primary)' }}>
+                  {pacienteDetectado
+                    ? `Destino confirmado: Carpeta #${pacienteDetectado.id} — ${pacienteDetectado.nombre || nombre} (DNI ${dniLimpio}, ${(pacienteDetectado.documentos || []).length} archivo(s) actuales).`
+                    : `Destino confirmado: Se creará y abrirá la nueva Carpeta para ${nombre || 'el paciente'} (DNI ${dniLimpio}).`}
                 </div>
               )}
             </div>
 
-            {/* Paso 2: Captura con Cámara del Celular */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '8px' }}>
+              <button type="button" onClick={() => navigate('/dashboard')} className="medix-btn medix-btn-secondary">
+                Cancelar
+              </button>
+              <button type="submit" disabled={subiendo || analizandoPython} className="medix-btn medix-btn-primary">
+                {subiendo ? 'Guardando en carpeta de destino...' : 'Guardar en Carpeta de Destino y Ver Historia'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* MODO 3: ESCANEAR HISTORIA CLÍNICA CON LA CÁMARA DEL CELULAR         */}
+      {/* =================================================================== */}
+      {modoRegistro === 'escanear_celular' && (
+        <div className="medix-card" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <form onSubmit={handleGuardarEscaneoMovil} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Paso 1: Captura con Cámara del Celular + Identificación Automática con Python */}
             <div
               style={{
                 border: '1.5px dashed var(--border-color)',
@@ -1804,10 +1838,10 @@ export default function NuevaHistoriaView({
               }}
             >
               <div style={{ fontSize: '14px', fontWeight: 700, color: theme.textHeading }}>
-                2. Escanear Hoja con la Cámara del Celular
+                1. Escanear Hoja con la Cámara del Celular (Identificación Automática con Python)
               </div>
-              <p style={{ fontSize: '12px', color: theme.textSecondary, maxWidth: '520px' }}>
-                Tome una foto directa de la historia clínica física. El sistema aplicará automáticamente un filtro de alto contraste tipo escáner para limpiar sombras del papel.
+              <p style={{ fontSize: '12px', color: theme.textSecondary, maxWidth: '580px', margin: 0 }}>
+                Tome una foto de la historia clínica física. La librería de Python (RapidOCR) leerá automáticamente el nombre y DNI del paciente en la hoja para enviarla directo a su carpeta.
               </p>
 
               {/* Inputs ocultos para cámara nativa móvil y galería */}
@@ -1896,18 +1930,50 @@ export default function NuevaHistoriaView({
                   </button>
                 </div>
               )}
+
+              {analizandoPython && (
+                <div className="medix-badge medix-badge-neutral" style={{ padding: '10px 14px', fontSize: '12.5px', fontWeight: 600, width: '100%', maxWidth: '640px' }}>
+                  Identificando nombre y DNI del paciente en la foto con librería Python (RapidOCR)...
+                </div>
+              )}
+
+              {!analizandoPython && resultadoPython && (
+                <div
+                  className={resultadoPython.detectado ? 'medix-badge-status' : 'medix-badge-alert'}
+                  style={{ padding: '10px 14px', borderRadius: '6px', fontSize: '12.5px', fontWeight: 600, width: '100%', maxWidth: '640px', textAlign: 'left' }}
+                >
+                  <div>{resultadoPython.mensaje}</div>
+                  <div style={{ fontSize: '11.5px', fontWeight: 500, marginTop: '3px', opacity: 0.9 }}>
+                    {resultadoPython.detectado
+                      ? 'La carpeta del paciente fue seleccionada automáticamente abajo. Si hubo un error, puede cambiar el destino.'
+                      : 'Seleccione o ingrese manualmente la Carpeta de Destino obligatoria abajo.'}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Paso 3: Páginas escaneadas, filtro de contraste y rotación */}
+            {/* Paso 2: Páginas escaneadas, filtro de contraste y rotación */}
             {paginasEscaneadas.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: theme.textHeading }}>
-                    3. Hojas Capturadas ({paginasEscaneadas.length})
+                    Hojas Capturadas ({paginasEscaneadas.length})
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '12px', color: theme.textSecondary, fontWeight: 600 }}>Modo de imagen:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const blob = dataUrlToBlob(paginasEscaneadas[0].originalUrl)
+                        const f = new File([blob], `Reanalisis_Celular.jpg`, { type: 'image/jpeg' })
+                        ejecutarIdentificacionPython(f)
+                      }}
+                      disabled={analizandoPython}
+                      className="medix-btn medix-btn-secondary medix-btn-sm"
+                    >
+                      {analizandoPython ? 'Analizando...' : 'Re-identificar con Python'}
+                    </button>
+                    <span style={{ fontSize: '12px', color: theme.textSecondary, fontWeight: 600 }}>Modo:</span>
                     <button
                       type="button"
                       onClick={() => cambiarFiltroEscaner('documento')}
@@ -1975,6 +2041,121 @@ export default function NuevaHistoriaView({
               </div>
             )}
 
+            {/* Paso 3: Carpeta de Destino Obligatoria (Autocompletada por Python o editable si hay error) */}
+            <div
+              style={{
+                backgroundColor: theme.bgSubtle,
+                border: '1.5px solid var(--color-primary)',
+                borderRadius: '8px',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ fontSize: '13.5px', fontWeight: 700, color: theme.textHeading }}>
+                  2. Carpeta de Destino de la Historia Clínica (Campo Obligatorio) *
+                </div>
+                <span className="medix-badge medix-badge-primary">Destino Obligatorio</span>
+              </div>
+
+              <div>
+                <label htmlFor="scan-carpeta-destino" className="medix-label">
+                  Carpeta del Paciente de Destino *
+                </label>
+                <select
+                  id="scan-carpeta-destino"
+                  className="medix-select"
+                  value={destinoSeleccionado}
+                  onChange={(e) => handleSeleccionarCarpetaDestino(e.target.value)}
+                  required
+                >
+                  <option value="">-- Seleccione la carpeta del paciente de destino (Obligatorio) --</option>
+                  {pacientes.map((p) => (
+                    <option key={p.id} value={String(p.dni).trim()}>
+                      Carpeta #{p.id} — {p.nombre || 'Paciente registrado'} (DNI: {p.dni}) · {(p.documentos || []).length} archivo(s)
+                    </option>
+                  ))}
+                  <option value="__NUEVA_CARPETA__">
+                    {pacienteDetectado
+                      ? `Usar carpeta existente de: ${pacienteDetectado.nombre || formEmergencia.apellidos_nombres || 'Paciente'} (DNI: ${formEmergencia.dni})`
+                      : `Crear nueva carpeta con el DNI y Nombre indicados abajo${formEmergencia.dni ? ` (DNI: ${formEmergencia.dni})` : ''}`}
+                  </option>
+                </select>
+                <div style={{ marginTop: '4px', fontSize: '11.5px', color: theme.textSecondary }}>
+                  Si hubo algún error al escanear el nombre con Python, puede cambiar la carpeta de destino aquí o corregir el DNI y Nombre abajo.
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                <div>
+                  <label htmlFor="scan-dni" className="medix-label">DNI de Destino (8 dígitos) *</label>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <input
+                      id="scan-dni"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={8}
+                      className="medix-input"
+                      style={{ fontWeight: 700 }}
+                      value={formEmergencia.dni}
+                      onChange={(e) => actualizarCampo('dni', e.target.value.replace(/\D/g, ''))}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => buscarDatosReniec(formEmergencia.dni, true)}
+                      disabled={consultandoReniec || formEmergencia.dni.length !== 8}
+                      className="medix-btn medix-btn-primary medix-btn-sm"
+                      style={{ height: '38px', flexShrink: 0 }}
+                    >
+                      {consultandoReniec ? '...' : 'RENIEC'}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="scan-nombre" className="medix-label">Nombre del Paciente de Destino *</label>
+                  <input
+                    id="scan-nombre"
+                    type="text"
+                    className="medix-input"
+                    value={formEmergencia.apellidos_nombres}
+                    onChange={(e) => actualizarCampo('apellidos_nombres', e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="scan-alergias" className="medix-label">Alergias (Opcional)</label>
+                  <input
+                    id="scan-alergias"
+                    type="text"
+                    className="medix-input"
+                    value={formEmergencia.alergias}
+                    onChange={(e) => actualizarCampo('alergias', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {estadoReniec.texto && (
+                <div>
+                  <span
+                    className={
+                      estadoReniec.tipo === 'error'
+                        ? 'medix-badge medix-badge-alert'
+                        : estadoReniec.tipo === 'exito'
+                        ? 'medix-badge medix-badge-status'
+                        : 'medix-badge medix-badge-neutral'
+                    }
+                  >
+                    {estadoReniec.texto}
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '10px', borderTop: theme.border, flexWrap: 'wrap' }}>
               <button
                 type="button"
@@ -1985,12 +2166,12 @@ export default function NuevaHistoriaView({
               </button>
               <button
                 type="submit"
-                disabled={subiendoEscaneo || paginasEscaneadas.length === 0}
+                disabled={subiendoEscaneo || analizandoPython || paginasEscaneadas.length === 0}
                 className="medix-btn medix-btn-primary"
               >
                 {subiendoEscaneo
-                  ? 'Guardando escaneo en expediente...'
-                  : `Guardar Escaneo en el Expediente (${paginasEscaneadas.length})`}
+                  ? 'Guardando escaneo en carpeta...'
+                  : `Guardar en Carpeta de Destino y Ver Historia (${paginasEscaneadas.length})`}
               </button>
             </div>
           </form>
