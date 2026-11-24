@@ -62,6 +62,18 @@ export async function subirDocumento(authFetch, formData) {
   return data
 }
 
+export async function identificarPacienteDocumento(authFetch, archivoFile) {
+  const fd = new FormData()
+  fd.append('archivo', archivoFile)
+  const res = await authFetch('/documentos/identificar-paciente', {
+    method: 'POST',
+    body: fd
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.mensaje || 'No se pudo analizar el documento')
+  return data
+}
+
 export async function eliminarDocumento(authFetch, id) {
   const res = await authFetch(`/documentos/${id}`, { method: 'DELETE' })
   const data = await res.json()

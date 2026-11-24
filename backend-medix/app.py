@@ -860,8 +860,210 @@ def eliminar_paciente(id):
         return jsonify({"mensaje": f"Error al eliminar paciente: {str(e)}"}), 500
 
 # ==========================================
-# CRUD DOCUMENTOS (CON NOMBRE ORIGINAL)
+# CRUD DOCUMENTOS (CON NOMBRE ORIGINAL Y RECONOCIMIENTO PYTHON OCR/PDF/DOCX)
 # ==========================================
+_ocr_engine = None
+
+def obtener_ocr_engine():
+    global _ocr_engine
+    if _ocr_engine is None:
+        try:
+            from rapidocr_onnxruntime import RapidOCR
+            _ocr_engine = RapidOCR()
+        except Exception as e:
+            print(f"Aviso inicializando RapidOCR: {e}")
+    return _ocr_engine
+
+def extraer_dni_y_nombre_de_texto(lineas, filename=""):
+    texto_unido = "\n".join(lineas)
+    dni_detectado = ""
+    nombre_detectado = ""
+
+    # 1. Buscar DNI explícito (8 dígitos) junto a etiquetas clave
+    patrones_dni = [
+        r'DNI\s*[:.\-]?\s*(\d{8})',
+        r'(\d{8})\s*-\s*Manual',
+        r'Historia\s*[:.\-]?\s*(\d{8})',
+        r'\b(\d{8})\b'
+    ]
+    for pat in patrones_dni:
+        for m in re.finditer(pat, texto_unido, re.IGNORECASE):
+            cand = m.group(1)
+            # Evitar confundir con fechas tipo 20261124
+            if not cand.startswith(('2024', '2025', '2026', '199', '200')):
+                dni_detectado = cand
+                break
+        if dni_detectado:
+            break
+
+    if not dni_detectado and filename:
+        m_fn = re.search(r'(\d{8})', filename)
+        if m_fn:
+            dni_detectado = m_fn.group(1)
+
+    # 2. Buscar Nombre del Paciente en las líneas extraídas
+    palabras_excluidas = {
+        "MINISTERIO DE SALUD", "SISGALENPLUS", "HOSP. SAN JUAN DE DIOS", "HOSPITAL SAN JUAN",
+        "HISTORIA CLINICA", "HISTORIA CLÍNICA", "HISTORIA CLINICA DE EMERGENCIA",
+        "FUNCIONES VITALES", "PRESION ARTERIAL", "ANAMNESIS", "ANTECEDENTES",
+        "EXAMEN FISICO", "EXAMENES AUXILIARES", "PLAN DE TRABAJO", "TERAPEUTICA",
+        "NRO HISTORIA", "NRO CUENTA", "APELLIDOS Y NOMBRES", "APELLIDOSYNOMBRES",
+        "FECHA INGRESO", "HORA INGRESO", "CONSULTORIO MEDICO", "FECHA NACIMIENTO"
+    }
+
+    for idx, linea in enumerate(lineas):
+        limpia = linea.strip()
+        # Si la línea contiene "Apellidos y Nombres: XXX"
+        m_nom = re.search(r'(?:Apellidos\s*y\s*Nombres|Paciente|Nombre\s*del\s*Paciente)\s*[:.\-]?\s*([A-ZÁÉÍÓÚÑa-záéíóúñ\s]{5,70})', limpia, re.IGNORECASE)
+        if m_nom:
+            cand_nom = m_nom.group(1).strip()
+            if len(cand_nom) >= 5 and not any(ex in cand_nom.upper() for ex in palabras_excluidas):
+                nombre_detectado = cand_nom.upper()
+                break
+
+        # En OCR de historias de emergencia, el nombre suele estar justo antes o después de "ApellidosYNombres" o después de "Nro Historia"
+        if re.search(r'Apellidos\s*Y?\s*Nombres', limpia, re.IGNORECASE):
+            vecinos = []
+            if idx > 0:
+                vecinos.append(lineas[idx - 1].strip())
+            if idx > 1:
+                vecinos.append(lineas[idx - 2].strip())
+            if idx + 1 < len(lineas):
+                vecinos.append(lineas[idx + 1].strip())
+            for v in vecinos:
+                v_up = v.upper()
+                if (
+                    len(v) >= 6
+                    and re.match(r'^[A-ZÁÉÍÓÚÑa-záéíóúñ\s]{6,70}$', v)
+                    and not any(ex in v_up for ex in palabras_excluidas)
+                    and v_up not in {"EDAD", "SEXO", "MASCULINO", "FEMENINO", "MANUAL"}
+                ):
+                    # Separar palabras pegadas tipo YAVARRUTHKarina
+                    v_sep = re.sub(r'([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])', r'\1 \2', v)
+                    nombre_detectado = v_sep.upper().strip()
+                    break
+            if nombre_detectado:
+                break
+
+    return dni_detectado, nombre_detectado
+
+@app.route('/api/documentos/identificar-paciente', methods=['POST'])
+@token_required
+def identificar_paciente_documento():
+    import io
+    archivo = request.files.get('archivo')
+    if not archivo or not archivo.filename:
+        return jsonify({"mensaje": "No se envió ningún archivo para analizar"}), 400
+
+    nombre_original = archivo.filename
+    extension = nombre_original.rsplit('.', 1)[-1].lower() if '.' in nombre_original else ''
+    raw_bytes = archivo.read()
+    lineas_extraidas = []
+    metodo_usado = "Python Document Analyzer"
+
+    try:
+        if extension == 'pdf':
+            from pypdf import PdfReader
+            reader = PdfReader(io.BytesIO(raw_bytes))
+            metodo_usado = "Python pypdf"
+            for page in reader.pages[:3]:
+                txt = page.extract_text() or ''
+                if txt.strip():
+                    lineas_extraidas.extend([l.strip() for l in txt.splitlines() if l.strip()])
+            # Si es un PDF escaneado sin texto embebido, extraer imagen de la primera página y pasar por RapidOCR
+            if not lineas_extraidas and len(reader.pages) > 0:
+                ocr = obtener_ocr_engine()
+                if ocr:
+                    for img_file in reader.pages[0].images[:2]:
+                        res_ocr, _ = ocr(img_file.data)
+                        if res_ocr:
+                            metodo_usado = "Python pypdf + RapidOCR"
+                            lineas_extraidas.extend([item[1] for item in res_ocr if item and len(item) > 1])
+        elif extension in ('docx', 'doc'):
+            import docx
+            doc_word = docx.Document(io.BytesIO(raw_bytes))
+            metodo_usado = "Python python-docx"
+            for p in doc_word.paragraphs:
+                if p.text.strip():
+                    lineas_extraidas.append(p.text.strip())
+            for table in doc_word.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        if cell.text.strip():
+                            lineas_extraidas.extend([l.strip() for l in cell.text.splitlines() if l.strip()])
+        elif extension in ('jpg', 'jpeg', 'png', 'webp', 'bmp'):
+            ocr = obtener_ocr_engine()
+            if ocr:
+                metodo_usado = "Python RapidOCR"
+                res_ocr, _ = ocr(raw_bytes)
+                if res_ocr:
+                    lineas_extraidas.extend([item[1] for item in res_ocr if item and len(item) > 1])
+        elif extension in ('txt', 'html', 'htm'):
+            metodo_usado = "Python Text/HTML Parser"
+            texto_plano = raw_bytes.decode('utf-8', errors='ignore')
+            texto_sin_tags = re.sub(r'<[^>]+>', ' ', texto_plano)
+            lineas_extraidas.extend([l.strip() for l in texto_sin_tags.splitlines() if l.strip()])
+    except Exception as e:
+        print(f"Aviso analizando documento con Python ({extension}): {e}")
+
+    dni_det, nombre_det = extraer_dni_y_nombre_de_texto(lineas_extraidas, nombre_original)
+
+    # Cruzar con base de datos local de Pacientes
+    paciente_bd = None
+    if dni_det:
+        paciente_bd = Paciente.query.filter_by(dni=dni_det).first()
+
+    if not paciente_bd and nombre_det:
+        # Buscar coincidencia por nombre en la BD
+        todos_pac = Paciente.query.all()
+        for p in todos_pac:
+            if p.nombre and (p.nombre.upper() in nombre_det.upper() or nombre_det.upper() in p.nombre.upper()):
+                paciente_bd = p
+                if not dni_det:
+                    dni_det = p.dni
+                break
+
+    # Si aún no hay coincidencia, buscar si algún DNI o nombre de la BD aparece literalmente en el texto extraído
+    if not paciente_bd and lineas_extraidas:
+        texto_completo_up = "\n".join(lineas_extraidas).upper()
+        for p in Paciente.query.all():
+            if p.dni and p.dni in texto_completo_up:
+                paciente_bd = p
+                dni_det = p.dni
+                break
+            if p.nombre and len(p.nombre.strip()) >= 5 and p.nombre.strip().upper() in texto_completo_up:
+                paciente_bd = p
+                dni_det = p.dni
+                nombre_det = p.nombre.strip().upper()
+                break
+
+    # Si se detectó un DNI de 8 dígitos, completar o normalizar el nombre oficial con RENIEC / BD
+    if paciente_bd and paciente_bd.nombre:
+        nombre_det = paciente_bd.nombre.strip().upper()
+    elif dni_det and len(dni_det) == 8:
+        if dni_det in CACHE_RENIEC_NOMBRES:
+            nombre_det = CACHE_RENIEC_NOMBRES[dni_det]
+        else:
+            try:
+                with app.test_request_context(f'/api/reniec/{dni_det}'):
+                    resp_reniec, status_code = consultar_reniec(dni_det)
+                    if status_code == 200:
+                        datos_r = resp_reniec.get_json() or {}
+                        if datos_r.get('apellidos_nombres'):
+                            nombre_det = datos_r['apellidos_nombres']
+            except Exception:
+                pass
+
+    return jsonify({
+        "detectado": bool(dni_det or nombre_det),
+        "dni": dni_det or "",
+        "nombre": nombre_det or "",
+        "paciente_id": paciente_bd.id if paciente_bd else None,
+        "carpeta_existente": bool(paciente_bd),
+        "metodo": metodo_usado,
+        "lineas_muestra": lineas_extraidas[:10]
+    }), 200
+
 @app.route('/api/documentos', methods=['GET'])
 @token_required
 def listar_documentos():

@@ -773,7 +773,7 @@ export default function UsuariosView({
                               title={`Editar credenciales de ${u.username}`}
                               className="medix-btn medix-btn-secondary medix-btn-sm"
                             >
-                              Editar credenciales
+                              Editar
                             </button>
 
                             {esAdmin ? (

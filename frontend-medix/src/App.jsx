@@ -275,7 +275,7 @@ function AppContent() {
         setCarpetasAbiertas(prev => new Set([...prev, pacId]))
       }
       cargarDiagnostico()
-      navigate('/dashboard')
+      navigate(/dashboard?dni=${encodeURIComponent(dniLimpio)})
     } catch (error) {
       notificar('error', error.message || 'Error al subir el documento.')
     } finally {
@@ -786,23 +786,25 @@ function AppContent() {
         </Routes>
       </main>
 
-      {/* 3. VISOR LATERAL CON CABECERA FIJA Y LÍNEA DE TIEMPO */}
-      <VisorLateral
-        documentoEnVista={documentoEnVista}
-        paciente={
-          documentoEnVista?.paciente ||
-          pacientes.find(p => p.id === documentoEnVista?.paciente_id || String(p.dni) === String(documentoEnVista?.paciente_dni)) ||
-          null
-        }
-        onCerrar={() => setDocumentoEnVista(null)}
-        onSeleccionarDocumento={(doc) => {
-          const pac = pacientes.find(p => p.id === doc.paciente_id || String(p.dni) === String(doc.paciente_dni))
-          setDocumentoEnVista({
-            ...doc,
-            paciente: pac || null
-          })
-        }}
-      />
+      {/* 3. VISOR LATERAL CON CABECERA FIJA Y LÍNEA DE TIEMPO (fuera del dashboard, ya que el dashboard usa el panel derecho integrado) */}
+      {location.pathname !== '/dashboard' && (
+        <VisorLateral
+          documentoEnVista={documentoEnVista}
+          paciente={
+            documentoEnVista?.paciente ||
+            pacientes.find(p => p.id === documentoEnVista?.paciente_id || String(p.dni) === String(documentoEnVista?.paciente_dni)) ||
+            null
+          }
+          onCerrar={() => setDocumentoEnVista(null)}
+          onSeleccionarDocumento={(doc) => {
+            const pac = pacientes.find(p => p.id === doc.paciente_id || String(p.dni) === String(doc.paciente_dni))
+            setDocumentoEnVista({
+              ...doc,
+              paciente: pac || null
+            })
+          }}
+        />
+      )}
 
       {/* 4. MODAL DE SOLICITUD DE ELIMINACIÓN */}
       {pacienteParaSolicitud && (

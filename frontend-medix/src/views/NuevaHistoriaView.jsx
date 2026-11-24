@@ -264,6 +264,11 @@ export default function NuevaHistoriaView({
   const [alertaLocal, setAlertaLocal] = useState({ tipo: '', texto: '' })
   const ultimoDniConsultadoRef = useRef('')
 
+  // Estados de Identificación Automática con Librería de Python (RapidOCR / PyPDF / python-docx)
+  const [analizandoPython, setAnalizandoPython] = useState(false)
+  const [resultadoPython, setResultadoPython] = useState(null)
+  const [destinoSeleccionado, setDestinoSeleccionado] = useState('')
+
   const [formEmergencia, setFormEmergencia] = useState(() =>
     crearEstadoInicialEmergencia(dni, nombre, alergias, usuario)
   )
@@ -495,7 +500,7 @@ export default function NuevaHistoriaView({
         texto: `Historia Clínica de Emergencia (${formEmergencia.codigo_atencion}) guardada exitosamente.`
       })
       setTimeout(() => {
-        window.location.href = '/dashboard'
+        window.location.href = `/dashboard?dni=${encodeURIComponent(dniLimpio)}`
       }, 900)
     } catch (err) {
       setAlertaLocal({ tipo: 'error', texto: err.message || 'Error al guardar la Historia Clínica de Emergencia.' })
@@ -503,6 +508,93 @@ export default function NuevaHistoriaView({
       setGuardandoFormato(false)
     }
   }
+
+  // =========================================================================
+  // IDENTIFICACIÓN AUTOMÁTICA DEL PACIENTE CON LIBRERÍA DE PYTHON
+  // =========================================================================
+  const ejecutarIdentificacionPython = async (archivoAnalizar) => {
+    if (!archivoAnalizar) return
+    setAnalizandoPython(true)
+    setResultadoPython(null)
+    try {
+      const res = await api.identificarPacienteDocumento(authFetch, archivoAnalizar)
+      const dniDetectado = String(res.dni || '').replace(/\D/g, '')
+      const nombreDetectado = String(res.nombre || '').trim()
+
+      if (dniDetectado && dniDetectado.length === 8) {
+        ultimoDniConsultadoRef.current = dniDetectado
+        actualizarCampo('dni', dniDetectado)
+      }
+      if (nombreDetectado) {
+        actualizarCampo('apellidos_nombres', nombreDetectado)
+      }
+
+      if (dniDetectado && dniDetectado.length === 8) {
+        const carpetaExistente = pacientes.find(p => p.dni && String(p.dni).trim() === dniDetectado)
+        setDestinoSeleccionado(carpetaExistente ? dniDetectado : '__NUEVA_CARPETA__')
+      }
+
+      setResultadoPython({
+        detectado: Boolean(res.detectado),
+        dni: dniDetectado,
+        nombre: nombreDetectado,
+        paciente_id: res.paciente_id || null,
+        carpeta_existente: Boolean(res.carpeta_existente),
+        metodo: res.metodo || 'Python OCR',
+        mensaje: res.detectado
+          ? `Paciente identificado con Python (${res.metodo || 'OCR'}): ${nombreDetectado || 'Paciente'} ${dniDetectado ? `(DNI ${dniDetectado})` : ''}`
+          : 'No se pudo identificar automáticamente el nombre o DNI en el documento. Seleccione o ingrese la Carpeta de Destino obligatoria abajo.'
+      })
+
+      // Si Python detectó el DNI de 8 dígitos pero el nombre estaba incompleto, complementar con RENIEC
+      if (dniDetectado && dniDetectado.length === 8 && !nombreDetectado) {
+        buscarDatosReniec(dniDetectado, true)
+      }
+    } catch (err) {
+      setResultadoPython({
+        detectado: false,
+        dni: '',
+        nombre: '',
+        metodo: 'Python OCR',
+        mensaje: `Aviso al analizar con Python: ${err.message || 'Seleccione manualmente la Carpeta de Destino obligatoria.'}`
+      })
+    } finally {
+      setAnalizandoPython(false)
+    }
+  }
+
+  const handleSeleccionarCarpetaDestino = (valorDestino) => {
+    setDestinoSeleccionado(valorDestino)
+    if (!valorDestino || valorDestino === '__NUEVA_CARPETA__') {
+      return
+    }
+    const pacCarpeta = pacientes.find(p => p.dni && String(p.dni).trim() === String(valorDestino).trim())
+    if (pacCarpeta) {
+      const dniPac = String(pacCarpeta.dni).trim()
+      const nomPac = String(pacCarpeta.nombre || '').trim()
+      ultimoDniConsultadoRef.current = dniPac
+      actualizarCampo('dni', dniPac)
+      if (nomPac) {
+        actualizarCampo('apellidos_nombres', nomPac)
+      } else {
+        buscarDatosReniec(dniPac, true)
+      }
+      if (pacCarpeta.alergias) {
+        actualizarCampo('alergias', pacCarpeta.alergias)
+      }
+    }
+  }
+
+  // Sincronizar selector de carpeta de destino cuando el usuario escribe un DNI válido de 8 dígitos
+  useEffect(() => {
+    const dniActual = String(formEmergencia.dni || dni || '').replace(/\D/g, '')
+    if (dniActual.length === 8) {
+      const existe = pacientes.find(p => p.dni && String(p.dni).trim() === dniActual)
+      setDestinoSeleccionado(existe ? dniActual : '__NUEVA_CARPETA__')
+    } else if (!dniActual) {
+      setDestinoSeleccionado('')
+    }
+  }, [formEmergencia.dni, dni, pacientes])
 
   // =========================================================================
   // LÓGICA DEL ESCÁNER MÓVIL CON CÁMARA DEL CELULAR
@@ -573,9 +665,11 @@ export default function NuevaHistoriaView({
   const agregarArchivosAlEscaner = async (fileList) => {
     if (!fileList || fileList.length === 0) return
     const nuevas = []
+    let primerArchivoOriginal = null
     for (let i = 0; i < fileList.length; i++) {
       const f = fileList[i]
       if (!f.type.startsWith('image/')) continue
+      if (!primerArchivoOriginal) primerArchivoOriginal = f
       const dataUrl = await new Promise((res) => {
         const reader = new FileReader()
         reader.onload = (ev) => res(ev.target.result)
@@ -591,6 +685,9 @@ export default function NuevaHistoriaView({
     }
     if (nuevas.length > 0) {
       setPaginasEscaneadas(prev => [...prev, ...nuevas])
+      if (primerArchivoOriginal) {
+        ejecutarIdentificacionPython(primerArchivoOriginal)
+      }
     }
   }
 
@@ -686,6 +783,14 @@ export default function NuevaHistoriaView({
         rotacion: 0
       }
     ])
+    // Analizar imagen capturada con la librería de Python para identificar paciente
+    try {
+      const blobCaptura = dataUrlToBlob(originalUrl)
+      const archivoCaptura = new File([blobCaptura], `Captura_Celular_${Date.now()}.jpg`, { type: 'image/jpeg' })
+      ejecutarIdentificacionPython(archivoCaptura)
+    } catch {
+      // Ignorar si falla la conversión
+    }
   }
 
   const dataUrlToBlob = (dataUrl) => {
@@ -703,8 +808,17 @@ export default function NuevaHistoriaView({
   const handleGuardarEscaneoMovil = async (e) => {
     e.preventDefault()
     const dniGuardar = String(formEmergencia.dni || dni || '').replace(/\D/g, '')
+    const nombrePacienteGuardar = (formEmergencia.apellidos_nombres || nombre || '').trim()
+    if (!destinoSeleccionado) {
+      setAlertaLocal({ tipo: 'error', texto: 'El campo Carpeta de Destino de la Historia Clínica es obligatorio.' })
+      return
+    }
     if (dniGuardar.length !== 8) {
-      setAlertaLocal({ tipo: 'error', texto: 'Ingrese el DNI del paciente (8 dígitos) antes de guardar el escaneo.' })
+      setAlertaLocal({ tipo: 'error', texto: 'El DNI de la Carpeta de Destino (8 dígitos) es obligatorio.' })
+      return
+    }
+    if (!nombrePacienteGuardar) {
+      setAlertaLocal({ tipo: 'error', texto: 'El Nombre del Paciente de la Carpeta de Destino es obligatorio.' })
       return
     }
     if (paginasEscaneadas.length === 0) {
@@ -715,7 +829,6 @@ export default function NuevaHistoriaView({
     setSubiendoEscaneo(true)
     setAlertaLocal({ tipo: '', texto: '' })
     try {
-      const nombrePacienteGuardar = (formEmergencia.apellidos_nombres || nombre || '').trim()
       const alergiasGuardar = (formEmergencia.alergias || alergias || '').trim()
       const fechaTag = new Date().toISOString().slice(0, 10)
 
@@ -755,16 +868,37 @@ export default function NuevaHistoriaView({
       detenerCamaraViva()
       setAlertaLocal({
         tipo: 'exito',
-        texto: `Escaneo móvil (${paginasEscaneadas.length} página${paginasEscaneadas.length !== 1 ? 's' : ''}) guardado exitosamente en el expediente DNI ${dniGuardar}.`
+        texto: `Escaneo móvil guardado en la Carpeta de ${nombrePacienteGuardar} (DNI ${dniGuardar}). Dirigiendo a su carpeta...`
       })
       setTimeout(() => {
-        window.location.href = '/dashboard'
-      }, 850)
+        window.location.href = `/dashboard?dni=${encodeURIComponent(dniGuardar)}`
+      }, 750)
     } catch (err) {
       setAlertaLocal({ tipo: 'error', texto: err.message || 'Error al subir el documento escaneado.' })
     } finally {
       setSubiendoEscaneo(false)
     }
+  }
+
+  const handleSubmitArchivoEscaneado = (e) => {
+    e.preventDefault()
+    const dniActual = String(dni || formEmergencia.dni || '').replace(/\D/g, '')
+    const nombreActual = String(nombre || formEmergencia.apellidos_nombres || '').trim()
+    if (!destinoSeleccionado) {
+      setAlertaLocal({ tipo: 'error', texto: 'El campo Carpeta de Destino de la Historia Clínica es obligatorio.' })
+      return
+    }
+    if (dniActual.length !== 8) {
+      setAlertaLocal({ tipo: 'error', texto: 'El DNI de la Carpeta de Destino (8 dígitos) es obligatorio.' })
+      return
+    }
+    if (!nombreActual) {
+      setAlertaLocal({ tipo: 'error', texto: 'El Nombre del Paciente de la Carpeta de Destino es obligatorio.' })
+      return
+    }
+    if (setDni) setDni(dniActual)
+    if (setNombre) setNombre(nombreActual)
+    handleUpload(e)
   }
 
   const dniLimpio = (dni || '').trim()
