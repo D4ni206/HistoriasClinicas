@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
+import * as api from '../api/pacientesService'
 
 export default function UsuariosView({
   usuarios,
@@ -12,8 +14,68 @@ export default function UsuariosView({
   cargarUsuarios
 }) {
   const { theme, temaOscuro } = useTheme()
+  const { authFetch } = useAuth()
   const [filtroBusqueda, setFiltroBusqueda] = useState('')
   const [mostrarPassword, setMostrarPassword] = useState(false)
+
+  // Estados para Edición de Credenciales de Usuario (Administrador)
+  const [usuarioEditando, setUsuarioEditando] = useState(null)
+  const [formEdicion, setFormEdicion] = useState({
+    username: '',
+    password: '',
+    nombres_completos: '',
+    rol: 'Médico General',
+    telefono: '',
+    correo: ''
+  })
+  const [mostrarPasswordEdicion, setMostrarPasswordEdicion] = useState(false)
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false)
+  const [alertaEdicion, setAlertaEdicion] = useState({ tipo: '', texto: '' })
+
+  const abrirModalEdicion = (u) => {
+    setUsuarioEditando(u)
+    setFormEdicion({
+      username: u.username || '',
+      password: '',
+      nombres_completos: u.nombres_completos || '',
+      rol: u.rol || 'Médico General',
+      telefono: u.telefono || '',
+      correo: u.correo || ''
+    })
+    setMostrarPasswordEdicion(false)
+    setAlertaEdicion({ tipo: '', texto: '' })
+  }
+
+  const handleGuardarEdicionUsuario = async (e) => {
+    e.preventDefault()
+    if (!usuarioEditando) return
+    if (!formEdicion.username.trim()) {
+      setAlertaEdicion({ tipo: 'error', texto: 'El nombre de usuario no puede estar vacío.' })
+      return
+    }
+    setGuardandoEdicion(true)
+    setAlertaEdicion({ tipo: '', texto: '' })
+    try {
+      const res = await api.actualizarUsuario(authFetch, usuarioEditando.id, {
+        username: formEdicion.username.trim(),
+        password: formEdicion.password.trim(),
+        nombres_completos: formEdicion.nombres_completos.trim(),
+        rol: formEdicion.rol,
+        telefono: formEdicion.telefono.trim(),
+        correo: formEdicion.correo.trim()
+      })
+      setAlertaEdicion({ tipo: 'exito', texto: res.mensaje || 'Credenciales actualizadas correctamente.' })
+      if (cargarUsuarios) await cargarUsuarios()
+      setTimeout(() => {
+        setUsuarioEditando(null)
+        setAlertaEdicion({ tipo: '', texto: '' })
+      }, 700)
+    } catch (err) {
+      setAlertaEdicion({ tipo: 'error', texto: err.message || 'No se pudieron actualizar las credenciales.' })
+    } finally {
+      setGuardandoEdicion(false)
+    }
+  }
 
   // Filtrado de usuarios por nombre, usuario, rol o teléfono
   const usuariosFiltrados = useMemo(() => {
@@ -704,53 +766,39 @@ export default function UsuariosView({
 
                         {/* Acción */}
                         <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                          {esAdmin ? (
-                            <span style={{
-                              fontSize: '11px',
-                              color: theme.textMuted,
-                              fontWeight: '500',
-                              padding: '3px 8px',
-                              borderRadius: '4px',
-                              backgroundColor: theme.bgSubtle,
-                              border: theme.border
-                            }}>
-                              Protegido
-                            </span>
-                          ) : (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
                             <button
                               type="button"
-                              onClick={() => handleEliminarUsuario(u.id, u.username)}
-                              title={`Eliminar usuario ${u.username}`}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '4px 8px',
-                                backgroundColor: temaOscuro ? 'rgba(244, 63, 94, 0.1)' : 'transparent',
-                                color: temaOscuro ? '#fda4af' : '#e11d48',
-                                border: temaOscuro ? '1px solid rgba(244, 63, 94, 0.25)' : '1px solid #fecdd3',
-                                borderRadius: '6px',
-                                fontSize: '11.5px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s ease'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = temaOscuro ? 'rgba(244, 63, 94, 0.2)' : '#ffe4e6'
-                                e.currentTarget.style.borderColor = temaOscuro ? 'rgba(244, 63, 94, 0.4)' : '#fda4af'
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = temaOscuro ? 'rgba(244, 63, 94, 0.1)' : 'transparent'
-                                e.currentTarget.style.borderColor = temaOscuro ? 'rgba(244, 63, 94, 0.25)' : '#fecdd3'
-                              }}
+                              onClick={() => abrirModalEdicion(u)}
+                              title={`Editar credenciales de ${u.username}`}
+                              className="medix-btn medix-btn-secondary medix-btn-sm"
                             >
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                              </svg>
-                              <span>Eliminar</span>
+                              Editar credenciales
                             </button>
-                          )}
+
+                            {esAdmin ? (
+                              <span style={{
+                                fontSize: '11px',
+                                color: theme.textMuted,
+                                fontWeight: '500',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                backgroundColor: theme.bgSubtle,
+                                border: theme.border
+                              }}>
+                                Protegido
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleEliminarUsuario(u.id, u.username)}
+                                title={`Eliminar usuario ${u.username}`}
+                                className="medix-btn medix-btn-danger medix-btn-sm"
+                              >
+                                Eliminar
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )
@@ -761,6 +809,179 @@ export default function UsuariosView({
           </div>
         )}
       </div>
+
+      {/* 4. MODAL PARA EDITAR CREDENCIALES Y DATOS DE USUARIO */}
+      {usuarioEditando && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(11, 37, 69, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 200,
+            padding: '16px'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !guardandoEdicion) setUsuarioEditando(null)
+          }}
+        >
+          <div
+            className="medix-card"
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              padding: '22px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: theme.borderSubtle, paddingBottom: '12px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: theme.textHeading }}>
+                  Editar Credenciales de Usuario
+                </h3>
+                <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: theme.textSecondary }}>
+                  Cuenta seleccionada: <strong>{usuarioEditando.username}</strong> (ID #{usuarioEditando.id})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUsuarioEditando(null)}
+                className="medix-btn medix-btn-secondary medix-btn-sm"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            {alertaEdicion.texto && (
+              <div
+                role="alert"
+                className={alertaEdicion.tipo === 'error' ? 'medix-badge-alert' : 'medix-badge-status'}
+                style={{ padding: '10px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600 }}
+              >
+                {alertaEdicion.texto}
+              </div>
+            )}
+
+            <form onSubmit={handleGuardarEdicionUsuario} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label htmlFor="edit-username" className="medix-label">Nombre de Usuario *</label>
+                  <input
+                    id="edit-username"
+                    type="text"
+                    className="medix-input"
+                    value={formEdicion.username}
+                    onChange={(e) => setFormEdicion({ ...formEdicion, username: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label htmlFor="edit-password" className="medix-label" style={{ marginBottom: 0 }}>
+                      Nueva Contraseña
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setMostrarPasswordEdicion(prev => !prev)}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                    >
+                      {mostrarPasswordEdicion ? 'Ocultar' : 'Mostrar'}
+                    </button>
+                  </div>
+                  <input
+                    id="edit-password"
+                    type={mostrarPasswordEdicion ? 'text' : 'password'}
+                    className="medix-input"
+                    placeholder="Dejar vacío para no cambiar"
+                    value={formEdicion.password}
+                    onChange={(e) => setFormEdicion({ ...formEdicion, password: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="edit-nombres" className="medix-label">Nombres Completos</label>
+                <input
+                  id="edit-nombres"
+                  type="text"
+                  className="medix-input"
+                  value={formEdicion.nombres_completos}
+                  onChange={(e) => setFormEdicion({ ...formEdicion, nombres_completos: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label htmlFor="edit-rol" className="medix-label">Rol / Especialidad</label>
+                  <select
+                    id="edit-rol"
+                    className="medix-input"
+                    value={formEdicion.rol}
+                    onChange={(e) => setFormEdicion({ ...formEdicion, rol: e.target.value })}
+                  >
+                    <option value="Médico General">Médico General</option>
+                    <option value="Pediatra">Pediatra</option>
+                    <option value="Cardiólogo">Cardiólogo</option>
+                    <option value="Ginecólogo">Ginecólogo</option>
+                    <option value="Cirujano">Cirujano</option>
+                    <option value="Traumatólogo">Traumatólogo</option>
+                    <option value="Neurólogo">Neurólogo</option>
+                    <option value="Enfermera">Enfermera</option>
+                    <option value="Administrador">Administrador</option>
+                    <option value="Recepción">Recepción / Admisión</option>
+                    <option value="Soporte TI">Soporte TI</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-telefono" className="medix-label">Teléfono Móvil (SMS)</label>
+                  <input
+                    id="edit-telefono"
+                    type="tel"
+                    className="medix-input"
+                    value={formEdicion.telefono}
+                    onChange={(e) => setFormEdicion({ ...formEdicion, telefono: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="edit-correo" className="medix-label">Correo Institucional</label>
+                <input
+                  id="edit-correo"
+                  type="email"
+                  className="medix-input"
+                  value={formEdicion.correo}
+                  onChange={(e) => setFormEdicion({ ...formEdicion, correo: e.target.value })}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '10px', borderTop: theme.borderSubtle }}>
+                <button
+                  type="button"
+                  onClick={() => setUsuarioEditando(null)}
+                  disabled={guardandoEdicion}
+                  className="medix-btn medix-btn-secondary"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardandoEdicion}
+                  className="medix-btn medix-btn-primary"
+                >
+                  {guardandoEdicion ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   )

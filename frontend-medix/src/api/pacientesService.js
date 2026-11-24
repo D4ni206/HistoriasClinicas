@@ -127,6 +127,17 @@ export async function crearUsuario(authFetch, usuarioData) {
   return data
 }
 
+export async function actualizarUsuario(authFetch, id, usuarioData) {
+  const res = await authFetch(`/usuarios/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(usuarioData)
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.mensaje || 'Error al actualizar credenciales del usuario')
+  return data
+}
+
 export async function eliminarUsuario(authFetch, id) {
   const res = await authFetch(`/usuarios/${id}`, { method: 'DELETE' })
   const data = await res.json()

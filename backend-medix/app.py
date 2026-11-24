@@ -643,6 +643,49 @@ def crear_usuario():
         "usuario": nuevo_usuario.to_dict()
     }), 201
 
+@app.route('/api/usuarios/<int:id>', methods=['PUT'])
+@token_required
+@roles_required('Administrador')
+def actualizar_usuario(id):
+    usuario = Usuario.query.get_or_404(id)
+    data = request.get_json() or {}
+
+    nuevo_username = (data.get('username') or '').strip()
+    nueva_password = (data.get('password') or data.get('nueva_password') or '').strip()
+    nuevo_rol = data.get('rol')
+    nuevo_telefono = data.get('telefono')
+    nuevo_correo = data.get('correo')
+    nuevos_nombres = data.get('nombres_completos')
+
+    if nuevo_username and nuevo_username.lower() != usuario.username.lower():
+        existente = Usuario.query.filter(db.func.lower(Usuario.username) == nuevo_username.lower()).first()
+        if existente and existente.id != id:
+            return jsonify({"mensaje": f"El nombre de usuario '{nuevo_username}' ya está en uso por otra cuenta"}), 409
+        usuario.username = nuevo_username
+
+    if nueva_password:
+        if len(nueva_password) < 4:
+            return jsonify({"mensaje": "La nueva contraseña debe tener al menos 4 caracteres"}), 400
+        usuario.password_hash = generate_password_hash(nueva_password)
+
+    if nuevo_rol is not None and nuevo_rol.strip():
+        usuario.rol = nuevo_rol.strip()
+
+    if nuevo_telefono is not None:
+        usuario.telefono = nuevo_telefono.strip() if nuevo_telefono.strip() else None
+
+    if nuevo_correo is not None:
+        usuario.correo = nuevo_correo.strip() if nuevo_correo.strip() else None
+
+    if nuevos_nombres is not None:
+        usuario.nombres_completos = nuevos_nombres.strip() if nuevos_nombres.strip() else None
+
+    db.session.commit()
+    return jsonify({
+        "mensaje": f"Credenciales y datos del usuario '{usuario.username}' actualizados exitosamente",
+        "usuario": usuario.to_dict()
+    }), 200
+
 @app.route('/api/usuarios/<int:id>', methods=['DELETE'])
 @token_required
 @roles_required('Administrador')
